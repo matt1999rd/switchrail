@@ -15,15 +15,15 @@ import java.util.List;
 
 public class SwitchStorageCapability
 {
-    @CapabilityInject(ISwitchStorage.class)
-    public static Capability<ISwitchStorage> SWITCH_STORAGE_CAPABILITY = null ;
+    @CapabilityInject(IPosStorage.class)
+    public static Capability<IPosStorage> SWITCH_STORAGE_CAPABILITY = null ;
 
     public static void register()
     {
-        CapabilityManager.INSTANCE.register(ISwitchStorage.class, new Capability.IStorage<ISwitchStorage>() {
+        CapabilityManager.INSTANCE.register(IPosStorage.class, new Capability.IStorage<IPosStorage>() {
 
             @Override
-            public INBT writeNBT(Capability<ISwitchStorage> capability, ISwitchStorage instance, Direction side)
+            public INBT writeNBT(Capability<IPosStorage> capability, IPosStorage instance, Direction side)
             {
                 ListNBT switches = new ListNBT();
                 List<SwitchData> datas = instance.getSwitchList();
@@ -41,8 +41,8 @@ public class SwitchStorageCapability
             }
 
             @Override
-            public void readNBT(Capability<ISwitchStorage> capability, ISwitchStorage instance, Direction side, INBT nbt) {
-                if (!(instance instanceof SwitchStorage))
+            public void readNBT(Capability<IPosStorage> capability, IPosStorage instance, Direction side, INBT nbt) {
+                if (!(instance instanceof PosStorage))
                     throw new IllegalArgumentException("Can not deserialize to an instance that isn't the default implementation");
                 ListNBT List_tag= (ListNBT)nbt;
                 int max = List_tag.size();
@@ -54,11 +54,11 @@ public class SwitchStorageCapability
                     int posZ = tag_switch.getInt("posZ");
                     String type = tag_switch.getString("type");
                     SwitchData data =  new SwitchData(SwitchType.valueOf(type),new BlockPos(posX,posY,posZ));
-                    ((SwitchStorage)instance).addSwitchWhatever(data);
+                    ((PosStorage)instance).addSwitchWhatever(data);
                 }
 
             }
-        },SwitchStorage::new);
+        }, PosStorage::new);
 
     }
 
