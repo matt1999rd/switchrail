@@ -12,6 +12,7 @@ import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.state.properties.RailShape;
 import net.minecraft.tileentity.TileEntity;
 
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -43,7 +44,7 @@ public class Bumper extends Block {
 
 
     public Bumper() {
-        super(Properties.create(Material.ROCK).lightValue(0).sound(SoundType.METAL).hardnessAndResistance(2f).notSolid());
+        super(Properties.create(Material.ROCK).lightValue(0).sound(SoundType.METAL).hardnessAndResistance(2f));
         setRegistryName("bumper");
     }
 
@@ -87,7 +88,12 @@ public class Bumper extends Block {
 
     }
 
-    public void  changeRailNearBy(Direction bumper_direction,World world,BlockPos bumper_pos){
+    @Override
+    public BlockRenderLayer func_180664_k() {
+        return BlockRenderLayer.CUTOUT_MIPPED;
+    }
+
+    public void  changeRailNearBy(Direction bumper_direction, World world, BlockPos bumper_pos){
         BlockPos connected_block_pos = bumper_pos.offset(bumper_direction);
         BlockState connected_block_state = world.getBlockState(connected_block_pos);
         if (connected_block_state.getBlock() instanceof AbstractRailBlock){

@@ -54,37 +54,6 @@ public abstract class Switch extends AbstractRailBlock {
 
 
     @Override
-    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player){
-        super.onBlockHarvested(worldIn,pos,state,player);
-        if (!worldIn.getWorld().isRemote) {
-            List<ControllerTile> controller_nearby = searchController(worldIn, pos);
-            for (ControllerTile controller_tile : controller_nearby) {
-                controller_tile.deleteSwitch((SwitchTile) worldIn.getWorld().getTileEntity(pos));
-                System.out.println("safely deleted block :" + this.toString());
-            }
-        }
-    }
-
-    protected List<ControllerTile> searchController(IWorld world,BlockPos pos){
-        List<ControllerTile> controllerTiles = new ArrayList<>();
-        int i = 10;
-        int j = 5;
-        for (int x=pos.getX()-i; x<pos.getX()+i;x++){
-            for (int y=pos.getY()-j; y<pos.getZ()+i;y++){
-                for (int z=pos.getZ()-i;z<pos.getZ()+i;z++){
-                    BlockPos pos_tested = new BlockPos(x,y,z);
-                    TileEntity controllerTile=world.getWorld().getTileEntity(pos_tested);
-                    if (controllerTile instanceof ControllerTile){
-                        controllerTiles.add((ControllerTile) controllerTile);
-                    }
-                }
-            }
-        }
-
-        return controllerTiles;
-    };
-
-    @Override
     public IProperty<RailShape> getShapeProperty() {
         return RAIL_STRAIGHT_FLAT;
     }

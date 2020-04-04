@@ -3,9 +3,11 @@ package fr.mattmouss.switchrail.gui;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import fr.mattmouss.switchrail.SwitchRailMod;
-import fr.mattmouss.switchrail.blocks.ControllerTile;
+import fr.mattmouss.switchrail.blocks.CrossedRail;
 import fr.mattmouss.switchrail.enum_rail.SwitchType;
 import fr.mattmouss.switchrail.enum_rail.Tjd_Position;
+import fr.mattmouss.switchrail.network.ChangePosPacket;
+import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.switchblock.Switch;
 import fr.mattmouss.switchrail.switchblock.Switch_Tjd;
 import fr.mattmouss.switchrail.switchdata.SwitchData;
@@ -14,7 +16,6 @@ import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.gui.IGuiEventListener;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.ImageButton;
@@ -22,14 +23,12 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.state.properties.BlockStateProperties;
 
 import net.minecraft.state.properties.RailShape;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -55,8 +54,7 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
     private int x_origine = 13;
     private int y_origine = 22;
 
-    private boolean addone = false;
-    private boolean delone = true;
+    private boolean delone = false;
 
     private Button ZoomInButton;
 
@@ -75,12 +73,10 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
     private static final int white = 0xffffff;
     private static final int green = 0x00ff00;
 
-    private ControllerTile te;
 
 
     public ControllerScreen(ControllerContainer container, PlayerInventory inventory, ITextComponent title) {
         super(container,inventory,title);
-        te = container.getTileEntity();
     }
 
     public void init() {
@@ -195,7 +191,9 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
 
     private void changePos(Direction dir) {
         System.out.println("Bouton "+dir+" Button appuyé avec succès");
-        te.pos_base = te.pos_base.offset(dir);
+        BlockPos pos_base = container.getPos();
+        container.setPos(pos_base.offset(dir));
+        Networking.INSTANCE.sendToServer(new ChangePosPacket(dir,container.getTileEntity().getPos()));
     }
 
     @Override
@@ -209,7 +207,7 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
             int y = getYOnBoard(data.pos,relY);
             double mouseX_rel = mouseX-x;
             double mouseY_rel = mouseY-y;
-            World world = te.getWorld();
+            World world = container.getTileEntity().getWorld();
             BlockState state = world.getBlockState(data.pos);
             Tjd_Position tjd_position = state.get(Switch_Tjd.SWITCH_POSITION);
             Direction dir = state.get(Switch_Tjd.FACING_AXE);
@@ -233,7 +231,7 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
         } else {
 
 
-            World world= te.getWorld();
+            World world= container.getTileEntity().getWorld();
             BlockState state = world.getBlockState(data.pos);
             Block block = state.getBlock();
             if (block instanceof Switch) {
@@ -246,8 +244,7 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
 
     public void ZoomIn() {
         System.out.println("Zoom + active");
-        scaleX = (addone) ? scaleX - 1 : scaleX - 2;
-        addone = !addone;
+        scaleX = (delone) ? scaleX - 1 : scaleX - 2;
         delone = !delone;
         scaleY -= 1;
         tailleX = 144 / scaleX;
@@ -256,9 +253,8 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
 
     public void ZoomOut() {
         System.out.println("Zoom - active");
-        scaleX = (delone) ? scaleX + 1 : scaleX + 2;
+        scaleX = (!delone) ? scaleX + 1 : scaleX + 2;
         delone = !delone;
-        addone = !addone;
         scaleY += 1;
         tailleX = 144 / scaleX;
         tailleY = 99 / scaleY;
@@ -285,9 +281,9 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
         //affichage de la position du block d'origine
         this.drawString(minecraft.fontRenderer,"O",relX+2,relY+20,green);
         this.drawString(minecraft.fontRenderer,"Position du Block O",relX+12,relY+142,green);
-        this.drawString(minecraft.fontRenderer,String.valueOf(te.pos_base.getX()),relX+18,relY+153,white);
-        this.drawString(minecraft.fontRenderer,String.valueOf(te.pos_base.getY()),relX+62,relY+153,white);
-        this.drawString(minecraft.fontRenderer,String.valueOf(te.pos_base.getZ()),relX+106,relY+153,white);
+        this.drawString(minecraft.fontRenderer,String.valueOf(container.getX()),relX+18,relY+153,white);
+        this.drawString(minecraft.fontRenderer,String.valueOf(container.getY()),relX+62,relY+153,white);
+        this.drawString(minecraft.fontRenderer,String.valueOf(container.getZ()),relX+106,relY+153,white);
         //affichage des boutons de controle de la position
         GlStateManager.enableBlend();
         super.render(mouseX, mouseY, partialTicks);
@@ -303,10 +299,10 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
     private void displayControllerBlock(int relX, int relY) {
         this.minecraft.getTextureManager().bindTexture(OTHERS_PICTURE);
         int[] scaleYList = {0,9,18,29,41,55,71,114,171}; //cumul des scaleY
-        if (isOnBoard(te.getPos())){
+        if (isOnBoard(container.getTileEntity().getPos())){
             int i= 11-scaleY;
-            int x_debut_affichage =getXOnBoard(te.getPos(),relX);
-            int y_debut_affichage =getYOnBoard(te.getPos(),relY);
+            int x_debut_affichage =getXOnBoard(container.getTileEntity().getPos(),relX);
+            int y_debut_affichage =getYOnBoard(container.getTileEntity().getPos(),relY);
             int x_debut_image = (i == 7 || i==8) ? 5*tailleX : 11*tailleX ;
             int y_debut_image =scaleYList[i];
             //System.out.println("debut de l'image en ("+x_debut_image+" ; "+y_debut_image+" )");
@@ -319,8 +315,8 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
     private void displayNormalRail(int relX, int relY) {
         List<BlockPos> normalRails = getNormalRailOnBoard();
         for (BlockPos pos: normalRails){
-            String type = te.getWorld().getBlockState(pos).getBlock().getClass().getName();
-            Boolean isCrossed = !type.startsWith("net"); // les blocks que je n'ai pas créé
+            Block rail = container.getTileEntity().getWorld().getBlockState(pos).getBlock();
+            Boolean isCrossed = (rail instanceof CrossedRail) ; // the crossed rail block I created that will display false railshape
             showSpecifiedNormalRail(pos,isCrossed,relX,relY);
         }
 
@@ -339,7 +335,7 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
         if (isCrossed){
             order = 10;
         }else {
-            BlockState state = te.getWorld().getBlockState(pos);
+            BlockState state = container.getTileEntity().getWorld().getBlockState(pos);
             if (state.has(BlockStateProperties.RAIL_SHAPE)) {
                 order = getMeta(state.get(BlockStateProperties.RAIL_SHAPE));
             } else if (state.has(BlockStateProperties.RAIL_SHAPE_STRAIGHT)){
@@ -403,8 +399,8 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
         List<BlockPos> list = new ArrayList<>();
         for (int i=0;i<scaleX;i++){
             for (int j=0;j<scaleY;j++){
-                BlockPos pos =te.pos_base.add(i,0,j);
-                Block block = te.getWorld().getBlockState(pos).getBlock();
+                BlockPos pos =container.getPos().add(i,0,j);
+                Block block = container.getTileEntity().getWorld().getBlockState(pos).getBlock();
                 if (block instanceof AbstractRailBlock && !(block instanceof Switch)){
                     list.add(pos);
                 }
@@ -417,8 +413,8 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
         List<SwitchData> list = new ArrayList<>();
         for (int i=0;i<scaleX;i++){
             for (int j=0;j<scaleY;j++){
-                BlockPos pos =te.pos_base.add(i,0,j);
-                Block block = te.getWorld().getBlockState(pos).getBlock();
+                BlockPos pos =container.getPos().add(i,0,j);
+                Block block = container.getTileEntity().getWorld().getBlockState(pos).getBlock();
 
                 if (block instanceof Switch){
                     SwitchType type = ((Switch)block).getType();
@@ -441,14 +437,14 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
     }
 
     private void showSpecifiedSwitch(SwitchData data, int relativeX, int relativeY) {
-        ResourceLocation location = data.getResourceLocation(te);
+        ResourceLocation location = data.getResourceLocation(container.getTileEntity());
         assert this.minecraft != null;
         this.minecraft.getTextureManager().bindTexture(location);
         if (this.isOnBoard(data.pos)){
             int x_debut_affichage =getXOnBoard(data.pos,relativeX);
             int y_debut_affichage =getYOnBoard(data.pos,relativeY);
-            int x_debut_image =data.getXDebutImg(tailleX,te,scaleY);
-            int y_debut_image =data.getYDebutImg(scaleY,te);
+            int x_debut_image =data.getXDebutImg(tailleX,container.getTileEntity(),scaleY);
+            int y_debut_image =data.getYDebutImg(scaleY,container.getTileEntity());
             //System.out.println("coordonée x de debut d'affichage : "+x_debut_affichage);
             //System.out.println("coordonée y de debut d'affichage : "+y_debut_affichage);
             //System.out.println("coordonée x de debut d'image : "+x_debut_image);
@@ -462,16 +458,16 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
     //permet de savoir si un switch stocké dans un switchdata est bien affichable sur l'écran (utilise uniquement les blockpos
 
     private boolean isOnBoard(BlockPos pos) {
-        return (pos.getY() == te.pos_base.getY()) &&
-                (pos.getX() >= te.pos_base.getX() && pos.getX() < te.pos_base.getX()+scaleX) && // le blockPos corrrespond au point en haut à gauche de la fenetre
-                (pos.getZ() >= te.pos_base.getZ() && pos.getZ() < te.pos_base.getZ()+scaleY);
+        return (pos.getY() == container.getY()) &&
+                (pos.getX() >= container.getX() && pos.getX() < container.getX()+scaleX) && // le blockPos corrrespond au point en haut à gauche de la fenetre
+                (pos.getZ() >= container.getZ() && pos.getZ() < container.getZ()+scaleY);
     }
 
     private int getXOnBoard(BlockPos pos,int RelativeX){
         if (!isOnBoard(pos)){
             return -1;
         }
-        int i =pos.getX()-te.pos_base.getX();
+        int i =pos.getX()-container.getX();
         return x_origine+RelativeX+i*tailleX;
     }
 
@@ -479,7 +475,7 @@ public class ControllerScreen extends ContainerScreen<ControllerContainer> imple
         if (!isOnBoard(pos)){
             return -1;
         }
-        int j= pos.getZ()-te.pos_base.getZ();
+        int j= pos.getZ()-container.getZ();
         return y_origine+RelativeY+j*tailleY;
     }
 

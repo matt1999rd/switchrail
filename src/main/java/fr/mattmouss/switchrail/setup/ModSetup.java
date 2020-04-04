@@ -1,6 +1,7 @@
 package fr.mattmouss.switchrail.setup;
 
 import fr.mattmouss.switchrail.blocks.ModBlock;
+import fr.mattmouss.switchrail.network.Networking;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundEvent;
@@ -21,6 +22,6 @@ public class ModSetup {
 
 
     public void init(){
-
+        Networking.registerMessages();
     }
 }

@@ -6,8 +6,8 @@ package fr.mattmouss.switchrail;
 import fr.mattmouss.switchrail.blocks.*;
 import fr.mattmouss.switchrail.gui.ControllerContainer;
 import fr.mattmouss.switchrail.item.SwitchLever;
-import fr.mattmouss.switchrail.item.SwitchRegister;
-import fr.mattmouss.switchrail.other.SwitchStorageCapability;
+import fr.mattmouss.switchrail.other.PosStorageCapability;
+import fr.mattmouss.switchrail.setup.ModSetup;
 import fr.mattmouss.switchrail.switchblock.*;
 import fr.mattmouss.switchrail.setup.ClientProxy;
 import fr.mattmouss.switchrail.setup.IProxy;
@@ -15,14 +15,13 @@ import fr.mattmouss.switchrail.setup.IProxy;
 import fr.mattmouss.switchrail.setup.ServerProxy;
 import net.minecraft.block.Block;
 
-import net.minecraft.block.Blocks;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 
 import net.minecraft.item.ItemGroup;
+import net.minecraft.item.Rarity;
 import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.extensions.IForgeContainerType;
@@ -44,7 +43,7 @@ public class SwitchRailMod {
 
     public static final String MODID = "switchrail";
 
-    //public static ModSetup setup = new ModSetup();
+    public static ModSetup setup = new ModSetup();
 
     public static final Logger logger =  Logger.getLogger(MODID);
 
@@ -59,12 +58,12 @@ public class SwitchRailMod {
     }
 
     public void preInit(FMLCommonSetupEvent evt) {
-        SwitchStorageCapability.register();
+        PosStorageCapability.register();
 
     }
 
     private void setup(final FMLCommonSetupEvent event) {
-        //setup.init();
+        setup.init();
 
         proxy.init();
 
@@ -106,7 +105,7 @@ public class SwitchRailMod {
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.CONTROLLER_BLOCK,properties).setRegistryName("controller_block"));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.BUMPER,properties).setRegistryName("bumper"));
             blockRegistryEvent.getRegistry().register(new SwitchLever(properties.maxStackSize(1)));
-            blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.ONE_WAY_POWERED_RAIL,properties.maxStackSize(64)).setRegistryName("one_way_powered_rail"));
+            blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.ONE_WAY_POWERED_RAIL,properties.maxStackSize(64).rarity(Rarity.COMMON)).setRegistryName("one_way_powered_rail"));
             //blockRegistryEvent.getRegistry().register(new SwitchRegister(properties)); // si on veut controler les aiguilles
 
 

@@ -13,7 +13,7 @@ import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
 
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -22,7 +22,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
-import org.lwjgl.opengl.ARBTessellationShader;
 
 import javax.annotation.Nullable;
 
@@ -33,7 +32,6 @@ public class ControllerBlock extends Block {
                 .hardnessAndResistance(2f)
                 .sound(SoundType.METAL)
                 .lightValue(0)
-                .notSolid()
         );
         this.setRegistryName("controller_block");
     }
@@ -57,8 +55,20 @@ public class ControllerBlock extends Block {
         }
     }
 
+    @Override
+    public BlockRenderLayer func_180664_k() {
+        return BlockRenderLayer.CUTOUT_MIPPED;
+    }
 
-
+    @Override
+    public boolean func_220051_a(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand p_220051_5_, BlockRayTraceResult p_220051_6_) {
+        ControllerTile te = (ControllerTile) worldIn.getTileEntity(pos);
+        System.out.println("openning gui !!");
+        if (!worldIn.isRemote){
+            NetworkHooks.openGui((ServerPlayerEntity)player,te,te.getPos());
+        }
+        return true;
+    }
 
     private Direction getDirectionFromEntity(LivingEntity placer, BlockPos pos) {
         Vec3d vec = placer.getPositionVec();
@@ -75,15 +85,8 @@ public class ControllerBlock extends Block {
     }
 
 
-    @Override
-    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        ControllerTile te = (ControllerTile) worldIn.getTileEntity(pos);
-        System.out.println("openning gui !!");
-        if (!worldIn.isRemote){
-            NetworkHooks.openGui((ServerPlayerEntity)player,te,te.getPos());
-        }
-        return ActionResultType.SUCCESS;
-    }
+
+
 
 
 

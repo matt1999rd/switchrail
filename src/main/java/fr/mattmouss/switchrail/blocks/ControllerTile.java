@@ -1,12 +1,8 @@
 package fr.mattmouss.switchrail.blocks;
 
 import fr.mattmouss.switchrail.gui.ControllerContainer;
-import fr.mattmouss.switchrail.gui.ControllerScreen;
-import fr.mattmouss.switchrail.other.ISwitchStorage;
-import fr.mattmouss.switchrail.other.SwitchStorage;
-import fr.mattmouss.switchrail.other.SwitchStorageCapability;
-import fr.mattmouss.switchrail.switchdata.SwitchData;
-import net.minecraft.client.Minecraft;
+import fr.mattmouss.switchrail.other.PosStorage;
+import fr.mattmouss.switchrail.other.PosStorageCapability;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
@@ -24,16 +20,15 @@ import net.minecraftforge.common.util.LazyOptional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class ControllerTile extends TileEntity implements ITickableTileEntity, INamedContainerProvider {
     //on ne peut pas stocker les tile entity car pour les recuperer il faut un world qui n'est pas encore defini lorsque le world est en train de se charger
 
-    //solution : on va stocker les données propres à chaque switch dans un nouvel objet SwitchData qui sera envoyé par petit bout via SwitchStorage
+    //solution : on va stocker les données propres à chaque switch dans un nouvel objet SwitchData qui sera envoyé par petit bout via PosStorage
 
-    private LazyOptional<SwitchStorage> switches = LazyOptional.of(this::createSwitch).cast();
-
-    public BlockPos pos_base ;
+    private LazyOptional<PosStorage> pos_store = LazyOptional.of(this::createPos).cast();
 
     private Boolean isInit = true;
 
@@ -47,17 +42,39 @@ public class ControllerTile extends TileEntity implements ITickableTileEntity, I
     @Override
     public void tick() {
         if (isInit){
-            pos_base = this.pos;
             isInit = false;
         }
 
     }
 
-    private SwitchStorage createSwitch(){
-        return new SwitchStorage(world);
+    private PosStorage createPos(){
+        return new PosStorage(this.pos);
     }
 
 
+    public BlockPos getPosBase() {
+        AtomicIntegerArray integerArray = new AtomicIntegerArray(3);
+        pos_store.ifPresent(posStorage -> {
+            BlockPos pos = posStorage.getPos();
+            integerArray.set(0,pos.getX());
+            integerArray.set(1,pos.getY());
+            integerArray.set(2,pos.getZ());
+        });
+        return new BlockPos(integerArray.get(0),integerArray.get(1),integerArray.get(2));
+    }
+
+    public void setX(int x){
+        pos_store.ifPresent(posStorage -> posStorage.setX(x));
+    }
+
+    public void setY(int y){
+        pos_store.ifPresent(posStorage -> posStorage.setY(y));
+    }
+
+    public void setZ(int z){
+        pos_store.ifPresent(posStorage -> posStorage.setZ(z));
+    }
+    /*
     public void addSwitch(SwitchTile switch_tile){
         switches.ifPresent(switchStorage -> switchStorage.addSwitch(new SwitchData(switch_tile),world));
     }
@@ -69,9 +86,11 @@ public class ControllerTile extends TileEntity implements ITickableTileEntity, I
 
     public List<SwitchData> getSwitch() {
         List<SwitchData> datas = new ArrayList<>();
-        List<SwitchData> datas2 = getCapability(SwitchStorageCapability.SWITCH_STORAGE_CAPABILITY).map(ISwitchStorage::getSwitchList).orElse(datas);
+        List<SwitchData> datas2 = getCapability(PosStorageCapability.SWITCH_STORAGE_CAPABILITY).map(IPosStorage::getSwitchList).orElse(datas);
         return datas2;
     }
+
+     */
 
     @Override
     public ITextComponent getDisplayName() {
@@ -86,17 +105,17 @@ public class ControllerTile extends TileEntity implements ITickableTileEntity, I
 
     @Override
     public void read(CompoundNBT compound) {
-        CompoundNBT switch_tag = compound.getCompound("swag");
-        switches.ifPresent(switchStorage -> ((INBTSerializable<CompoundNBT>)switchStorage).deserializeNBT(switch_tag));
+        CompoundNBT pos_tag = compound.getCompound("pos");
+        pos_store.ifPresent(switchStorage -> ((INBTSerializable<CompoundNBT>)switchStorage).deserializeNBT(pos_tag));
         super.read(compound);
 
     }
 
     @Override
     public CompoundNBT write(CompoundNBT tag) {
-        switches.ifPresent(switchStorage -> {
-            CompoundNBT compoundNBT = ((INBTSerializable<CompoundNBT>)switchStorage).serializeNBT();
-            tag.put("swag",compoundNBT);
+        pos_store.ifPresent(posStorage -> {
+            CompoundNBT compoundNBT = ((INBTSerializable<CompoundNBT>)posStorage).serializeNBT();
+            tag.put("pos",compoundNBT);
         });
         return super.write(tag);
     }
@@ -104,8 +123,8 @@ public class ControllerTile extends TileEntity implements ITickableTileEntity, I
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        if (cap == SwitchStorageCapability.SWITCH_STORAGE_CAPABILITY){
-            return switches.cast();
+        if (cap == PosStorageCapability.POS_STORAGE_CAPABILITY){
+            return pos_store.cast();
         }
         return super.getCapability(cap, side);
     }
