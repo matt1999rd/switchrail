@@ -12,17 +12,19 @@ import net.minecraft.util.IntReferenceHolder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import java.util.Objects;
+
 
 public class ControllerContainer extends Container {
-    private ControllerTile tileEntity ;
-    private PlayerEntity playerEntity;
+    private final ControllerTile tileEntity ;
+    private final PlayerEntity playerEntity;
 
     public ControllerContainer(int windowId, World world, BlockPos pos, PlayerEntity entity) {
         super(ModBlock.CONTROLLER_CONTAINER, windowId);
-        tileEntity = (ControllerTile)world.getTileEntity(pos);
+        tileEntity = (ControllerTile)world.getBlockEntity(pos);
         playerEntity = entity;
 
-        trackInt(new IntReferenceHolder() {
+        addDataSlot(new IntReferenceHolder() {
             @Override
             public int get() {
                 return getX();
@@ -33,7 +35,7 @@ public class ControllerContainer extends Container {
                 tileEntity.getCapability(PosStorageCapability.POS_STORAGE_CAPABILITY).ifPresent(s-> s.setX(i));
             }
         });
-        trackInt(new IntReferenceHolder() {
+        addDataSlot(new IntReferenceHolder() {
             @Override
             public int get() {
                 return getY();
@@ -44,7 +46,7 @@ public class ControllerContainer extends Container {
                 tileEntity.getCapability(PosStorageCapability.POS_STORAGE_CAPABILITY).ifPresent(s-> s.setY(i));
             }
         });
-        trackInt(new IntReferenceHolder() {
+        addDataSlot(new IntReferenceHolder() {
             @Override
             public int get() {
                 return getZ();
@@ -76,9 +78,9 @@ public class ControllerContainer extends Container {
 
 
     @Override
-    public boolean canInteractWith(PlayerEntity playerIn) {
-        return isWithinUsableDistance(
-                IWorldPosCallable.of(tileEntity.getWorld(),tileEntity.getPos()),
+    public boolean stillValid(PlayerEntity playerIn) {
+        return stillValid(
+                IWorldPosCallable.create(Objects.requireNonNull(tileEntity.getLevel()),tileEntity.getBlockPos()),
                 playerEntity,
                 ModBlock.CONTROLLER_BLOCK);
     }

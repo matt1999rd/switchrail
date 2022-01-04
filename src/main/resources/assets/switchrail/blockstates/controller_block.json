@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "switchrail:block/controller_block"
+
+    },
+    "facing=east": {
+      "model": "switchrail:block/controller_block",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "switchrail:block/controller_block",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "switchrail:block/controller_block",
+      "y": 270
+    }
+  }
+}

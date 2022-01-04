@@ -2,6 +2,7 @@ package fr.mattmouss.switchrail.network;
 
 
 import fr.mattmouss.switchrail.blocks.ControllerTile;
+import fr.mattmouss.switchrail.blocks.IPosBaseTileEntity;
 import net.minecraft.network.PacketBuffer;
 
 import net.minecraft.util.Direction;
@@ -9,6 +10,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class ChangePosPacket {
@@ -22,7 +24,7 @@ public class ChangePosPacket {
     }
 
     public ChangePosPacket(Direction direction,BlockPos pos){
-        dir_id = direction.getIndex();
+        dir_id = direction.get3DDataValue();
         te_pos = pos;
     }
 
@@ -33,14 +35,10 @@ public class ChangePosPacket {
 
     public void handle(Supplier<NetworkEvent.Context> context){
         context.get().enqueueWork(()->{
-            ControllerTile te = (ControllerTile) context.get().getSender().getServerWorld().getTileEntity(te_pos);
-            BlockPos pos_base =te.getPosBase();
-            Direction dir = Direction.byIndex(dir_id);
-            BlockPos new_pos_base = pos_base.offset(dir);
-            System.out.println("set of the new Position : "+new_pos_base);
-            te.setX(new_pos_base.getX());
-            te.setY(new_pos_base.getY());
-            te.setZ(new_pos_base.getZ());
+            IPosBaseTileEntity te = (IPosBaseTileEntity) Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(te_pos);
+            assert te != null;
+            Direction dir = Direction.from3DDataValue(dir_id);
+            te.changePosBase(dir);
         });
         context.get().setPacketHandled(true);
     }

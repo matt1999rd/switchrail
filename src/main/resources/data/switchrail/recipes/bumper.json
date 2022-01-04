@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  s",
+    " ss",
+    "sss"
+  ],
+  "key": {
+    "s": {
+      "item": "minecraft:stone"
+    }
+  },
+  "result": {
+    "item": "switchrail:bumper",
+    "count": 12
+  }
+}

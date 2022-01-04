@@ -1,0 +1,14 @@
+{
+	"block.switchrail.switch": "Aiguillage",
+	"block.switchrail.switch_straight":  "Aiguillage Simple",
+	"block.switchrail.double_turn_switch": "Aiguillage en Y",
+	"block.switchrail.crossed_rail": "Traversee",
+	"item.switchrail.switch_lever": "Levier d'aiguille",
+	"block.switchrail.triple_switch": "Aiguillage triple",
+	"block.switchrail.switch_tjs": "Traversée Jonction Simple",
+	"block.switchrail.switch_tjd": "Traversée Jonction Double",
+	"block.switchrail.controller_block": "Controleur",
+	"block.switchrail.switch_register": "Registre d'aiguille",
+	"block.switchrail.one_way_powered_rail": "Rail Accélérateur A Une Direction",
+	"block.switchrail.bumper": "Heurtoir"
+}

@@ -1,0 +1,15 @@
+{
+	"block.switchrail.switch":  "Switch",
+	"block.switchrail.switch_straight":  "Switch Straight",
+	"block.switchrail.double_turn_switch": "Switch On Double Turn",
+	"block.switchrail.crossed_rail": "Crossed Rail",
+	"block.switchrail.triple_switch": "Switch with Three Direction",
+	"block.switchrail.switch_tjs": "Crossed Rail with Simple Switch",
+	"block.switchrail.switch_tjd": "Crossed Rail with Double Switch",
+	"block.switchrail.controller_block": "Controller",
+	"block.switchrail.bumper": "Bumper",
+	"block.switchrail.one_way_powered_rail": "One Way Powered Rail",
+
+	"item.switchrail.switch_lever": "Switch Lever",
+	"item.switchrail.switch_register": "Switch Register"
+}

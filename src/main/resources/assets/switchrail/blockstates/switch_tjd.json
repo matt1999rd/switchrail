@@ -1,0 +1,60 @@
+{
+  "variants": {
+    "facing_axe=north,switch_position=no_power,shape=north_south": {
+      "model": "switchrail:block/switch_tjd_np"
+    },
+    "facing_axe=east,switch_position=no_power,shape=north_south": {
+      "model": "switchrail:block/switch_tjd_np",
+      "y": 90
+    },
+    "facing_axe=north,switch_position=right_up_powered,shape=north_south": {
+      "model": "switchrail:block/switch_tjd_rup"
+    },
+    "facing_axe=east,switch_position=right_up_powered,shape=north_south": {
+      "model": "switchrail:block/switch_tjd_rup",
+      "y": 90
+    },
+    "facing_axe=north,switch_position=left_down_powered,shape=north_south": {
+      "model": "switchrail:block/switch_tjd_ldp"
+    },
+    "facing_axe=east,switch_position=left_down_powered,shape=north_south": {
+      "model": "switchrail:block/switch_tjd_ldp",
+      "y": 90
+    },
+    "facing_axe=north,switch_position=all_powered,shape=north_south": {
+      "model": "switchrail:block/switch_tjd_ap"
+    },
+    "facing_axe=east,switch_position=all_powered,shape=north_south": {
+      "model": "switchrail:block/switch_tjd_ap",
+      "y": 90
+    },
+    "facing_axe=north,switch_position=no_power,shape=east_west": {
+      "model": "switchrail:block/switch_tjd_np"
+    },
+    "facing_axe=east,switch_position=no_power,shape=east_west": {
+      "model": "switchrail:block/switch_tjd_np",
+      "y": 90
+    },
+    "facing_axe=north,switch_position=right_up_powered,shape=east_west": {
+      "model": "switchrail:block/switch_tjd_rup"
+    },
+    "facing_axe=east,switch_position=right_up_powered,shape=east_west": {
+      "model": "switchrail:block/switch_tjd_rup",
+      "y": 90
+    },
+    "facing_axe=north,switch_position=left_down_powered,shape=east_west": {
+      "model": "switchrail:block/switch_tjd_ldp"
+    },
+    "facing_axe=east,switch_position=left_down_powered,shape=east_west": {
+      "model": "switchrail:block/switch_tjd_ldp",
+      "y": 90
+    },
+    "facing_axe=north,switch_position=all_powered,shape=east_west": {
+      "model": "switchrail:block/switch_tjd_ap"
+    },
+    "facing_axe=east,switch_position=all_powered,shape=east_west": {
+      "model": "switchrail:block/switch_tjd_ap",
+      "y": 90
+    }
+  }
+}

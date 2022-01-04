@@ -1,0 +1,14 @@
+{
+	"block.switchrail.switch": "Направление",
+	"block.switchrail.switch_straight":  "Направление",
+	"block.switchrail.double_turn_switch": "Направление У-образные",
+	"block.switchrail.crossed_rail": "перекрестный рельса",
+	"block.switchrail.triple_switch": "Тройное Направление ",
+	"block.switchrail.switch_tjs": "перекрестный рельса с простым стрекалми",
+	"block.switchrail.switch_tjd": "перекрестный рельса с двойным стрекалми",
+	"block.switchrail.controller_block": "контроллер",
+	"block.switchrail.bumper": "молоток",
+	"block.switchrail.one_way_powered_rail": "Однонаправленный ускоритель рельса",
+
+	"item.switchrail.switch_lever": "рычаг направления"
+}

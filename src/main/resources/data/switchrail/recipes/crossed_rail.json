@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "m m",
+    " s ",
+    "m m"
+  ],
+  "key": {
+    "m": {
+      "item": "minecraft:iron_ingot"
+    },
+    "s": {
+      "item": "minecraft:stone"
+    }
+  },
+  "result": {
+    "item": "switchrail:crossed_rail",
+    "count": 12
+  }
+}

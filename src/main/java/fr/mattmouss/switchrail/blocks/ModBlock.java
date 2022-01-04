@@ -10,23 +10,27 @@ public class ModBlock {
 
     @ObjectHolder("switchrail:switch_v_right")
 
-    public static Switch_Straight switchStraightVRight = new SwitchStraightVRight();
+    public static SwitchStraight switchStraightVRight = new SwitchStraightVRight();
+
+    @ObjectHolder("switchrail:switch_v_left")
+
+    public static SwitchStraight switchStraightVLeft = new SwitchStraightVLeft();
+
+    @ObjectHolder("switchrail:switch_n_left")
+
+    public static SwitchStraight switchStraightNLeft = new SwitchStraightNLeft();
+
+    @ObjectHolder("switchrail:switch_n_right")
+
+    public static SwitchStraight switchStraightNRight = new SwitchStraightNRight();
 
     @ObjectHolder("switchrail:switch")
 
     public static TileEntityType<SwitchTile> SWITCH_TILE;
 
-    @ObjectHolder("switchrail:switch_v_left")
+    @ObjectHolder("switchrail:switch_straight")
 
-    public static Switch_Straight switchStraightVLeft = new SwitchStraightVLeft();
-
-    @ObjectHolder("switchrail:switch_n_left")
-
-    public static Switch_Straight switchStraightNLeft = new SwitchStraightNLeft();
-
-    @ObjectHolder("switchrail:switch_n_right")
-
-    public static Switch_Straight switchStraightNRight = new SwitchStraightNRight();
+    public static SwitchStraight SWITCH_STRAIGHT = new SwitchStraight();
 
     @ObjectHolder("switchrail:double_turn_switch")
 
@@ -71,6 +75,14 @@ public class ModBlock {
     @ObjectHolder("switchrail:one_way_powered_rail")
 
     public static  OneWayPoweredRail ONE_WAY_POWERED_RAIL = new OneWayPoweredRail();
+
+    @ObjectHolder("switchrail:switch_terminal")
+
+    public static SwitchTerminal SWITCH_TERMINAL = new SwitchTerminal();
+
+    @ObjectHolder("switchrail:switch_terminal")
+
+    public static TileEntityType<TerminalTile> TERMINAL_TILE;
 
 
 

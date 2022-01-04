@@ -17,31 +17,30 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 
-
 public class SwitchLever extends Item {
 
-    private static Rarity rarity = Rarity.UNCOMMON;
+    private static final Rarity rarity = Rarity.UNCOMMON;
 
 
     public SwitchLever(Properties builder) {
-        super(builder.maxStackSize(1).rarity(rarity));
+        super(builder.stacksTo(1).rarity(rarity));
         this.setRegistryName("switch_lever");
     }
 
 
 
     @Override
-    public ActionResultType onItemUse(ItemUseContext context) {
+    public ActionResultType useOn(ItemUseContext context) {
 
-        BlockPos pos=context.getPos();
+        BlockPos pos=context.getClickedPos();
 
-        World world = context.getWorld();
+        World world = context.getLevel();
 
         PlayerEntity player= context.getPlayer();
 
         Block clickedBlock = world.getBlockState(pos).getBlock();
 
-        if ((clickedBlock instanceof Switch) && !world.isRemote){
+        if ((clickedBlock instanceof Switch) && !world.isClientSide){
             Switch sw = (Switch)clickedBlock;
             BlockState state = sw.getBlockState(world,pos);
             if (state != null) {

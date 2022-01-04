@@ -11,12 +11,11 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void init() {
-        ScreenManager.registerFactory(ModBlock.CONTROLLER_CONTAINER, ControllerScreen::new);
     }
 
     @Override
     public World getClientWorld() {
-        return Minecraft.getInstance().world;
+        return Minecraft.getInstance().level;
     }
 
     @Override

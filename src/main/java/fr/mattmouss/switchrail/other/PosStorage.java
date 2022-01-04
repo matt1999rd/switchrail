@@ -1,18 +1,10 @@
 package fr.mattmouss.switchrail.other;
 
-import fr.mattmouss.switchrail.switchblock.Switch;
-import fr.mattmouss.switchrail.switchdata.SwitchData;
-import fr.mattmouss.switchrail.enum_rail.SwitchType;
-import net.minecraft.block.Block;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import net.minecraftforge.common.util.INBTSerializable;
 
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class PosStorage implements INBTSerializable<CompoundNBT>, IPosStorage {
 
@@ -26,11 +18,10 @@ public class PosStorage implements INBTSerializable<CompoundNBT>, IPosStorage {
         pos = new BlockPos(0,0,0);
     }
 
-
-
     @Override
     public CompoundNBT serializeNBT() {
         CompoundNBT tag = new CompoundNBT();
+        System.out.println("position written :"+pos);
         tag.putInt("x",pos.getX());
         tag.putInt("y",pos.getY());
         tag.putInt("z",pos.getZ());
@@ -65,6 +56,7 @@ public class PosStorage implements INBTSerializable<CompoundNBT>, IPosStorage {
             int y = nbt.getInt("y");
             int z = nbt.getInt("z");
             pos = new BlockPos(x,y,z);
+            System.out.println("position read :"+pos);
         }
     }
 

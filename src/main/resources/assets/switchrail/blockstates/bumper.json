@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "switchrail:block/bumper"
+
+    },
+    "facing=east": {
+      "model": "switchrail:block/bumper",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "switchrail:block/bumper",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "switchrail:block/bumper",
+      "y": 270
+    }
+  }
+}

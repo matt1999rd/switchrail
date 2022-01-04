@@ -1,0 +1,100 @@
+{
+  "variants": {
+    "facing=north,switch_position=turn_right,shape=north_south": {
+      "model": "switchrail:block/triple_switch_turn_right",
+      "y": 270
+    },
+    "facing=north,switch_position=turn_left,shape=north_south": {
+      "model": "switchrail:block/triple_switch_turn_left",
+      "y": 270
+    },
+    "facing=north,switch_position=straight,shape=north_south": {
+      "model": "switchrail:block/triple_switch_straight",
+      "y": 270
+    },
+    "facing=east,switch_position=turn_right,shape=north_south": {
+      "model": "switchrail:block/triple_switch_turn_right"
+    },
+    "facing=east,switch_position=turn_left,shape=north_south": {
+      "model": "switchrail:block/triple_switch_turn_left"
+    },
+    "facing=east,switch_position=straight,shape=north_south": {
+      "model": "switchrail:block/triple_switch_straight"
+    },
+    "facing=south,switch_position=turn_right,shape=north_south": {
+      "model": "switchrail:block/triple_switch_turn_right",
+      "y": 90
+    },
+    "facing=south,switch_position=turn_left,shape=north_south": {
+      "model": "switchrail:block/triple_switch_turn_left",
+      "y": 90
+    },
+    "facing=south,switch_position=straight,shape=north_south": {
+      "model": "switchrail:block/triple_switch_straight",
+      "y": 90
+    },
+    "facing=west,switch_position=turn_right,shape=north_south": {
+      "model": "switchrail:block/triple_switch_turn_right",
+      "y": 180
+
+    },
+    "facing=west,switch_position=straight,shape=north_south": {
+      "model": "switchrail:block/triple_switch_straight",
+      "y": 180
+
+    },
+    "facing=west,switch_position=turn_left,shape=north_south": {
+      "model": "switchrail:block/triple_switch_turn_left",
+      "y": 180
+
+    },
+    "facing=north,switch_position=turn_right,shape=east_west": {
+      "model": "switchrail:block/triple_switch_turn_right",
+      "y": 270
+    },
+    "facing=north,switch_position=turn_left,shape=east_west": {
+      "model": "switchrail:block/triple_switch_turn_left",
+      "y": 270
+    },
+    "facing=north,switch_position=straight,shape=east_west": {
+      "model": "switchrail:block/triple_switch_straight",
+      "y": 270
+    },
+    "facing=east,switch_position=turn_right,shape=east_west": {
+      "model": "switchrail:block/triple_switch_turn_right"
+    },
+    "facing=east,switch_position=turn_left,shape=east_west": {
+      "model": "switchrail:block/triple_switch_turn_left"
+    },
+    "facing=east,switch_position=straight,shape=east_west": {
+      "model": "switchrail:block/triple_switch_straight"
+    },
+    "facing=south,switch_position=turn_right,shape=east_west": {
+      "model": "switchrail:block/triple_switch_turn_right",
+      "y": 90
+    },
+    "facing=south,switch_position=turn_left,shape=east_west": {
+      "model": "switchrail:block/triple_switch_turn_left",
+      "y": 90
+    },
+    "facing=south,switch_position=straight,shape=east_west": {
+      "model": "switchrail:block/triple_switch_straight",
+      "y": 90
+    },
+    "facing=west,switch_position=turn_right,shape=east_west": {
+      "model": "switchrail:block/triple_switch_turn_right",
+      "y": 180
+
+    },
+    "facing=west,switch_position=straight,shape=east_west": {
+      "model": "switchrail:block/triple_switch_straight",
+      "y": 180
+
+    },
+    "facing=west,switch_position=turn_left,shape=east_west": {
+      "model": "switchrail:block/triple_switch_turn_left",
+      "y": 180
+
+    }
+  }
+}

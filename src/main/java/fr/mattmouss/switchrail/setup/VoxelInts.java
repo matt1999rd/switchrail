@@ -4,10 +4,10 @@ import net.minecraft.block.Block;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.shapes.VoxelShape;
 
-//un block d'outillage utilisable pour faciliter  la création de VoxelShape
+//tools for voxel-shapes
 public class VoxelInts {
 
-    private int[] plane_val ;
+    private final int[] plane_val ;
     public VoxelInts(int x1, int y1, int z1, int x2, int y2, int z2){
         if (x1>16 || x2>16 || y1>16 || y2>16 || z1>16 ||z2>16){
             throw new ExceptionInInitializerError("none of this 6 int are greater than 15");
@@ -56,7 +56,7 @@ public class VoxelInts {
         if (present_direction == changing_direction){
             return this;
         }
-        //si il sont sur le même axe on fait une rotation autour de n'importe lequel des deux autres axes de 180°
+        //see docs in VoxelDoubles class in Gates Mod
         if (present_direction.getAxis() == changing_direction.getAxis()){
             Direction.Axis other_axis = (present_direction.getAxis().isHorizontal() ? Direction.Axis.Y : Direction.Axis.X);
             return this.rotateCW(2,other_axis);
@@ -82,8 +82,8 @@ public class VoxelInts {
 
 
     private boolean isRotatedCW(Direction.Axis axis, Direction present_direction, Direction changing_direction) {
-        int pd_ind = present_direction.getIndex();
-        int cd_ind = changing_direction.getIndex();
+        int pd_ind = present_direction.get3DDataValue();
+        int cd_ind = changing_direction.get3DDataValue();
         switch (axis){
             case X:
                 return (pd_ind==0 && cd_ind==2) ||
@@ -105,40 +105,8 @@ public class VoxelInts {
     }
 
 
-    //make the symetry around the plane formed by the two axis given if distinct
-    //not functinonning !!
-    public VoxelInts makeSymetry(Direction.Axis axis1, Direction.Axis axis2){
-        if (axis1 == axis2){
-            throw new IllegalArgumentException("The Axis selected are identic no axial symetry can be done");
-        }
-        int x1 = plane_val[0];
-        int y1 = plane_val[1];
-        int z1 = plane_val[2];
-        int x2 = plane_val[3];
-        int y2 = plane_val[4];
-        int z2 = plane_val[5];
-        //symetrie par rapport au plan XY
-        if ((axis1== Direction.Axis.X && axis2== Direction.Axis.Y)
-                ||(axis1== Direction.Axis.Y && axis2== Direction.Axis.X)){
-            return new VoxelInts(x1,y1,16-z2,x2,y2,16-z1);
-        }
-
-        //symetrie par rapport au plan YZ
-        if ((axis1== Direction.Axis.Z && axis2== Direction.Axis.Y)
-                ||(axis1== Direction.Axis.Y && axis2== Direction.Axis.Z)){
-            return new VoxelInts(16-x2,y1,z1,16-x1,y2,z2);
-        }
-
-        //symetrie par rapport au plan XZ
-        if ((axis1== Direction.Axis.X && axis2== Direction.Axis.Z)
-                ||(axis1== Direction.Axis.Z && axis2== Direction.Axis.X)){
-            return new VoxelInts(x1,16-y2,z1,x2,16-y1,z2);
-        }
-        return null;
-    }
-
     public VoxelShape getAssociatedShape(){
-        return Block.makeCuboidShape(
+        return Block.box(
                 plane_val[0], plane_val[1], plane_val[2],
                 plane_val[3], plane_val[4], plane_val[5]);
     }

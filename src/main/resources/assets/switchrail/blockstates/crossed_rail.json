@@ -1,0 +1,13 @@
+
+{
+  "variants": {
+    "shape=north_south": {
+      "model": "switchrail:block/crossed_rail"
+    },
+    "shape=east_west": {
+      "model": "switchrail:block/crossed_rail"
+    }
+  }
+}
+
+

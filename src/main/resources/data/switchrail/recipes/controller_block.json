@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "mmm",
+    "msm",
+    "mmm"
+  ],
+  "key": {
+    "m": {
+      "item": "minecraft:iron_ingot"
+    },
+    "s": {
+      "item": "switchrail:switch_straight"
+    }
+  },
+  "result": {
+    "item": "switchrail:controller_block",
+    "count": 6
+  }
+}

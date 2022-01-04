@@ -1,31 +1,32 @@
 package fr.mattmouss.switchrail.blocks;
 
+import fr.mattmouss.switchrail.other.Util;
 import fr.mattmouss.switchrail.setup.VoxelInts;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 
 import net.minecraft.entity.LivingEntity;
 
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.state.properties.RailShape;
 import net.minecraft.tileentity.TileEntity;
 
-import net.minecraft.util.BlockRenderLayer;
+//import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
-
-
 
 public class Bumper extends Block {
 
@@ -44,7 +45,7 @@ public class Bumper extends Block {
 
 
     public Bumper() {
-        super(Properties.create(Material.ROCK).lightValue(0).sound(SoundType.METAL).hardnessAndResistance(2f));
+        super(Properties.of(Material.STONE).lightLevel(state -> 0).sound(SoundType.METAL).strength(2f).noOcclusion());
         setRegistryName("bumper");
     }
 
@@ -57,7 +58,7 @@ public class Bumper extends Block {
 
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader reader, BlockPos pos, ISelectionContext context) {
-        Direction direction = state.get(BlockStateProperties.HORIZONTAL_FACING);
+        Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         return VoxelShapes.or(
                 WOOD_1.rotate(Direction.NORTH,direction).getAssociatedShape(),
                 WOOD_2.rotate(Direction.NORTH,direction).getAssociatedShape(),
@@ -79,47 +80,53 @@ public class Bumper extends Block {
     }
 
     @Override
-    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (placer != null){
-            Direction dir = getFacingFromEntity(placer,pos);
-            worldIn.setBlockState(pos,state.with(BlockStateProperties.HORIZONTAL_FACING,dir));
+            Direction dir = Util.getFacingFromEntity(placer,pos,false);
+            worldIn.setBlockAndUpdate(pos,state.setValue(BlockStateProperties.HORIZONTAL_FACING,dir));
             changeRailNearBy(dir,worldIn,pos);
         }
 
     }
-
+/*
+    //1.14.4 function replaced by .notSolid()
     @Override
     public BlockRenderLayer func_180664_k() {
         return BlockRenderLayer.CUTOUT_MIPPED;
     }
 
+
+ */
+
+
+
     public void  changeRailNearBy(Direction bumper_direction, World world, BlockPos bumper_pos){
-        BlockPos connected_block_pos = bumper_pos.offset(bumper_direction);
+        BlockPos connected_block_pos = bumper_pos.relative(bumper_direction);
         BlockState connected_block_state = world.getBlockState(connected_block_pos);
         if (connected_block_state.getBlock() instanceof AbstractRailBlock){
             RailShape railShape = (bumper_direction == Direction.EAST || bumper_direction == Direction.WEST) ? RailShape.EAST_WEST:RailShape.NORTH_SOUTH;
-            if (connected_block_state.has(BlockStateProperties.RAIL_SHAPE)){
-                world.setBlockState(connected_block_pos,connected_block_state.with(BlockStateProperties.RAIL_SHAPE, railShape));
-            } else if (connected_block_state.has(BlockStateProperties.RAIL_SHAPE_STRAIGHT)){
-                world.setBlockState(connected_block_pos,connected_block_state.with(BlockStateProperties.RAIL_SHAPE_STRAIGHT,railShape));
+            if (connected_block_state.hasProperty(BlockStateProperties.RAIL_SHAPE)){
+                world.setBlockAndUpdate(connected_block_pos,connected_block_state.setValue(BlockStateProperties.RAIL_SHAPE, railShape));
+            } else if (connected_block_state.hasProperty(BlockStateProperties.RAIL_SHAPE_STRAIGHT)){
+                world.setBlockAndUpdate(connected_block_pos,connected_block_state.setValue(BlockStateProperties.RAIL_SHAPE_STRAIGHT,railShape));
             }
         }
     }
 
-
-    private Direction getFacingFromEntity(LivingEntity placer, BlockPos pos) {
-        Vec3d vec =placer.getPositionVec();
-        Direction dir = Direction.getFacingFromVector(vec.x-pos.getX(),vec.y-pos.getY(),vec.z-pos.getZ());
-        if (dir == Direction.UP || dir == Direction.DOWN){
-            dir = Direction.NORTH;
+    @Override
+    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
+        if (facing == Direction.DOWN && !facingState.getMaterial().blocksMotion()){
+            if (worldIn instanceof World){
+                dropResources(stateIn,(World) worldIn,currentPos);
+            }
+            return Blocks.AIR.defaultBlockState();
         }
-        return dir;
+        return super.updateShape(stateIn, facing, facingState, worldIn, currentPos, facingPos);
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(BlockStateProperties.HORIZONTAL_FACING);
     }
-
 
 }

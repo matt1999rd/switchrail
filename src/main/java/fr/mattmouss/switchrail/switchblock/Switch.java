@@ -1,149 +1,79 @@
 package fr.mattmouss.switchrail.switchblock;
 
-import fr.mattmouss.switchrail.blocks.ControllerTile;
-import fr.mattmouss.switchrail.blocks.SwitchTile;
 import fr.mattmouss.switchrail.enum_rail.Corners;
-import fr.mattmouss.switchrail.enum_rail.SwitchType;
 import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.entity.item.minecart.MinecartEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.state.EnumProperty;
-import net.minecraft.state.IProperty;
+import net.minecraft.state.Property;
+import net.minecraft.state.StateContainer;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.state.properties.RailShape;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.Tag;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tags.ITag;
 import net.minecraft.util.Direction;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
+import javax.annotation.Nonnull;
 
 public abstract class Switch extends AbstractRailBlock {
 
-    private static AbstractMinecartEntity previous_cart = null;
-
-    private static int i;
-
     public static EnumProperty<RailShape> RAIL_STRAIGHT_FLAT;
-    public static EnumProperty<Corners> SWITCH_POSITION_TRIPLE;
+    public static EnumProperty<Corners>
+            SWITCH_POSITION_STANDARD,
+            Y_SWITCH_POSITION,
+            THREE_WAY_SWITCH_POSITION;
 
     static {
-        RAIL_STRAIGHT_FLAT = EnumProperty.create("shape",RailShape.class,(railShape -> {
-            return (railShape == RailShape.NORTH_SOUTH || railShape == RailShape.EAST_WEST);
-        }));
-        SWITCH_POSITION_TRIPLE = EnumProperty.create("switch_position",Corners.class,(corners -> {
-                return (corners != Corners.TURN);
-        }));
-
+        RAIL_STRAIGHT_FLAT = EnumProperty.create("shape",RailShape.class,(railShape -> (railShape == RailShape.NORTH_SOUTH || railShape == RailShape.EAST_WEST)));
+        SWITCH_POSITION_STANDARD = EnumProperty.create("switch_position", Corners.class, Corners.STRAIGHT, Corners.TURN);
+        Y_SWITCH_POSITION = EnumProperty.create("switch_position",Corners.class, Corners.TURN_LEFT, Corners.TURN_RIGHT );
+        THREE_WAY_SWITCH_POSITION = EnumProperty.create("switch_position",Corners.class,(corners -> (corners != Corners.TURN)));
     }
 
-
-
+    @Nonnull
     @Override
-    public IProperty<RailShape> getShapeProperty() {
+    public Property<RailShape> getShapeProperty() {
         return RAIL_STRAIGHT_FLAT;
     }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
-    @Nullable
-    @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new SwitchTile();
-    }
     
-    protected Switch(boolean p_i48444_1_, Properties p_i48444_2_) {
+    protected Switch(Properties p_i48444_2_) {
         super(true, p_i48444_2_);
+        this.registerDefaultState(this.defaultBlockState().setValue(BlockStateProperties.ENABLED,true));
     }
     
     public BlockState getBlockState(World world, BlockPos pos){
         return world.getBlockState(pos);
     }
 
-    public abstract void updatePoweredState(World world, BlockState state, BlockPos pos, PlayerEntity player, int flag,boolean fromScreen);
-
-    protected Direction getFacingFromEntity(LivingEntity entity, BlockPos pos) {
-        Vec3d vec3d = entity.getPositionVec();
-        Direction d= Direction.getFacingFromVector(
-                (float) (vec3d.x-pos.getX()),
-                (float) (vec3d.y-pos.getY()),
-                (float) (vec3d.z-pos.getZ()));
-        if (d==Direction.UP || d==Direction.DOWN){
-            return Direction.NORTH;
-        }else {
-            return d.getOpposite();
+    public void updatePoweredState(World world, BlockState state, BlockPos pos, PlayerEntity player, int flags, boolean fromScreen){
+        if (!world.isClientSide || fromScreen){
+            RailShape currentRailShape = world.getBlockState(pos).getValue(RAIL_STRAIGHT_FLAT);
+            world.setBlock(pos,state.cycle(getSwitchPositionProperty()).setValue(RAIL_STRAIGHT_FLAT,currentRailShape),flags);
         }
     }
 
-    protected RailShape updateRailShapeFromEntity(LivingEntity entity, BlockPos pos) {
-        Vec3d vec3d = entity.getPositionVec();
-        Direction d= Direction.getFacingFromVector(
-                (float) (vec3d.x-pos.getX()),
-                (float) (vec3d.y-pos.getY()),
-                (float) (vec3d.z-pos.getZ()));
-        if (d==Direction.EAST || d==Direction.WEST)
-            return RailShape.EAST_WEST;
-        else if (d==Direction.NORTH || d==Direction.SOUTH)
-            return RailShape.NORTH_SOUTH;
-        else return RailShape.EAST_WEST;
-    }
-
-
-
-
+    public abstract EnumProperty<?> getSwitchPositionProperty();
 
     @Override
-    public boolean isIn(Tag<Block> tag) {
+    public boolean is(@Nonnull ITag<Block> tag) {
         return (tag == BlockTags.RAILS);
     }
 
-    public abstract SwitchType getType();
 
-
-
-
+    @Nonnull
     @Override
-    protected BlockState getUpdatedState(World p_208489_1_, BlockPos p_208489_2_, BlockState p_208489_3_, boolean placing) {
-        System.out.println("getUpdatedState appele");
-        return p_208489_3_;
+    protected BlockState updateDir(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, boolean placing) {
+        System.out.println("getUpdatedState called");
+        return state;
     }
 
-    /*
     @Override
-    public void onMinecartPass(BlockState state, World world, BlockPos pos, AbstractMinecartEntity cart) {
-        System.out.println("Position du minecart : ( "+cart.lastTickPosX+" ; "+cart.lastTickPosY+" ; "+cart.lastTickPosZ+" )");
-        System.out.println("Position du switch :"+pos);
-        System.out.println("entier increment :"+i);
-        if (previous_cart == null){
-            previous_cart = cart;
-            i=0;
-        }
-        if (previous_cart.equals(cart)){
-            if (i !=10) i++;
-
-        }else {
-            i =0;
-        }
-        if (i != 10) Minecraft.getInstance().getSoundHandler().play(SimpleSound.master(SoundEvents.BLOCK_METAL_BREAK,1.0F));
-
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(BlockStateProperties.ENABLED);
     }
-     */
-
 }

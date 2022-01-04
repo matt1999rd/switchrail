@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "powered=true": {
+      "model": "switchrail:block/switch_terminal_on"
+
+    },
+    "powered=false": {
+      "model": "switchrail:block/switch_terminal_off"
+    }
+  }
+}
