@@ -9,6 +9,7 @@
 	"block.switchrail.controller_block": "Controller",
 	"block.switchrail.bumper": "Bumper",
 	"block.switchrail.one_way_powered_rail": "One Way Powered Rail",
+	"block.switchrail.switch_terminal": "Switch Terminal",
 
 	"item.switchrail.switch_lever": "Switch Lever",
 	"item.switchrail.switch_register": "Switch Register"

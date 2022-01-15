@@ -2,21 +2,20 @@ package fr.mattmouss.switchrail.gui;
 
 import fr.mattmouss.switchrail.blocks.ControllerTile;
 import fr.mattmouss.switchrail.blocks.IPosBaseTileEntity;
+import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.enum_rail.RailType;
-import fr.mattmouss.switchrail.enum_rail.Dss_Position;
 import fr.mattmouss.switchrail.network.ChangeSwitchPacket;
 import fr.mattmouss.switchrail.network.Networking;
+import fr.mattmouss.switchrail.other.Vector2i;
 import fr.mattmouss.switchrail.switchblock.Switch;
-import fr.mattmouss.switchrail.switchblock.Switch_Tjd;
+import fr.mattmouss.switchrail.switchblock.SwitchDoubleSlip;
 import fr.mattmouss.switchrail.switchdata.RailData;
 import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.world.World;
 
 
@@ -39,7 +38,7 @@ public class ControllerScreen extends RailScreen implements IGuiEventListener {
     }
 
     @Override
-    public boolean onSwitchClicked(RailData data, double mouseX, double mouseY, Vector2f relative,int button) {
+    public boolean onSwitchClicked(RailData data, double mouseX, double mouseY, Vector2i relative, int button) {
         if (isDisabled(data.pos) || button != 0)return false;
         ChangeSwitchPacket packet;
         assert this.minecraft != null;
@@ -48,11 +47,11 @@ public class ControllerScreen extends RailScreen implements IGuiEventListener {
             //if it is tjd rail
             assert world != null;
             BlockState state = world.getBlockState(data.pos);
-            Dss_Position tjd_position = state.getValue(Switch_Tjd.SWITCH_POSITION);
-            Switch_Tjd switch_tjd = (Switch_Tjd)(state.getBlock());
+            Corners tjd_position = state.getValue(SwitchDoubleSlip.DSS_POSITION);
+            SwitchDoubleSlip switch_tjd = (SwitchDoubleSlip)(state.getBlock());
             System.out.println("changing switch using gui successfully done !");
             // ld nearest is a boolean associated with the left down part in game -> left down part on screen is associated with the right up part in game and vice versa
-            boolean ld_nearest = !isLeftDownNearestOnScreen(data.pos,relative,mouseX,mouseY);
+            boolean ld_nearest = isRightUpNearestOnScreen(data.pos, relative, mouseX, mouseY);
             int flag = ld_nearest ? 0b11 : 0b01;
             switch_tjd.updatePowerState(world,state,data.pos,7,ld_nearest,tjd_position);
             packet = new ChangeSwitchPacket(data.pos, (byte) flag);
@@ -77,6 +76,7 @@ public class ControllerScreen extends RailScreen implements IGuiEventListener {
     public boolean isDisabled(BlockPos pos) {
         assert this.minecraft != null;
         World world = this.minecraft.level;
+        assert world != null;
         BlockState state = world.getBlockState(pos);
         if (state.hasProperty(BlockStateProperties.ENABLED)){
             return !state.getValue(BlockStateProperties.ENABLED);

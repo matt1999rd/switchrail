@@ -80,7 +80,7 @@ public class SwitchDoubleTurn extends Switch {
     }
 
     @Override
-    public EnumProperty<?> getSwitchPositionProperty() {
+    public EnumProperty<Corners> getSwitchPositionProperty() {
         return Y_SWITCH_POSITION;
     }
 

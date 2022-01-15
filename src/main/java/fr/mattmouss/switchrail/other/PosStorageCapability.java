@@ -11,17 +11,17 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 
 public class PosStorageCapability
 {
-    @CapabilityInject(IPosStorage.class)
-    public static Capability<IPosStorage> POS_STORAGE_CAPABILITY = null ;
+    @CapabilityInject(PosStorage.class)
+    public static Capability<PosStorage> POS_STORAGE_CAPABILITY = null ;
 
     public static void register()
     {
-        CapabilityManager.INSTANCE.register(IPosStorage.class, new Capability.IStorage<IPosStorage>() {
+        CapabilityManager.INSTANCE.register(PosStorage.class, new Capability.IStorage<PosStorage>() {
 
             @Override
-            public INBT writeNBT(Capability<IPosStorage> capability, IPosStorage instance, Direction side)
+            public INBT writeNBT(Capability<PosStorage> capability, PosStorage instance, Direction side)
             {
-                BlockPos pos = instance.getPos();
+                BlockPos pos = instance.getBasePos();
                 CompoundNBT nbt = new CompoundNBT();
                 nbt.putInt("x",pos.getX());
                 nbt.putInt("y",pos.getY());
@@ -30,14 +30,14 @@ public class PosStorageCapability
             }
 
             @Override
-            public void readNBT(Capability<IPosStorage> capability, IPosStorage instance, Direction side, INBT nbt) {
-                if (!(instance instanceof PosStorage))
+            public void readNBT(Capability<PosStorage> capability, PosStorage instance, Direction side, INBT nbt) {
+                if (instance == null)
                     throw new IllegalArgumentException("Can not deserialize to an instance that isn't the default implementation");
                 CompoundNBT compoundNBT = (CompoundNBT)nbt;
                 int posX = compoundNBT.getInt("x");
                 int posY = compoundNBT.getInt("y");
                 int posZ = compoundNBT.getInt("z");
-                instance.setPos(new BlockPos(posX,posY,posZ));
+                instance.setBasePos(new BlockPos(posX,posY,posZ));
             }
         }, PosStorage::new);
 

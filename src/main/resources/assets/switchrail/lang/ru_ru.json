@@ -9,6 +9,7 @@
 	"block.switchrail.controller_block": "контроллер",
 	"block.switchrail.bumper": "молоток",
 	"block.switchrail.one_way_powered_rail": "Однонаправленный ускоритель рельса",
+	"block.switchrail.switch_terminal": "Терминал управления иглой",
 
 	"item.switchrail.switch_lever": "рычаг направления"
 }

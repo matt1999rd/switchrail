@@ -82,7 +82,7 @@ public class ControllerBlock extends Block {
         ControllerTile te = (ControllerTile) worldIn.getTileEntity(pos);
         System.out.println("opening gui !!");
         if (!worldIn.isRemote){
-            NetworkHooks.openGui((ServerPlayerEntity)player,te,te.getPos());
+            NetworkHooks.openGui((ServerPlayerEntity)player,te,te.getBasePos());
         }
         return true;
     }

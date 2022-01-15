@@ -120,7 +120,7 @@ public class SwitchTriple extends Switch {
     }
 
     @Override
-    public EnumProperty<?> getSwitchPositionProperty() {
+    public EnumProperty<Corners> getSwitchPositionProperty() {
         return Switch.THREE_WAY_SWITCH_POSITION;
     }
 }

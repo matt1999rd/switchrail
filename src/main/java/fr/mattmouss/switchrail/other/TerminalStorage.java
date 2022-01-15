@@ -10,24 +10,28 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class TerminalStorage implements INBTSerializable<CompoundNBT>, ITerminalStorage {
+public class TerminalStorage extends PosStorage implements INBTSerializable<CompoundNBT> {
 
+    // the switch map store the position of all switch associated with the byte value of the switch position
+    // the byte value is also storing a flag that indicates if the switch was disabled by this tile
+    // byte value is as followed : 0b (0/1 -> isBlocked)*4+(0/1/2/3 -> switch position)
+    // example : a switch straight registered with position turn (2nd position) and that is blocked will have byte value 5
+    // a switch double slip with position all powered and that is not blocked will have byte value 3 (7 if it is blocked)
     private final Map<BlockPos,Byte> switchMap;
 
-    private BlockPos basePos;
-
     public TerminalStorage(BlockPos basePos) {
-        this();
-        this.basePos = basePos;
+        super(basePos);
+        switchMap = new HashMap<>();
     }
 
     public TerminalStorage(){
+        super();
         switchMap = new HashMap<>();
     }
 
     @Override
     public CompoundNBT serializeNBT() {
-        CompoundNBT tag = new CompoundNBT();
+        CompoundNBT tag = super.serializeNBT();
         ListNBT listNBT = new ListNBT();
         for (BlockPos pos : switchMap.keySet()){
             CompoundNBT switchNBT = new CompoundNBT();
@@ -36,12 +40,12 @@ public class TerminalStorage implements INBTSerializable<CompoundNBT>, ITerminal
             listNBT.add(switchNBT);
         }
         tag.put("list",listNBT);
-        tag.putLong("base_pos",basePos.asLong());
         return tag;
     }
 
     @Override
     public void deserializeNBT(CompoundNBT nbt) {
+        super.deserializeNBT(nbt);
         if (nbt.contains("list")){
             ListNBT listNBT = (ListNBT) nbt.get("list");
             assert listNBT != null;
@@ -52,44 +56,46 @@ public class TerminalStorage implements INBTSerializable<CompoundNBT>, ITerminal
                 switchMap.put(pos,switchPosition);
             }
         }
-        basePos = BlockPos.of(nbt.getLong("base_pos"));
     }
 
-
-    @Override
     public void addSwitch(BlockPos pos) {
         switchMap.put(pos,(byte)0);
     }
 
-    @Override
     public void removeSwitch(BlockPos pos) {
         switchMap.remove(pos);
     }
 
-    @Override
     public void setSwitchPosition(BlockPos pos, byte position) {
-        switchMap.replace(pos,position);
+        byte blockOffset = (byte) ((isSwitchBlocked(pos))?4:0);
+        switchMap.replace(pos, (byte) (position+blockOffset));
     }
 
 
 
-    @Override
     public Map<BlockPos, Byte> getSwitchMap() {
         return switchMap;
     }
 
-    @Override
-    public void setBasePos(BlockPos pos) {
-        this.basePos = pos;
-    }
 
-    @Override
-    public BlockPos getBasePos() {
-        return basePos;
-    }
-
-    @Override
     public boolean hasSwitch(BlockPos pos) {
         return switchMap.containsKey(pos);
     }
+
+
+    public boolean isSwitchBlocked(BlockPos pos) {
+        byte value = switchMap.get(pos);
+        return (value>>2 == 1);
+    }
+
+
+    public void setSwitchBlockingFlag(BlockPos pos, boolean blockSwitch) {
+        if (isSwitchBlocked(pos) == blockSwitch){
+            return;
+        }
+        int sign = (blockSwitch)?1:-1;
+        byte value = (byte) (switchMap.get(pos)+sign*4);
+        switchMap.replace(pos,value);
+    }
+
 }

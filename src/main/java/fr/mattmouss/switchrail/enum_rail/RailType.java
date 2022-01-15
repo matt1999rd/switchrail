@@ -18,10 +18,8 @@ import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.state.properties.DoorHingeSide;
 import net.minecraft.state.properties.RailShape;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector2f;
-import net.minecraft.world.World;
 
 import java.util.function.Predicate;
 
@@ -31,8 +29,8 @@ public enum RailType {
     SIMPLE(12, SwitchStraight.class),
     Y(28,SwitchDoubleTurn.class),
     THREE_WAY(36,SwitchTriple.class),
-    SINGLE_SLIP(48,Switch_Tjs.class),
-    DOUBLE_SLIP(56,Switch_Tjd.class),
+    SINGLE_SLIP(48, SwitchSimpleSlip.class),
+    DOUBLE_SLIP(56, SwitchDoubleSlip.class),
     RAIL(0,AbstractRailBlock.class);
     final int shift;
     final Class<? extends Block> instanceClass;
@@ -74,14 +72,17 @@ public enum RailType {
             bs_shift+=side.ordinal()*8;
         }
         if (this == DOUBLE_SLIP){
-            if (!(state.hasProperty(Switch_Tjd.SWITCH_POSITION) && state.hasProperty(Switch_Tjd.FACING_AXE))){
+            if (!(state.hasProperty(BlockStateProperties.HORIZONTAL_AXIS))){
                 throw new IllegalStateException(
                         "Type called is not matching the block state given in argument : expect tjd got "
                                 +state.getBlock().getRegistryName()+" instead" );
             }
-            Dss_Position position = state.getValue(Switch_Tjd.SWITCH_POSITION);
-            Direction dir = state.getValue(Switch_Tjd.FACING_AXE);
-            bs_shift+=2*position.ordinal()+dir.get2DDataValue()-2;
+            Direction.Axis dir_axis = state.getValue(BlockStateProperties.HORIZONTAL_AXIS);
+            // when replacing axis we have to map the NORTH part to the Z axis and the EAST part to the X axis
+            // this leads to use the ordinal and map 0 to 1 and 2 to 0 -> y=ax+b
+            // y(0) = 1 -> b = 1 ; y(2) = 0 -> 2a + 1 = 0 -> a = -1/2
+            // y = 1 - x/2
+            bs_shift+=1-dir_axis.ordinal()/2;
         }
 
         EnumProperty<Corners> cornersProperty = getCornerProperty(state);
@@ -89,7 +90,9 @@ public enum RailType {
             Object[] possibleCorner = cornersProperty.getPossibleValues().stream().sorted().toArray();
             for (int i=0;i<possibleCorner.length;i++){
                 if (possibleCorner[i] == state.getValue(cornersProperty)){
-                    bs_shift += i*4;
+                    // include dss in this condition forces to have an intern condition on the possible value
+                    // only dss has the four possibilities
+                    bs_shift += i*(possibleCorner.length == 4 ? 2 : 4);
                 }
             }
         }
@@ -97,9 +100,10 @@ public enum RailType {
     }
 
     private static EnumProperty<Corners> getCornerProperty(BlockState state){
-        boolean hasCornerProperty = state.getProperties().stream().anyMatch(RailType.hasCornerProperty);
-        if (!hasCornerProperty)return null;
-        return (EnumProperty<Corners>) state.getProperties().stream().filter(RailType.hasCornerProperty).findFirst().get();
+        if (state.getBlock() instanceof Switch){
+            return ((Switch)state.getBlock()).getSwitchPositionProperty();
+        }
+        return null;
     }
 
     public void render(MatrixStack stack, Vector2f posOnBoard, Vector2f iconDimension, BlockState blockState,boolean isEnable){
@@ -111,7 +115,6 @@ public enum RailType {
     private void renderQuad(MatrixStack stack, Vector2f origin, Vector2f end, Vector2f uvOrigin, Vector2f uvEnd,boolean isEnable){
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuilder();
-        RenderSystem.depthMask(true);
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
         Matrix4f matrix4f = stack.last().pose();
         float colorMask = (isEnable) ? 1.0F : 0.5F;
@@ -121,6 +124,7 @@ public enum RailType {
         bufferbuilder.vertex(matrix4f, end.x, end.y, (float)0).uv(uvEnd.x, uvEnd.y).endVertex();
         bufferbuilder.vertex(matrix4f, end.x, origin.y, (float)0).uv(uvEnd.x, uvOrigin.y).endVertex();
         tessellator.end();
+        RenderSystem.color3f(1.0F,1.0F,1.0F);
     }
 
 }

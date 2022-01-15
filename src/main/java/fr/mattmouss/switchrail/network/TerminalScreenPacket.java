@@ -2,7 +2,7 @@ package fr.mattmouss.switchrail.network;
 
 
 import fr.mattmouss.switchrail.blocks.TerminalTile;
-import fr.mattmouss.switchrail.enum_rail.Dss_Position;
+import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.gui.TerminalScreen;
 import fr.mattmouss.switchrail.switchblock.Switch;
 import net.minecraft.block.BlockState;
@@ -54,11 +54,11 @@ public class TerminalScreenPacket {
                     throw new IllegalStateException("Block position clicked is not pointing toward a switch !");
                 }
                 Switch switchBlock = (Switch) state.getBlock();
-                EnumProperty<?> property = switchBlock.getSwitchPositionProperty();
+                EnumProperty<Corners> property = switchBlock.getSwitchPositionProperty();
                 if (flag != 0){
                     boolean isLeftDownNearest = (flag == 3);
-                    Dss_Position position = (Dss_Position) state.getValue(property);
-                    tile.setPosition(sw_pos,state.setValue((EnumProperty<Dss_Position>)property,position.moveDssSwitch(isLeftDownNearest)));
+                    Corners corners = state.getValue(property);
+                    tile.setPosition(sw_pos,state.setValue(property,corners.moveDssSwitch(isLeftDownNearest)));
                 }else {
                     tile.setPosition(sw_pos,state.cycle(property));
                 }

@@ -5,6 +5,7 @@ import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.enum_rail.Dss_Position;
 import fr.mattmouss.switchrail.other.TerminalStorage;
 import fr.mattmouss.switchrail.switchblock.Switch;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.state.EnumProperty;
@@ -13,8 +14,10 @@ import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -35,10 +38,25 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
     public void tick() {
         BlockState state = this.getBlockState();
         boolean isPowered = state.getValue(BlockStateProperties.POWERED);
+        updateSwitch();
         if (isPowered){
             actionOnPowered();
         }else {
             freeSwitch();
+            changeTerminalAuthoring(false);
+        }
+    }
+
+    private void updateSwitch() {
+        Set<BlockPos> switches = getSwitches();
+        List<BlockPos> switchToRemove = Lists.newArrayList();
+        for (BlockPos switchPos : switches){
+            if (!(level.getBlockState(switchPos).getBlock() instanceof Switch)){
+                switchToRemove.add(switchPos);
+            }
+        }
+        for (BlockPos switchPos : switchToRemove){
+            removeSwitch(switchPos);
         }
     }
 
@@ -86,7 +104,7 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
     }
 
     private byte getSwitchByteValue(BlockPos pos){
-        return storage.map(terminalStorage -> terminalStorage.getSwitchMap().get(pos)).orElseThrow(storageErrorSupplier);
+        return storage.map(terminalStorage -> (byte) (terminalStorage.getSwitchMap().get(pos)%4)).orElseThrow(storageErrorSupplier);
     }
 
     public Set<BlockPos> getSwitches(){
@@ -94,13 +112,41 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
     }
 
     private void actionOnPowered(){
+        assert this.level != null;
+        if (blockOrUnblockTerminal())return;
         blockSwitch();
         Set<BlockPos> switchPos = getSwitches();
         for (BlockPos pos : switchPos){
-            assert level != null;
             BlockState state = getSwitchValue(pos);
             level.setBlock(pos,state,3);
         }
+    }
+
+    //the boolean specify if the terminal is blocked
+    public boolean blockOrUnblockTerminal(){
+        if (isSwitchActivatedByOtherTerminal()){
+            changeTerminalAuthoring(true);
+            return true;
+        }else {
+            changeTerminalAuthoring(false);
+        }
+        return false;
+    }
+
+    private void changeTerminalAuthoring(boolean blockTerminal){
+        assert this.level != null;
+        this.level.setBlock(this.worldPosition,this.getBlockState().setValue(SwitchTerminal.IS_BLOCKED,blockTerminal),3);
+    }
+
+    private boolean isSwitchActivatedByOtherTerminal(){
+        Set<BlockPos> switchPos = getSwitches();
+        for (BlockPos pos : switchPos){
+            BlockState state = getSwitchValue(pos);
+            if (!state.getValue(BlockStateProperties.ENABLED)){
+                return !storage.map(terminalStorage -> terminalStorage.isSwitchBlocked(pos)).orElseThrow(storageErrorSupplier);
+            }
+        }
+        return false;
     }
 
     private void freeSwitch(){
@@ -114,6 +160,7 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
     private void setEnabledProperty(boolean value){
         Set<BlockPos> switches = getSwitches();
         for (BlockPos pos : switches){
+            storage.ifPresent(terminalStorage -> terminalStorage.setSwitchBlockingFlag(pos,!value));
             assert level != null;
             BlockState state = level.getBlockState(pos);
             if (state.getBlock() instanceof Switch && state.hasProperty(BlockStateProperties.ENABLED)){
@@ -124,23 +171,39 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
 
     @Override
     public void load(BlockState state, CompoundNBT nbt) {
+        CompoundNBT storage_tag = nbt.getCompound("terminal");
+        storage.ifPresent(switchStorage -> ((INBTSerializable<CompoundNBT>)switchStorage).deserializeNBT(storage_tag));
         super.load(state, nbt);
     }
 
     @Override
     public CompoundNBT save(CompoundNBT nbt) {
+        storage.ifPresent(posStorage -> {
+            CompoundNBT compoundNBT = ((INBTSerializable<CompoundNBT>)posStorage).serializeNBT();
+            nbt.put("terminal",compoundNBT);
+        });
         return super.save(nbt);
+    }
+
+    @Override
+    public CompoundNBT getUpdateTag() {
+        return this.save(new CompoundNBT());
     }
 
 
     @Override
-    public BlockPos getPosBase() {
+    public BlockPos getBasePos() {
         return storage.map(TerminalStorage::getBasePos).orElseThrow(storageErrorSupplier);
     }
 
     @Override
-    public void changePosBase(Direction direction) {
+    public void changeBasePos(Direction direction) {
         storage.ifPresent(terminalStorage -> terminalStorage.setBasePos(terminalStorage.getBasePos().relative(direction)));
+    }
+
+    @Override
+    public void setBasePos(Direction.Axis axis, int newPos) {
+        storage.ifPresent(storage->storage.setBasePos(axis,newPos));
     }
 
     public byte getMaxValue(BlockPos pos){

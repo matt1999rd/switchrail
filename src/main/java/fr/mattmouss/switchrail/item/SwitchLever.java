@@ -11,6 +11,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemUseContext;
 import net.minecraft.item.Rarity;
 
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockPos;
 
@@ -43,7 +44,7 @@ public class SwitchLever extends Item {
         if ((clickedBlock instanceof Switch) && !world.isClientSide){
             Switch sw = (Switch)clickedBlock;
             BlockState state = sw.getBlockState(world,pos);
-            if (state != null) {
+            if (state != null && state.getValue(BlockStateProperties.ENABLED)) {
                 System.out.println("item lever use successfully");
                 sw.updatePoweredState(world, state, pos,player,7,false);
                 return ActionResultType.SUCCESS;

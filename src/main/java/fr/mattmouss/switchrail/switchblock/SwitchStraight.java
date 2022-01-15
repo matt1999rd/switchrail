@@ -95,7 +95,7 @@ public class SwitchStraight extends Switch {
     }
 
     @Override
-    public EnumProperty<?> getSwitchPositionProperty() {
+    public EnumProperty<Corners> getSwitchPositionProperty() {
         return SWITCH_POSITION_STANDARD;
     }
 

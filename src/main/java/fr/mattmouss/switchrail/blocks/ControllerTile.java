@@ -33,24 +33,17 @@ public class ControllerTile extends TileEntity implements IPosBaseTileEntity {
     }
 
 
-    public BlockPos getPosBase() {
-        return pos_store.map(PosStorage::getPos).orElseThrow(storageErrorSupplier);
+    public BlockPos getBasePos() {
+        return pos_store.map(PosStorage::getBasePos).orElseThrow(storageErrorSupplier);
     }
 
-    public void changePosBase(Direction direction){
-        pos_store.ifPresent(posStorage -> posStorage.setPos(posStorage.getPos().relative(direction)));
+    public void changeBasePos(Direction direction){
+        pos_store.ifPresent(posStorage -> posStorage.setBasePos(posStorage.getBasePos().relative(direction)));
     }
 
-    public void setX(int x){
-        pos_store.ifPresent(posStorage -> posStorage.setX(x));
-    }
-
-    public void setY(int y){
-        pos_store.ifPresent(posStorage -> posStorage.setY(y));
-    }
-
-    public void setZ(int z){
-        pos_store.ifPresent(posStorage -> posStorage.setZ(z));
+    @Override
+    public void setBasePos(Direction.Axis axis, int newPos) {
+        pos_store.ifPresent(posStorage -> posStorage.setBasePos(axis,newPos));
     }
 
     @Override
@@ -76,5 +69,10 @@ public class ControllerTile extends TileEntity implements IPosBaseTileEntity {
             return pos_store.cast();
         }
         return super.getCapability(cap, side);
+    }
+
+    @Override
+    public CompoundNBT getUpdateTag() {
+        return this.save(new CompoundNBT());
     }
 }

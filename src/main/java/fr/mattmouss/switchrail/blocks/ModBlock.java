@@ -1,8 +1,6 @@
 package fr.mattmouss.switchrail.blocks;
 
-import fr.mattmouss.switchrail.gui.ControllerContainer;
 import fr.mattmouss.switchrail.switchblock.*;
-import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraftforge.registries.ObjectHolder;
 
@@ -46,11 +44,11 @@ public class ModBlock {
 
     @ObjectHolder("switchrail:switch_tjs")
 
-    public static Switch_Tjs SWITCH_TJS = new Switch_Tjs();
+    public static SwitchSimpleSlip SWITCH_TJS = new SwitchSimpleSlip();
 
     @ObjectHolder("switchrail:switch_tjd")
 
-    public static Switch_Tjd SWITCH_TJD = new Switch_Tjd();
+    public static SwitchDoubleSlip SWITCH_TJD = new SwitchDoubleSlip();
 
     @ObjectHolder("switchrail:controller_block")
 
@@ -59,10 +57,6 @@ public class ModBlock {
     @ObjectHolder("switchrail:controller_block")
 
     public static TileEntityType<ControllerTile> CONTROLLER_TILE;
-
-    @ObjectHolder("switchrail:controller_block")
-
-    public static ContainerType<ControllerContainer> CONTROLLER_CONTAINER;
 
     @ObjectHolder("switchrail:bumper")
 

@@ -9,7 +9,8 @@ import fr.mattmouss.switchrail.enum_rail.RailType;
 import fr.mattmouss.switchrail.network.ChangePosPacket;
 import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.other.Util;
-import fr.mattmouss.switchrail.switchblock.Switch_Tjd;
+import fr.mattmouss.switchrail.other.Vector2i;
+import fr.mattmouss.switchrail.switchblock.SwitchDoubleSlip;
 import fr.mattmouss.switchrail.switchdata.RailData;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -17,6 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.ImageButton;
 import net.minecraft.util.Direction;
@@ -27,56 +29,61 @@ import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     private final ResourceLocation GUI = new ResourceLocation(SwitchRailMod.MOD_ID, "textures/gui/controller_gui.png");
-    private final ResourceLocation POS_BUTTON = new ResourceLocation(SwitchRailMod.MOD_ID,"textures/gui/posbutton.png");
+    protected final ResourceLocation POS_BUTTON = new ResourceLocation(SwitchRailMod.MOD_ID,"textures/gui/posbutton.png");
     private static final ResourceLocation ICONS = new ResourceLocation(SwitchRailMod.MOD_ID,"textures/gui/controller_icons.png");
 
-    private static final int WIDTH = 212;
-    private static final int HEIGHT = 174;
+    protected static final int WIDTH = 227;
+    protected static final int HEIGHT = 175;
     private static final Vector2f internalGuiDimension = new Vector2f(13,22);
-    private static final int internalGuiWidth = 144;
+    private static final int internalGuiWidth = 146;
     private static final int internalGuiHeight = 99;
+    private static final int endInternalGuiX = 161;
 
-    private int scaleX = 16;
-    private int scaleY = 11;
-
-    protected int iconLength = 144 / scaleX;
-    protected int iconHeight = 99 / scaleY; // beware of height value in screen
-
-
-
-    private boolean delone = false;
+    private float decimalPartScaleY = 0.0F;
 
     private Button ZoomInButton;
 
     private Button ZoomOutButton;
 
+    private final TextFieldWidget[] posTextFields = new TextFieldWidget[3];
+
+    private final NumberTextField[] scaleTextFields = new NumberTextField[2];
+
     protected final BlockPos pos;
-
-
-    private static final int white = 0xffffff;
-    private static final int green = 0x00ff00;
-
-
 
     public RailScreen(BlockPos pos) {
         super(ITextComponent.nullToEmpty("RailSystem"));
         this.pos = pos;
     }
 
+    protected Vector2i getRelative(){
+        return new Vector2i(
+                 (this.width - WIDTH)   / 2,
+                 (this.height - HEIGHT) / 2);
+    }
+
+    private boolean isZoomAuthorised(int sign){
+        //Zoom+ : ZoomIn : sign = -1 : low limit of 1
+        //Zoom- : ZoomOut : sign = +1 : above limit of 50
+        int limit = (sign>0)? 50 : 1;
+        return getScale(Direction.Axis.X) != limit;
+    }
+
 
     public void init() {
-        int relX = (this.width - WIDTH) / 2;
-        int relY = (this.height - HEIGHT) / 2;
+        Vector2i relative = getRelative();
 
-        Button doneButton = new Button(relX + 12,
-                relY + 122,
+        Button doneButton = new Button(relative.x + 12,
+                relative.y + 122,
                 146,
                 20,
                 ITextComponent.nullToEmpty("Done"),
@@ -84,23 +91,57 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
         addButton(doneButton);
 
-        ZoomInButton = new Button(relX + 160,
-                relY + 26,
-                39,
+        Button setDefaultPosButton = new Button(relative.x + endInternalGuiX,
+                relative.y + 106,
+                60,
+                20,
+                ITextComponent.nullToEmpty("Reset Pos"),
+                button -> {
+                    for (Direction.Axis axis : Direction.Axis.values()){
+                        changePos(pos.get(axis),axis);
+                    }
+                });
+
+        addButton(setDefaultPosButton);
+
+        ZoomInButton = new Button(relative.x + endInternalGuiX,
+                relative.y + 26,
+                50,
                 20,
                 ITextComponent.nullToEmpty("Zoom+"),
-                button -> ZoomIn());
-        ZoomOutButton = new Button(relX + 160,
-                relY + 47,
-                39,
+                button -> Zoom(-1));
+        ZoomOutButton = new Button(relative.x + endInternalGuiX,
+                relative.y + 47,
+                50,
                 20,
                 ITextComponent.nullToEmpty("Zoom-"),
-                button -> ZoomOut());
-
-
+                button -> Zoom(+1));
 
         addButton(ZoomInButton);
         addButton(ZoomOutButton);
+
+        IPosBaseTileEntity tile = getTileEntity();
+        BlockPos basePos = tile.getBasePos();
+
+        assert minecraft != null;
+        for (Direction.Axis axis : Direction.Axis.values()){
+
+            int chunkPos = pos.get(axis) >> 4;
+            int lowLimit = (axis == Direction.Axis.Y) ? 0 : (chunkPos - 12) << 4;
+            int highLimit = (axis == Direction.Axis.Y) ? 255 : ((chunkPos + 12 + 1) << 4) - 1;
+            Consumer<String> responder = s -> {
+                tile.setBasePos(axis,Integer.parseInt(s));
+                Networking.INSTANCE.sendToServer(new ChangePosPacket(Integer.parseInt(s),pos,axis));
+            };
+            posTextFields[axis.ordinal()] = new NumberTextField(minecraft.font,basePos.get(axis),relative,16+axis.ordinal()*44,151,lowLimit,highLimit,responder);
+            addButton(posTextFields[axis.ordinal()]);
+        }
+
+        scaleTextFields[0] = new NumberTextField(minecraft.font,16,relative,endInternalGuiX + 5,69,1,50, s -> {});
+        scaleTextFields[1] = new NumberTextField(minecraft.font,11,relative,endInternalGuiX + 5,91,1,50, s -> decimalPartScaleY = 0.0F);
+        addButton(scaleTextFields[0]);
+        addButton(scaleTextFields[1]);
+
 
         //Definition of all button that shift the origin position
 
@@ -113,8 +154,8 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         //position y in main gui
         //position x in texture
         ImageButton northButton = new ImageButton(
-                relX + 169, //position x in main gui
-                relY + 126, //position y in main gui
+                relative.x + endInternalGuiX + 8, //position x in main gui
+                relative.y + 127, //position y in main gui
                 buttonLength,
                 buttonHeight,
                 0, //position x in texture
@@ -123,8 +164,8 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 POS_BUTTON,
                 buttons -> changePos(Direction.NORTH));
         ImageButton southButton = new ImageButton(
-                relX + 169,
-                relY + 159,
+                relative.x + endInternalGuiX + 8,
+                relative.y + 159,
                 buttonLength,
                 buttonHeight,
                 16,
@@ -133,8 +174,8 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 POS_BUTTON,
                 buttons -> changePos(Direction.SOUTH));
         ImageButton eastButton = new ImageButton(
-                relX + 194,
-                relY + 142,
+                relative.x + endInternalGuiX + 33,
+                relative.y + 143,
                 buttonLength,
                 buttonHeight,
                 32,
@@ -143,8 +184,8 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 POS_BUTTON,
                 buttons -> changePos(Direction.EAST));
         ImageButton westButton = new ImageButton(
-                relX + 143,
-                relY + 142,
+                relative.x + 143,
+                relative.y + 143,
                 buttonLength,
                 buttonHeight,
                 48,
@@ -153,8 +194,8 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 POS_BUTTON,
                 buttons -> changePos(Direction.WEST));
         ImageButton upButton = new ImageButton(
-                relX + 160,
-                relY + 142,
+                relative.x + endInternalGuiX - 1,
+                relative.y + 143,
                 buttonLength,
                 buttonHeight,
                 64,
@@ -163,8 +204,8 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 POS_BUTTON,
                 buttons -> changePos(Direction.UP));
         ImageButton downButton = new ImageButton(
-                relX + 177,
-                relY + 142,
+                relative.x + endInternalGuiX + 16,
+                relative.y + 143,
                 buttonLength,
                 buttonHeight,
                 80,
@@ -181,13 +222,26 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     }
 
-    //function to change the position using buttons
+    //function to change the position using direction buttons
 
     private void changePos(Direction dir) {
         System.out.println("button with direction "+dir+" clicked with success");
-        IPosBaseTileEntity tile = getTileEntity();
-        tile.changePosBase(dir);
-        Networking.INSTANCE.sendToServer(new ChangePosPacket(dir,pos));
+        changePos(dir.getAxis(),dir.getAxisDirection().getStep());
+    }
+
+    //function to change the position using offset on axis
+
+    private void changePos(Direction.Axis axis,int offset){
+        int index = axis.ordinal();
+        int oldPos = Integer.parseInt(posTextFields[index].getValue());
+        changePos(oldPos + offset, axis);
+    }
+
+    //function to change the position directly by replacing the old value with newPos argument
+
+    private void changePos(int newPos, Direction.Axis axis){
+        int index = axis.ordinal();
+        posTextFields[index].setValue(String.valueOf(newPos));
     }
 
     @Override
@@ -195,57 +249,54 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         return true;
     }
 
-    public void ZoomIn() {
-        System.out.println("Zoom + active");
-        scaleX = (delone) ? scaleX - 1 : scaleX - 2;
-        delone = !delone;
-        scaleY -= 1;
-        iconLength = 144 / scaleX;
-        iconHeight = 99 / scaleY;
+    public void Zoom(int sign){
+        scaleTextFields[0].add(sign);
+        decimalPartScaleY = decimalPartScaleY + sign * (float)(internalGuiHeight) / internalGuiWidth;
+        if (decimalPartScaleY * sign > 1){
+            float savedDecimalPartScaleY = decimalPartScaleY - sign;
+            scaleTextFields[1].add(sign);
+            decimalPartScaleY = savedDecimalPartScaleY;
+        }
+        System.out.println("Zoom "+(sign==-1 ? "-":"+")+" active");
     }
 
-    public void ZoomOut() {
-        System.out.println("Zoom - active");
-        scaleX = (!delone) ? scaleX + 1 : scaleX + 2;
-        delone = !delone;
-        scaleY += 1;
-        iconLength = 144 / scaleX;
-        iconHeight = 99 / scaleY;
+    private int getScale(Direction.Axis axis){
+        if (axis == Direction.Axis.Z)return -1;
+        return Integer.parseInt(scaleTextFields[axis.ordinal()].getValue());
     }
 
 
     @Override
     public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
-        int relX = (this.width - WIDTH) / 2;
-        int relY = (this.height - HEIGHT) / 2;
+        Vector2i relative = getRelative();
         GlStateManager._color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        IPosBaseTileEntity tile = getTileEntity();
-        BlockPos basePos = tile.getPosBase();
         assert this.minecraft != null;
         this.minecraft.getTextureManager().bind(GUI);
-        this.blit(stack,relX, relY, 0, 0, WIDTH, HEIGHT);
-        drawString(stack,Minecraft.getInstance().font, scaleX + " X " + scaleY, relX + 160, relY + 68, white);
+        this.blit(stack,relative.x, relative.y, 0, 0, WIDTH, HEIGHT);
+        drawString(stack, " X ",endInternalGuiX + 19,83,Color.WHITE);
         //display of origin block position
-        assert minecraft != null;
-        drawString(stack,minecraft.font, "RailSystem", relX + 10, relY + 10, white);
-        drawString(stack,minecraft.font,"O",relX+2,relY+20,green);
-        drawString(stack,minecraft.font,"Position of Block O",relX+12,relY+142,green);
-        drawString(stack,minecraft.font,String.valueOf(basePos.getX()),relX+18,relY+153,white);
-        drawString(stack,minecraft.font,String.valueOf(basePos.getY()),relX+62,relY+153,white);
-        drawString(stack,minecraft.font,String.valueOf(basePos.getZ()),relX+106,relY+153,white);
+        drawString(stack,"RailSystem",10,10,Color.WHITE);
+        drawString(stack,"O",2,20,Color.GREEN);
+        drawString(stack,"Position of Block O",12,142,Color.GREEN);
         super.render(stack,mouseX, mouseY, partialTicks);
-        ZoomOutButton.active = (scaleX != 16);
-        ZoomInButton.active = (scaleX != 4);
+        ZoomOutButton.active = (isZoomAuthorised(+1));
+        ZoomInButton.active = (isZoomAuthorised(-1));
         //function that display all icons on screen
-        displayIcons(stack,relX,relY);
+        displayIcons(stack,relative);
     }
 
-    private void displayIcons(MatrixStack stack,int relX, int relY){
+    protected void drawString(MatrixStack stack, String content, int offsetX, int offsetY, Color color){
+        Vector2i relative = getRelative();
+        assert minecraft != null;
+        drawString(stack,minecraft.font,content,relative.x+offsetX,relative.y+offsetY,color.getRGB());
+    }
+
+    private void displayIcons(MatrixStack stack,Vector2i relative){
         Map<BlockPos, RailType> blockToDisplay = getBlockOnBoard(true);
         assert this.minecraft != null;
         this.minecraft.getTextureManager().bind(ICONS);
         blockToDisplay.forEach((pos,type)->{
-            Vector2f posOnBoard = getPosOnBoard(pos,new Vector2f(relX,relY));
+            Vector2f posOnBoard = getPosOnBoard(pos,relative);
             boolean isDisabled = type.isSwitch() && isDisabled(pos);
             BlockState state = getBlockState(pos);
             type.render(stack,posOnBoard,getDimensionOnBoard(), state,!isDisabled);
@@ -254,7 +305,9 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     private Map<BlockPos, RailType> getBlockOnBoard(boolean allowNormalRail){
         Map<BlockPos, RailType> map = new HashMap<>();
-        BlockPos basePos = getTileEntity().getPosBase();
+        BlockPos basePos = getTileEntity().getBasePos();
+        int scaleX = getScale(Direction.Axis.X);
+        int scaleY = getScale(Direction.Axis.Y);
         for (int i=0;i<scaleX;i++){
             for (int j=0;j<scaleY;j++){
                 BlockPos pos = basePos.offset(i,0,j);
@@ -272,33 +325,35 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
     //indicates if a block with position pos is to be rendered on screen
 
     protected boolean isOnBoard(BlockPos pos) {
-        BlockPos basePos = getTileEntity().getPosBase();
+        BlockPos basePos = getTileEntity().getBasePos();
         return (pos.getY() == basePos.getY()) &&
-                (pos.getX() >= basePos.getX() && pos.getX() < basePos.getX()+scaleX) && // the blockPos corresponds to the point at the top left of the screen
-                (pos.getZ() >= basePos.getZ() && pos.getZ() < basePos.getZ()+scaleY);
+                (pos.getX() >= basePos.getX() && pos.getX() < basePos.getX()+getScale(Direction.Axis.X)) && // the blockPos corresponds to the point at the top left of the screen
+                (pos.getZ() >= basePos.getZ() && pos.getZ() < basePos.getZ()+getScale(Direction.Axis.Y));
     }
 
     protected abstract IPosBaseTileEntity getTileEntity();
 
-    protected Vector2f getPosOnBoard(BlockPos pos, Vector2f relative){
+    protected Vector2f getPosOnBoard(BlockPos pos, Vector2i relative){
         if (!isOnBoard(pos)){
             return Vector2f.ZERO;
         }
         return Util.add(
-                relative,
+                relative.toFloatVector(),
                 internalGuiDimension,
                 Util.directMult(
                         getDimensionOnBoard(),
                         Util.subtract(
                                 Util.makeVector(pos),
-                                Util.makeVector(getTileEntity().getPosBase())
+                                Util.makeVector(getTileEntity().getBasePos())
                         )
                 )
         );
     }
 
     private Vector2f getDimensionOnBoard(){
-        return new Vector2f(internalGuiWidth/(scaleX*1.0F),internalGuiHeight/(scaleY*1.0F));
+        return new Vector2f(
+                internalGuiWidth /(getScale(Direction.Axis.X)*1.0F),
+                internalGuiHeight/(getScale(Direction.Axis.Y)*1.0F));
     }
 
 
@@ -306,10 +361,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         //activation of all buttons
         boolean mouseClicked = super.mouseClicked(mouseX,mouseY,button);
-        Vector2f relative = new Vector2f(
-                (float) (this.width - WIDTH) / 2,
-                (float) (this.height - HEIGHT) / 2);
-
+        Vector2i relative = getRelative();
         RailData data = getSwitchClicked(mouseX,mouseY,relative);
         if (data != null ) {
             boolean actionDone = onSwitchClicked(data,mouseX,mouseY,relative,button);
@@ -319,7 +371,47 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         return mouseClicked;
     }
 
-    public abstract boolean onSwitchClicked(RailData data,double mouseX,double mouseY,Vector2f relative,int button);
+    @Override
+    public boolean charTyped(char keyChar, int p_231042_2_) {
+        if (keyChar == 'u'){
+            changePos(Direction.UP);
+            return true;
+        }else if (keyChar == 'd') {
+            changePos(Direction.DOWN);
+            return true;
+        }else if (keyChar == '+' || keyChar == '-'){
+            // character + is coded with 43 and - with 45
+            // when typing + we zoom in,  so we have a zoom of sign -1
+            // when typing - we zoom out, so we have a zoom of sign +1
+            // a shift of 44 gives the sign conveniently
+            int sign = keyChar-44;
+            if (isZoomAuthorised(sign)) {
+                Zoom(sign);
+                return true;
+            }
+        }
+        return super.charTyped(keyChar, p_231042_2_);
+    }
+
+    @Override
+    public boolean keyPressed(int keyChar, int keyPlacement, int altCtrlMaj) {
+        boolean keyPressed = super.keyPressed(keyChar, keyPlacement, altCtrlMaj);
+        if (!keyPressed){
+            System.out.println(keyChar);
+            if (keyChar>261 && keyChar<266){
+                // the different arrow are coded with this character :
+                // ↑ : 265 -> 2 -> NORTH,
+                // ↓ : 264 -> 3 -> SOUTH,
+                // ← : 263 -> 4 -> WEST,
+                // → : 262 -> 5 -> EAST
+                changePos(Direction.from3DDataValue(267-keyChar));
+                return true;
+            }
+        }
+        return keyPressed;
+    }
+
+    public abstract boolean onSwitchClicked(RailData data, double mouseX, double mouseY, Vector2i relative, int button);
 
     public abstract boolean isDisabled(BlockPos pos);
 
@@ -328,7 +420,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         return Objects.requireNonNull(this.minecraft.level).getBlockState(pos);
     }
 
-    protected RailData getSwitchClicked(double mouseX, double mouseY, Vector2f relative) {
+    protected RailData getSwitchClicked(double mouseX, double mouseY, Vector2i relative) {
         Map<BlockPos,RailType> switchOnBoard = getBlockOnBoard(false);
         for (BlockPos pos : switchOnBoard.keySet()){
             Vector2f posOnBoard = getPosOnBoard(pos,relative);
@@ -339,24 +431,27 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         return null;
     }
 
-    // isLeftDownNearestOnScreen function return a boolean that specified if the mouse is nearer from the left down switch part on the screen than the right up switch for tjd switch
+    // isRightUpNearestOnScreen function return a boolean that specified if the mouse is nearer from the right up switch part on the screen than the left down switch for tjd switch
     // if axis of the switch is Z (dir = North), the ld part is in left down, so we use the diagonal from left up to right down as border
     // its equation is Y = iconHeight/iconLength * X (origin is in left up)
     // ld is nearer when mouseY > Y (y is from up to down) => mouseY > iconHeight/iconLength * mouseX => iconLength *mouseY > iconHeight * mouseX
     // if axis of the switch is X (dir = East), the ld part is in right up, so we use the diagonal from left up to right down as border
     // its equation is Y = iconHeight - iconHeight/iconLength * X (origin is in left up)
     // ld is nearer when mouseY < Y (y is from up to down) => mouseY < iconHeight - iconHeight/iconLength * mouseX => mouseY * iconLength < iconArea - iconHeight * mouseX
-    protected boolean isLeftDownNearestOnScreen(BlockPos pos, Vector2f relative, double mouseX, double mouseY){
+    // IMPORTANT : all the function is inverted -> we calculate the boolean that indicates if left down is nearest and we return the opposite boolean
+
+    protected boolean isRightUpNearestOnScreen(BlockPos pos, Vector2i relative, double mouseX, double mouseY){
         Vector2f posOnBoard = getPosOnBoard(pos,relative);
+        float iconLength = internalGuiWidth / getScale(Direction.Axis.X);
+        float iconHeight = internalGuiHeight / getScale(Direction.Axis.Y);
         double relativeMouseX = mouseX-posOnBoard.x;
         double relativeMouseY = mouseY-posOnBoard.y;
         assert this.minecraft != null;
         World world = this.minecraft.level;
         assert world != null;
         BlockState state = world.getBlockState(pos);
-        Direction axis_direction = state.getValue(Switch_Tjd.FACING_AXE);
-        return (axis_direction == Direction.NORTH)? relativeMouseY * iconLength > iconHeight*relativeMouseX :
-                relativeMouseY * iconLength < iconHeight*(iconLength-relativeMouseX) ;
+        Direction axis_direction = state.getValue(SwitchDoubleSlip.FACING_AXE);
+        return (axis_direction == Direction.NORTH) ? !(relativeMouseY * iconLength > iconHeight * relativeMouseX) : !(relativeMouseY * iconLength < iconHeight * (iconLength - relativeMouseX));
     }
 
 }

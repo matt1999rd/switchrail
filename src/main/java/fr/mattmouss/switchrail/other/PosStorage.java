@@ -1,12 +1,13 @@
 package fr.mattmouss.switchrail.other;
 
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.INBTSerializable;
 
 
 
-public class PosStorage implements INBTSerializable<CompoundNBT>, IPosStorage {
+public class PosStorage implements INBTSerializable<CompoundNBT> {
 
     private BlockPos pos;
 
@@ -28,26 +29,16 @@ public class PosStorage implements INBTSerializable<CompoundNBT>, IPosStorage {
         return tag;
     }
 
-    public BlockPos getPos() {
+    public BlockPos getBasePos() {
         return pos;
     }
 
-    @Override
-    public void setPos(BlockPos pos_in) {
+    public void setBasePos(BlockPos pos_in) {
         pos = pos_in;
     }
-
-    public void setX(int x){
-        pos = new BlockPos(x,pos.getY(),pos.getZ());
+    public void setBasePos(Direction.Axis axis, int newPos) {
+        this.pos = this.pos.relative(axis,newPos - this.pos.get(axis));
     }
-
-    public void setY(int y){
-        pos = new BlockPos(pos.getX(),y,pos.getZ());
-    }
-    public void setZ(int z){
-        pos = new BlockPos(pos.getX(),pos.getY(),z);
-    }
-
 
     @Override
     public void deserializeNBT(CompoundNBT nbt) {

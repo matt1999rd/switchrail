@@ -14,15 +14,15 @@ import java.util.Map;
 
 public class TerminalStorageCapability
 {
-    @CapabilityInject(ITerminalStorage.class)
-    public static Capability<ITerminalStorage> TERMINAL_STORAGE_CAPABILITY = null ;
+    @CapabilityInject(TerminalStorage.class)
+    public static Capability<TerminalStorage> TERMINAL_STORAGE_CAPABILITY = null ;
 
     public static void register()
     {
-        CapabilityManager.INSTANCE.register(ITerminalStorage.class, new Capability.IStorage<ITerminalStorage>() {
+        CapabilityManager.INSTANCE.register(TerminalStorage.class, new Capability.IStorage<TerminalStorage>() {
 
             @Override
-            public INBT writeNBT(Capability<ITerminalStorage> capability, ITerminalStorage instance, Direction side)
+            public INBT writeNBT(Capability<TerminalStorage> capability, TerminalStorage instance, Direction side)
             {
                 CompoundNBT nbt = new CompoundNBT();
                 ListNBT listNBT = new ListNBT();
@@ -39,11 +39,12 @@ public class TerminalStorageCapability
             }
 
             @Override
-            public void readNBT(Capability<ITerminalStorage> capability, ITerminalStorage instance, Direction side, INBT nbt) {
-                if (!(instance instanceof TerminalStorage))
+            public void readNBT(Capability<TerminalStorage> capability, TerminalStorage instance, Direction side, INBT nbt) {
+                if (instance == null)
                     throw new IllegalArgumentException("Can not deserialize to an instance that isn't the default implementation");
                 CompoundNBT compoundNBT = (CompoundNBT)nbt;
                 ListNBT listNBT = (ListNBT) compoundNBT.get("list");
+                assert listNBT != null;
                 for (INBT inbt : listNBT){
                     CompoundNBT sw_nbt = (CompoundNBT) inbt;
                     BlockPos pos = Util.getPosFromNbt(sw_nbt);

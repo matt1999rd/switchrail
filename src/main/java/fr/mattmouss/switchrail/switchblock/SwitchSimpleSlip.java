@@ -1,7 +1,6 @@
 package fr.mattmouss.switchrail.switchblock;
 
 import fr.mattmouss.switchrail.enum_rail.Corners;
-import fr.mattmouss.switchrail.enum_rail.SwitchTypeOld;
 import fr.mattmouss.switchrail.other.Util;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -9,7 +8,6 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.EnumProperty;
 import net.minecraft.state.Property;
@@ -25,11 +23,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 
-public class Switch_Tjs extends Switch  {
+public class SwitchSimpleSlip extends Switch  {
 
     private RailShape fixedRailShape =RailShape.NORTH_SOUTH;
 
-    public Switch_Tjs() {
+    public SwitchSimpleSlip() {
         super(Properties.of(Material.METAL)
                 .noCollission()
                 .lightLevel(state -> 0)
@@ -69,7 +67,7 @@ public class Switch_Tjs extends Switch  {
     }
 
     @Override
-    public EnumProperty<?> getSwitchPositionProperty() {
+    public EnumProperty<Corners> getSwitchPositionProperty() {
         return SWITCH_POSITION_STANDARD;
     }
 

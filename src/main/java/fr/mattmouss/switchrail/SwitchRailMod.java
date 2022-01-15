@@ -78,8 +78,8 @@ public class SwitchRailMod {
             blockRegistryEvent.getRegistry().register(new SwitchDoubleTurn());
             blockRegistryEvent.getRegistry().register(new CrossedRail());
             blockRegistryEvent.getRegistry().register(new SwitchTriple());
-            blockRegistryEvent.getRegistry().register(new Switch_Tjs());
-            blockRegistryEvent.getRegistry().register(new Switch_Tjd());
+            blockRegistryEvent.getRegistry().register(new SwitchSimpleSlip());
+            blockRegistryEvent.getRegistry().register(new SwitchDoubleSlip());
             blockRegistryEvent.getRegistry().register(new ControllerBlock());
             blockRegistryEvent.getRegistry().register(new Bumper());
             blockRegistryEvent.getRegistry().register(new OneWayPoweredRail());

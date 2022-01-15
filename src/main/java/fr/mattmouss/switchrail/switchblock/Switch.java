@@ -26,13 +26,14 @@ public abstract class Switch extends AbstractRailBlock {
     public static EnumProperty<Corners>
             SWITCH_POSITION_STANDARD,
             Y_SWITCH_POSITION,
-            THREE_WAY_SWITCH_POSITION;
+            THREE_WAY_SWITCH_POSITION,DSS_POSITION;
 
     static {
         RAIL_STRAIGHT_FLAT = EnumProperty.create("shape",RailShape.class,(railShape -> (railShape == RailShape.NORTH_SOUTH || railShape == RailShape.EAST_WEST)));
         SWITCH_POSITION_STANDARD = EnumProperty.create("switch_position", Corners.class, Corners.STRAIGHT, Corners.TURN);
         Y_SWITCH_POSITION = EnumProperty.create("switch_position",Corners.class, Corners.TURN_LEFT, Corners.TURN_RIGHT );
         THREE_WAY_SWITCH_POSITION = EnumProperty.create("switch_position",Corners.class,(corners -> (corners != Corners.TURN)));
+        DSS_POSITION = EnumProperty.create("dss_active_rail",Corners.class);
     }
 
     @Nonnull
@@ -57,7 +58,7 @@ public abstract class Switch extends AbstractRailBlock {
         }
     }
 
-    public abstract EnumProperty<?> getSwitchPositionProperty();
+    public abstract EnumProperty<Corners> getSwitchPositionProperty();
 
     @Override
     public boolean is(@Nonnull ITag<Block> tag) {

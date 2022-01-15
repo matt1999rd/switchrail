@@ -8,7 +8,7 @@
 	"block.switchrail.switch_tjs": "Traversée Jonction Simple",
 	"block.switchrail.switch_tjd": "Traversée Jonction Double",
 	"block.switchrail.controller_block": "Controleur",
-	"block.switchrail.switch_register": "Registre d'aiguille",
 	"block.switchrail.one_way_powered_rail": "Rail Accélérateur A Une Direction",
+	"block.switchrail.switch_terminal": "Terminal de Commande d'Aiguille par Redstone",
 	"block.switchrail.bumper": "Heurtoir"
 }

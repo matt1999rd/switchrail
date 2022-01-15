@@ -4,6 +4,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 
 public interface IPosBaseTileEntity {
-    BlockPos getPosBase();
-    void changePosBase(Direction direction);
+    BlockPos getBasePos();
+    void changeBasePos(Direction direction);
+    void setBasePos(Direction.Axis axis, int newPos);
 }

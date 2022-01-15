@@ -1,59 +1,32 @@
 {
   "variants": {
-    "facing_axe=north,switch_position=no_power,shape=north_south": {
-      "model": "switchrail:block/switch_tjd_np"
+    "axis=z,dss_active_rail=straight": {
+      "model": "switchrail:block/switch_tjd_straight"
     },
-    "facing_axe=east,switch_position=no_power,shape=north_south": {
-      "model": "switchrail:block/switch_tjd_np",
+    "axis=x,dss_active_rail=straight": {
+      "model": "switchrail:block/switch_tjd_straight",
       "y": 90
     },
-    "facing_axe=north,switch_position=right_up_powered,shape=north_south": {
-      "model": "switchrail:block/switch_tjd_rup"
+    "axis=z,dss_active_rail=turn_left": {
+      "model": "switchrail:block/switch_tjd_one_turn"
     },
-    "facing_axe=east,switch_position=right_up_powered,shape=north_south": {
-      "model": "switchrail:block/switch_tjd_rup",
+    "axis=x,dss_active_rail=turn_left": {
+      "model": "switchrail:block/switch_tjd_one_turn",
       "y": 90
     },
-    "facing_axe=north,switch_position=left_down_powered,shape=north_south": {
-      "model": "switchrail:block/switch_tjd_ldp"
+    "axis=z,dss_active_rail=turn_right": {
+      "model": "switchrail:block/switch_tjd_one_turn",
+      "y": 180
     },
-    "facing_axe=east,switch_position=left_down_powered,shape=north_south": {
-      "model": "switchrail:block/switch_tjd_ldp",
-      "y": 90
+    "axis=x,dss_active_rail=turn_right": {
+      "model": "switchrail:block/switch_tjd_one_turn",
+      "y": 270
     },
-    "facing_axe=north,switch_position=all_powered,shape=north_south": {
-      "model": "switchrail:block/switch_tjd_ap"
+    "axis=z,dss_active_rail=turn": {
+      "model": "switchrail:block/switch_tjd_turn"
     },
-    "facing_axe=east,switch_position=all_powered,shape=north_south": {
-      "model": "switchrail:block/switch_tjd_ap",
-      "y": 90
-    },
-    "facing_axe=north,switch_position=no_power,shape=east_west": {
-      "model": "switchrail:block/switch_tjd_np"
-    },
-    "facing_axe=east,switch_position=no_power,shape=east_west": {
-      "model": "switchrail:block/switch_tjd_np",
-      "y": 90
-    },
-    "facing_axe=north,switch_position=right_up_powered,shape=east_west": {
-      "model": "switchrail:block/switch_tjd_rup"
-    },
-    "facing_axe=east,switch_position=right_up_powered,shape=east_west": {
-      "model": "switchrail:block/switch_tjd_rup",
-      "y": 90
-    },
-    "facing_axe=north,switch_position=left_down_powered,shape=east_west": {
-      "model": "switchrail:block/switch_tjd_ldp"
-    },
-    "facing_axe=east,switch_position=left_down_powered,shape=east_west": {
-      "model": "switchrail:block/switch_tjd_ldp",
-      "y": 90
-    },
-    "facing_axe=north,switch_position=all_powered,shape=east_west": {
-      "model": "switchrail:block/switch_tjd_ap"
-    },
-    "facing_axe=east,switch_position=all_powered,shape=east_west": {
-      "model": "switchrail:block/switch_tjd_ap",
+    "axis=x,dss_active_rail=turn": {
+      "model": "switchrail:block/switch_tjd_turn",
       "y": 90
     }
   }

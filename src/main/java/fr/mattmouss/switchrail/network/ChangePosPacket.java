@@ -1,7 +1,6 @@
 package fr.mattmouss.switchrail.network;
 
 
-import fr.mattmouss.switchrail.blocks.ControllerTile;
 import fr.mattmouss.switchrail.blocks.IPosBaseTileEntity;
 import net.minecraft.network.PacketBuffer;
 
@@ -14,22 +13,26 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public class ChangePosPacket {
-    private final int dir_id;
+    private final int newPos;
+    private final Direction.Axis axis;
     private final BlockPos te_pos;
 
 
     public ChangePosPacket(PacketBuffer buf) {
-        dir_id = buf.readInt();
+        newPos = buf.readInt();
+        axis = buf.readEnum(Direction.Axis.class);
         te_pos = buf.readBlockPos();
     }
 
-    public ChangePosPacket(Direction direction,BlockPos pos){
-        dir_id = direction.get3DDataValue();
+    public ChangePosPacket(int newPos,BlockPos pos,Direction.Axis axis){
+        this.newPos = newPos;
+        this.axis = axis;
         te_pos = pos;
     }
 
     public void toBytes(PacketBuffer buf){
-        buf.writeInt(dir_id);
+        buf.writeInt(newPos);
+        buf.writeEnum(axis);
         buf.writeBlockPos(te_pos);
     }
 
@@ -37,8 +40,7 @@ public class ChangePosPacket {
         context.get().enqueueWork(()->{
             IPosBaseTileEntity te = (IPosBaseTileEntity) Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(te_pos);
             assert te != null;
-            Direction dir = Direction.from3DDataValue(dir_id);
-            te.changePosBase(dir);
+            te.setBasePos(axis,newPos);
         });
         context.get().setPacketHandled(true);
     }
