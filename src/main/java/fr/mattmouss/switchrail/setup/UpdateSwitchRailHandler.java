@@ -12,7 +12,6 @@ import net.minecraft.state.properties.DoorHingeSide;
 import net.minecraft.state.properties.RailShape;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -33,11 +32,11 @@ public class UpdateSwitchRailHandler {
             chunk.getBlockEntitiesPos().stream().filter(blockPos->{
                 String path = Objects.requireNonNull(chunk.getBlockState(blockPos).getBlock().getRegistryName()).getPath();
                 return path.matches("switch_([nv])_(left|right)") || path.equals("switch_tjd");
-            }).forEach(blockPos -> doUpdateOnBlock(Objects.requireNonNull(chunk.getWorldForge()),blockPos));
+            }).forEach(blockPos -> doUpdateOnBlock(chunk,blockPos));
         }
 
-        private void doUpdateOnBlock(World world,BlockPos pos){
-            BlockState oldState = world.getBlockState(pos);
+        private void doUpdateOnBlock(Chunk chunk,BlockPos pos){
+            BlockState oldState = chunk.getBlockState(pos);
             BlockState newState;
             System.out.println("replacing block in position : "+pos);
             if (oldState.getBlock() instanceof SwitchStraight){
@@ -45,7 +44,8 @@ public class UpdateSwitchRailHandler {
             }else {
                 newState = changeState(oldState);
             }
-            world.setBlock(pos,newState,11);
+
+            chunk.setBlockState(pos,newState,true);
         }
 
         private BlockState replaceBlock(BlockState oldState){

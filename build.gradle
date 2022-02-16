@@ -13,7 +13,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.16.5-7_alphe'
+version = '1.16.5-7_alpha'
 group = 'fr.mattmouss.switchrail'
 archivesBaseName = 'switchrail'
 
