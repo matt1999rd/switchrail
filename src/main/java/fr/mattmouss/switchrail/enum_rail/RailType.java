@@ -13,15 +13,12 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.state.EnumProperty;
-import net.minecraft.state.Property;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.state.properties.DoorHingeSide;
 import net.minecraft.state.properties.RailShape;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector2f;
-
-import java.util.function.Predicate;
 
 public enum RailType {
     CROSSED_RAIL(10,CrossedRail.class),
@@ -34,7 +31,6 @@ public enum RailType {
     RAIL(0,AbstractRailBlock.class);
     final int shift;
     final Class<? extends Block> instanceClass;
-    static final Predicate<Property<?>> hasCornerProperty = property -> property.getValueClass() == Corners.class && property instanceof EnumProperty;
     final Vector2f uvDimension = Util.makeVector(32F/256F);
 
 
@@ -45,8 +41,12 @@ public enum RailType {
 
     public static RailType getType(Block block){
         for (RailType switchType : RailType.values()){
-            Class<?> class_in = (switchType == RAIL)? (Class<?>) block.getClass().getGenericSuperclass() :block.getClass();
-            if (class_in == switchType.instanceClass) {
+            Class<?> class_in = block.getClass();
+            if (switchType == RAIL){
+                if (AbstractRailBlock.class.isAssignableFrom(class_in)){
+                    return switchType;
+                }
+            }else if (class_in == switchType.instanceClass) {
                 return switchType;
             }
         }
@@ -108,7 +108,7 @@ public enum RailType {
 
     public void render(MatrixStack stack, Vector2f posOnBoard, Vector2f iconDimension, BlockState blockState,boolean isEnable){
         int uvShift = this.getUVShift(blockState);
-        Vector2f uvOrigin = Util.directMult(new Vector2f(uvShift%8,uvShift/8),uvDimension);
+        Vector2f uvOrigin = Util.directMult(new Vector2f(uvShift%8,(float)(uvShift/8)),uvDimension);
         renderQuad(stack,posOnBoard, Util.add(posOnBoard,iconDimension),uvOrigin,Util.add(uvOrigin,uvDimension),isEnable);
     }
 

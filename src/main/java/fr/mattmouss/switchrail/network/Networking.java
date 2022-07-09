@@ -38,6 +38,12 @@ public class Networking {
                 OpenScreenPacket::new,
                 OpenScreenPacket::handle);
 
+        INSTANCE.registerMessage(nextID(),
+                ActionOnTilePacket.class,
+                ActionOnTilePacket::toBytes,
+                ActionOnTilePacket::new,
+                ActionOnTilePacket::handle);
+
     }
 
 

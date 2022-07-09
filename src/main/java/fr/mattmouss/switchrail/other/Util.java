@@ -1,8 +1,5 @@
 package fr.mattmouss.switchrail.other;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.ImageButton;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.state.properties.DoorHingeSide;
@@ -11,9 +8,6 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.ITextComponent;
-
-import java.util.Locale;
 
 public class Util {
     public static Vector2f add(Vector2f... vectors){
@@ -100,9 +94,8 @@ public class Util {
         return dir;
     }
 
-    public static CompoundNBT putPos(CompoundNBT nbt,BlockPos pos){
+    public static void putPos(CompoundNBT nbt, BlockPos pos){
         nbt.putLong("position",pos.asLong());
-        return nbt;
     }
 
     public static BlockPos getPosFromNbt(CompoundNBT nbt){

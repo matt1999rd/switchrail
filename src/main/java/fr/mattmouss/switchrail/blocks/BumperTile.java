@@ -1,8 +1,6 @@
 package fr.mattmouss.switchrail.blocks;
 
 import net.minecraft.block.AbstractRailBlock;
-import net.minecraft.block.AirBlock;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.state.properties.RailShape;

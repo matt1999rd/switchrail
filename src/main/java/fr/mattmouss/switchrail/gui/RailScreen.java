@@ -2,7 +2,7 @@ package fr.mattmouss.switchrail.gui;
 
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import fr.mattmouss.switchrail.SwitchRailMod;
 import fr.mattmouss.switchrail.blocks.IPosBaseTileEntity;
 import fr.mattmouss.switchrail.enum_rail.RailType;
@@ -11,7 +11,7 @@ import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.other.Util;
 import fr.mattmouss.switchrail.other.Vector2i;
 import fr.mattmouss.switchrail.switchblock.SwitchDoubleSlip;
-import fr.mattmouss.switchrail.switchdata.RailData;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
@@ -21,6 +21,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.ImageButton;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvents;
@@ -269,7 +270,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
     @Override
     public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
         Vector2i relative = getRelative();
-        GlStateManager._color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         assert this.minecraft != null;
         this.minecraft.getTextureManager().bind(GUI);
         this.blit(stack,relative.x, relative.y, 0, 0, WIDTH, HEIGHT);
@@ -362,7 +363,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         //activation of all buttons
         boolean mouseClicked = super.mouseClicked(mouseX,mouseY,button);
         Vector2i relative = getRelative();
-        RailData data = getSwitchClicked(mouseX,mouseY,relative);
+        Pair<RailType,BlockPos> data = getSwitchClicked(mouseX,mouseY,relative);
         if (data != null ) {
             boolean actionDone = onSwitchClicked(data,mouseX,mouseY,relative,button);
             if (actionDone)Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
@@ -411,7 +412,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         return keyPressed;
     }
 
-    public abstract boolean onSwitchClicked(RailData data, double mouseX, double mouseY, Vector2i relative, int button);
+    public abstract boolean onSwitchClicked(Pair<RailType,BlockPos> data, double mouseX, double mouseY, Vector2i relative, int button);
 
     public abstract boolean isDisabled(BlockPos pos);
 
@@ -420,12 +421,12 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         return Objects.requireNonNull(this.minecraft.level).getBlockState(pos);
     }
 
-    protected RailData getSwitchClicked(double mouseX, double mouseY, Vector2i relative) {
+    protected Pair<RailType,BlockPos> getSwitchClicked(double mouseX, double mouseY, Vector2i relative) {
         Map<BlockPos,RailType> switchOnBoard = getBlockOnBoard(false);
         for (BlockPos pos : switchOnBoard.keySet()){
             Vector2f posOnBoard = getPosOnBoard(pos,relative);
             if (Util.isIn(posOnBoard,getDimensionOnBoard(),mouseX,mouseY)){
-                return new RailData(switchOnBoard.get(pos),pos);
+                return new Pair<>(switchOnBoard.get(pos),pos);
             }
         }
         return null;
@@ -442,16 +443,16 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     protected boolean isRightUpNearestOnScreen(BlockPos pos, Vector2i relative, double mouseX, double mouseY){
         Vector2f posOnBoard = getPosOnBoard(pos,relative);
-        float iconLength = internalGuiWidth / getScale(Direction.Axis.X);
-        float iconHeight = internalGuiHeight / getScale(Direction.Axis.Y);
+        float iconLength = (float) internalGuiWidth / getScale(Direction.Axis.X);
+        float iconHeight = (float) internalGuiHeight / getScale(Direction.Axis.Y);
         double relativeMouseX = mouseX-posOnBoard.x;
         double relativeMouseY = mouseY-posOnBoard.y;
         assert this.minecraft != null;
         World world = this.minecraft.level;
         assert world != null;
         BlockState state = world.getBlockState(pos);
-        Direction axis_direction = state.getValue(SwitchDoubleSlip.FACING_AXE);
-        return (axis_direction == Direction.NORTH) ? !(relativeMouseY * iconLength > iconHeight * relativeMouseX) : !(relativeMouseY * iconLength < iconHeight * (iconLength - relativeMouseX));
+        Direction.Axis axis= state.getValue(BlockStateProperties.HORIZONTAL_AXIS);
+        return (axis == Direction.Axis.Z) ? !(relativeMouseY * iconLength > iconHeight * relativeMouseX) : !(relativeMouseY * iconLength < iconHeight * (iconLength - relativeMouseX));
     }
 
 }

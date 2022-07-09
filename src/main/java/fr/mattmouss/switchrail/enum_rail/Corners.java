@@ -30,21 +30,6 @@ public enum Corners implements IStringSerializable {
         return null;
     }
 
-    public static Corners getCorner(Dss_Position position) {
-        switch (position){
-            case NO_POWER:
-                return STRAIGHT;
-            case POWER_ON_LEFT_DOWN:
-                return TURN_RIGHT;
-            case POWER_ON_RIGHT_UP:
-                return TURN_LEFT;
-            case POWER_ON_BOTH:
-                return TURN;
-            default:
-                return null;
-        }
-    }
-
     @Override
     public String getSerializedName() {
         return this.name;
@@ -53,7 +38,7 @@ public enum Corners implements IStringSerializable {
     public Corners moveDssSwitch(boolean isLeftDown){
         // to move from one corner to another that differ with activation of
         // left down if isLeftDown is true
-        // and right up if isLeftdown is false
+        // and right up if isLeftDown is false
         // we need to toggle the corresponding bit (1 for left down and 0 for right up) in dss active integer and reform our corner object
         // to toggle a bit use the xor operator with integer 0b01 (1<<0) or 0b10 (1<<1)
         // warning : turn right is activated by the left down part and turn left is activated by the right up part (see double slip switch scheme)

@@ -37,10 +37,6 @@ public class ControllerTile extends TileEntity implements IPosBaseTileEntity {
         return pos_store.map(PosStorage::getBasePos).orElseThrow(storageErrorSupplier);
     }
 
-    public void changeBasePos(Direction direction){
-        pos_store.ifPresent(posStorage -> posStorage.setBasePos(posStorage.getBasePos().relative(direction)));
-    }
-
     @Override
     public void setBasePos(Direction.Axis axis, int newPos) {
         pos_store.ifPresent(posStorage -> posStorage.setBasePos(axis,newPos));

@@ -8,7 +8,6 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.LivingEntity;
 
 import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.EnumProperty;
 import net.minecraft.state.Property;
@@ -37,15 +36,6 @@ public class SwitchStraight extends Switch {
                 .sound(SoundType.METAL));
         this.registerDefaultState(this.stateDefinition.any().setValue(RAIL_STRAIGHT_FLAT,RailShape.NORTH_SOUTH).setValue(SWITCH_POSITION_STANDARD,Corners.STRAIGHT));
         this.setRegistryName("switch_straight");
-    }
-
-    public SwitchStraight(boolean old){
-        super(Properties.of(Material.METAL)
-                .lightLevel(state -> 0)
-                .strength(2f)
-                .noCollission()
-                .sound(SoundType.METAL));
-        this.registerDefaultState(this.stateDefinition.any().setValue(RAIL_STRAIGHT_FLAT,RailShape.NORTH_SOUTH).setValue(SWITCH_POSITION_STANDARD,Corners.STRAIGHT));
     }
 
     @Override

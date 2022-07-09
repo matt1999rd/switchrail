@@ -24,11 +24,6 @@ public class TerminalStorage extends PosStorage implements INBTSerializable<Comp
         switchMap = new HashMap<>();
     }
 
-    public TerminalStorage(){
-        super();
-        switchMap = new HashMap<>();
-    }
-
     @Override
     public CompoundNBT serializeNBT() {
         CompoundNBT tag = super.serializeNBT();

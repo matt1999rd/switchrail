@@ -6,26 +6,6 @@ import net.minecraftforge.registries.ObjectHolder;
 
 public class ModBlock {
 
-    @ObjectHolder("switchrail:switch_v_right")
-
-    public static SwitchStraight switchStraightVRight = new SwitchStraightVRight();
-
-    @ObjectHolder("switchrail:switch_v_left")
-
-    public static SwitchStraight switchStraightVLeft = new SwitchStraightVLeft();
-
-    @ObjectHolder("switchrail:switch_n_left")
-
-    public static SwitchStraight switchStraightNLeft = new SwitchStraightNLeft();
-
-    @ObjectHolder("switchrail:switch_n_right")
-
-    public static SwitchStraight switchStraightNRight = new SwitchStraightNRight();
-
-    @ObjectHolder("switchrail:switch")
-
-    public static TileEntityType<SwitchTile> SWITCH_TILE;
-
     @ObjectHolder("switchrail:switch_straight")
 
     public static SwitchStraight SWITCH_STRAIGHT = new SwitchStraight();

@@ -1,7 +1,6 @@
 package fr.mattmouss.switchrail.switchblock;
 
 import fr.mattmouss.switchrail.enum_rail.Corners;
-import fr.mattmouss.switchrail.enum_rail.Dss_Position;
 import fr.mattmouss.switchrail.other.Util;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -11,12 +10,10 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.state.DirectionProperty;
 import net.minecraft.state.EnumProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.state.properties.RailShape;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -31,26 +28,7 @@ import javax.annotation.Nullable;
 
 public class SwitchDoubleSlip extends Switch {
 
-    public static EnumProperty<Dss_Position> SWITCH_POSITION_OLD;
-
-    public static final DirectionProperty FACING_AXE = DirectionProperty.create("facing_axe", Direction.NORTH,Direction.EAST);
-
-    static  {
-        SWITCH_POSITION_OLD=EnumProperty.create("switch_position", Dss_Position.class);
-    }
-
     private RailShape fixedRailShape= RailShape.NORTH_SOUTH;
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
-    @Nullable
-    @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new SwitchTile();
-    }
 
     //RailShape.NORTH_SOUTH classic model
     //RailShape.EAST_WEST model with West replacing North
@@ -63,8 +41,7 @@ public class SwitchDoubleSlip extends Switch {
                 .sound(SoundType.METAL));
         this.setRegistryName("switch_tjd");
         this.registerDefaultState(this.stateDefinition.any()
-                .setValue(SWITCH_POSITION_OLD, Dss_Position.NO_POWER)
-                .setValue(FACING_AXE,Direction.NORTH)
+                .setValue(DSS_POSITION, Corners.STRAIGHT)
                 .setValue(RAIL_STRAIGHT_FLAT, RailShape.NORTH_SOUTH)
         );
     }
@@ -87,7 +64,7 @@ public class SwitchDoubleSlip extends Switch {
 
     @Override
     protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(SWITCH_POSITION_OLD,FACING_AXE,RAIL_STRAIGHT_FLAT,DSS_POSITION, BlockStateProperties.HORIZONTAL_AXIS);
+        builder.add(RAIL_STRAIGHT_FLAT,DSS_POSITION, BlockStateProperties.HORIZONTAL_AXIS);
         super.createBlockStateDefinition(builder);
     }
 
@@ -96,10 +73,10 @@ public class SwitchDoubleSlip extends Switch {
     public void updatePoweredState(World world, BlockState state, BlockPos pos, PlayerEntity player, int flags,boolean fromScreen) {
         double[] pos_ru_sw;
         double[] pos_ld_sw;
-        pos_ru_sw=(state.getValue(FACING_AXE) == Direction.NORTH)?
+        pos_ru_sw=(state.getValue(BlockStateProperties.HORIZONTAL_AXIS) == Direction.Axis.Z)?
                 new double[]{pos.getX() + 0.9, pos.getY() + 0.1, pos.getZ() + 0.1}:
                 new double[]{pos.getX() + 0.9, pos.getY() + 0.1, pos.getZ() + 0.9};
-        pos_ld_sw = (state.getValue(FACING_AXE) == Direction.NORTH)?
+        pos_ld_sw = (state.getValue(BlockStateProperties.HORIZONTAL_AXIS) == Direction.Axis.Z)?
                 new double[]{pos.getX() + 0.1, pos.getY() + 0.1, pos.getZ() + 0.9}:
                 new double[]{pos.getX() + 0.1, pos.getY() + 0.1, pos.getZ() + 0.1};
         //determine the theoretic position of the small voxel constituting the switch in order to change the nearest one

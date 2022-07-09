@@ -26,19 +26,14 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
-import java.util.logging.Logger;
-
 @Mod(SwitchRailMod.MOD_ID)
 public class SwitchRailMod {
-    //2400 lines of code enjoy -> this is shit It is not necessary to have too much line !
 
     public static IProxy proxy = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
 
     public static final String MOD_ID = "switchrail";
 
     public static ModSetup setup = new ModSetup();
-
-    public static final Logger logger =  Logger.getLogger(MOD_ID);
 
     public SwitchRailMod (){
 
@@ -48,7 +43,6 @@ public class SwitchRailMod {
 
 
         MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(new UpdateSwitchRailHandler.WorldLoadingHandler());
 
     }
 
@@ -70,10 +64,6 @@ public class SwitchRailMod {
     public static class RegistryEvents {
         @SubscribeEvent
         public static void onBlockRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
-            blockRegistryEvent.getRegistry().register(new SwitchStraightNLeft());
-            blockRegistryEvent.getRegistry().register(new SwitchStraightNRight());
-            blockRegistryEvent.getRegistry().register(new SwitchStraightVLeft());
-            blockRegistryEvent.getRegistry().register(new SwitchStraightVRight());
             blockRegistryEvent.getRegistry().register(new SwitchStraight());
             blockRegistryEvent.getRegistry().register(new SwitchDoubleTurn());
             blockRegistryEvent.getRegistry().register(new CrossedRail());
@@ -109,27 +99,13 @@ public class SwitchRailMod {
         @SubscribeEvent
         public static void onTileEntityRegistry(final RegistryEvent.Register<TileEntityType<?>> event)
         {
-            event.getRegistry().register(TileEntityType.Builder.of(SwitchTile::new,ModBlock.switchStraightNLeft,
-                    ModBlock.switchStraightNRight,
-                    ModBlock.switchStraightVLeft,
-                    ModBlock.switchStraightVRight).build(null).setRegistryName("switch"));
             event.getRegistry().register(TileEntityType.Builder.of(ControllerTile::new,ModBlock.CONTROLLER_BLOCK)
                     .build(null).setRegistryName("controller_block"));
             event.getRegistry().register(TileEntityType.Builder.of(BumperTile::new,ModBlock.BUMPER)
                     .build(null).setRegistryName("bumper"));
             event.getRegistry().register(TileEntityType.Builder.of(TerminalTile::new,ModBlock.SWITCH_TERMINAL)
                     .build(null).setRegistryName("switch_terminal"));
-
         }
-
-        /*
-        @SubscribeEvent
-
-        public static void onSoundEventRegistry(final RegistryEvent.Register<SoundEvent> event){
-            //event.getRegistry().register(proxy.);
-        }
-
-         */
 
 
 

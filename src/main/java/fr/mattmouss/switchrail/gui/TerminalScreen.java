@@ -11,7 +11,6 @@ import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.network.TerminalScreenPacket;
 import fr.mattmouss.switchrail.other.Vector2i;
 import fr.mattmouss.switchrail.switchblock.Switch;
-import fr.mattmouss.switchrail.switchdata.RailData;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.state.EnumProperty;
@@ -22,6 +21,7 @@ import net.minecraft.util.text.ITextProperties;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.gui.GuiUtils;
+import com.mojang.datafixers.util.Pair;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -60,7 +60,14 @@ public class TerminalScreen extends RailScreen {
         Vector2i relative = getRelative();
         this.blit(stack,relative.x+ERROR_SCREEN_BEGINNING_X,relative.y+ERROR_SCREEN_BEGINNING_Y,0,26,124,26);
         TerminalTile tile = (TerminalTile) getTileEntity();
-        tile.blockOrUnblockTerminal();
+        BlockState state = tile.getBlockState();
+        if (state.getValue(BlockStateProperties.POWERED)){
+            if (state.getValue(SwitchTerminal.IS_BLOCKED)){
+                tile.tryUnblockTerminal();
+            }else {
+                tile.tryBlockTerminal();
+            }
+        }
         if (tile.getBlockState().getValue(SwitchTerminal.IS_BLOCKED)){
             renderErrorWithMovement(stack);
             if (isSwitchHoveredDisabled(mouseX, mouseY)){
@@ -110,47 +117,55 @@ public class TerminalScreen extends RailScreen {
     }
 
     private boolean isSwitchHoveredDisabled(int mouseX,int mouseY){
-        RailData data = getSwitchClicked(mouseX,mouseY,getRelative());
-        if (data != null && !isDisabled(data.pos)){
+        Pair<RailType, BlockPos> data = getSwitchClicked(mouseX,mouseY,getRelative());
+        if (data != null && !isDisabled(data.getSecond())){
             assert minecraft != null;
             assert minecraft.level != null;
-            BlockState state = minecraft.level.getBlockState(data.pos);
+            BlockState state = minecraft.level.getBlockState(data.getSecond());
             return !state.getValue(BlockStateProperties.ENABLED);
         }
         return false;
     }
 
     @Override
-    public boolean onSwitchClicked(RailData data, double mouseX, double mouseY, Vector2i relative, int button) {
+    public boolean onSwitchClicked(Pair<RailType,BlockPos> data, double mouseX, double mouseY, Vector2i relative, int button) {
         TerminalTile tile = (TerminalTile) getTileEntity();
         TerminalScreenPacket packet = null;
+        BlockPos switchBlockPos = data.getSecond();
+        // flag is a byte that indicates boolean used for action on set switch part
+        // if flag = 0x00 -> set position of normal switch
+        // if flag = 0xA1 -> set position of double slip switch
+        //      if flag = 0x01 -> set position of dds knowing that right up was clicked
+        //      if flag = 0x11 -> set position of dds knowing that left down was clicked
         byte flag = 0;
         if (button == 0){
             //when we click on a switch with the left button of the mouse, we add or modify the switch
-            if (isDisabled(data.pos)){
-                tile.addSwitch(data.pos);
-                packet = new TerminalScreenPacket(flag,pos,data.pos, ADD_SWITCH_ACTION);
+            if (isDisabled(switchBlockPos)){
+                tile.addSwitch(switchBlockPos);
+                packet = new TerminalScreenPacket(flag,pos,switchBlockPos, ADD_SWITCH_ACTION);
             }else {
-                BlockState state = tile.getSwitchValue(data.pos);
+                BlockState state = tile.getSwitchValue(switchBlockPos);
                 if (!(state.getBlock() instanceof Switch)){
-                    throw new IllegalStateException("Block position clicked is not pointing toward a switch !");
+                    throw new IllegalStateException("Block switchBlockPos clicked is not pointing toward a switch !");
                 }
                 Switch switchBlock = (Switch) state.getBlock();
                 EnumProperty<Corners> property = switchBlock.getSwitchPositionProperty();
-                if (data.type == RailType.DOUBLE_SLIP){
-                    boolean isLeftDownNearest = isRightUpNearestOnScreen(data.pos, relative, mouseX, mouseY);
+                if (data.getFirst() == RailType.DOUBLE_SLIP){
+                    flag += 1;
+                    boolean isLeftDownNearest = isRightUpNearestOnScreen(switchBlockPos, relative, mouseX, mouseY);
+                    if (isLeftDownNearest)flag += 2;
                     Corners corners = state.getValue(property);
-                    tile.setPosition(data.pos,state.setValue(property,corners.moveDssSwitch(isLeftDownNearest)));
+                    tile.setPosition(switchBlockPos,state.setValue(property,corners.moveDssSwitch(isLeftDownNearest)));
                 }else {
-                    tile.setPosition(data.pos,state.cycle(property));
+                    tile.setPosition(switchBlockPos,state.cycle(property));
                 }
-                packet = new TerminalScreenPacket(flag,pos,data.pos,SET_SWITCH_ACTION);
+                packet = new TerminalScreenPacket(flag,pos,switchBlockPos,SET_SWITCH_ACTION);
             }
         }else if (button == 1){
             //when we click on a switch with the right button of the mouse, we remove the switch if it is present
-            if (!isDisabled(data.pos)){
-                tile.removeSwitch(data.pos);
-                packet = new TerminalScreenPacket(flag,pos,data.pos,REMOVE_SWITCH_ACTION);
+            if (!isDisabled(switchBlockPos)){
+                tile.removeSwitch(switchBlockPos);
+                packet = new TerminalScreenPacket(flag,pos,switchBlockPos,REMOVE_SWITCH_ACTION);
             }
         }
         if (packet != null)Networking.INSTANCE.sendToServer(packet);

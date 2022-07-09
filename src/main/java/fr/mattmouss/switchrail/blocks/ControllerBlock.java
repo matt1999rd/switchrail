@@ -25,7 +25,6 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 
@@ -61,37 +60,6 @@ public class ControllerBlock extends Block {
         }
     }
 
-/*
-    //1.14.4 function replaced by .notSolid()
-    @Override
-    public BlockRenderLayer func_180664_k() {
-        return BlockRenderLayer.CUTOUT_MIPPED;
-    }
-
- */
-
-
-
-
-
-
-/*
-    //1.14.4 function replaced by onBlockActivated
-    @Override
-    public boolean func_220051_a(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand p_220051_5_, BlockRayTraceResult p_220051_6_) {
-        ControllerTile te = (ControllerTile) worldIn.getTileEntity(pos);
-        System.out.println("opening gui !!");
-        if (!worldIn.isRemote){
-            NetworkHooks.openGui((ServerPlayerEntity)player,te,te.getBasePos());
-        }
-        return true;
-    }
-*/
-
-
-
-
-    //1.15 function
     @Override
     public ActionResultType use(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
         System.out.println("opening gui !!");
