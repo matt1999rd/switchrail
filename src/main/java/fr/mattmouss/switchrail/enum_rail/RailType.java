@@ -20,6 +20,8 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector2f;
 
+import java.util.stream.Collectors;
+
 public enum RailType {
     CROSSED_RAIL(10,CrossedRail.class),
     CONTROLLER_BLOCK(11,ControllerBlock.class),
@@ -63,8 +65,9 @@ public enum RailType {
             Direction dir = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
             bs_shift+=dir.get2DDataValue();
         }
-        if (state.hasProperty(BlockStateProperties.RAIL_SHAPE)){
-            RailShape shape = state.getValue(BlockStateProperties.RAIL_SHAPE);
+        if (this == RAIL){
+            EnumProperty<RailShape> properties = (EnumProperty<RailShape>) state.getProperties().stream().filter(property -> property.getValueClass() == RailShape.class).findAny().get();
+            RailShape shape = state.getValue(properties);
             bs_shift+=shape.ordinal();
         }
         if (state.hasProperty(BlockStateProperties.DOOR_HINGE)){

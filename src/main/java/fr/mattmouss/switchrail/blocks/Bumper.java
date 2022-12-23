@@ -51,8 +51,6 @@ public class Bumper extends Block {
         return true;
     }
 
-
-
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader reader, BlockPos pos, ISelectionContext context) {
         Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);

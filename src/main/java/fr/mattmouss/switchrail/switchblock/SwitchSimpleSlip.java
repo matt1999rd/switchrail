@@ -1,5 +1,7 @@
 package fr.mattmouss.switchrail.switchblock;
 
+import fr.mattmouss.switchrail.blocks.CrossedRail;
+import fr.mattmouss.switchrail.blocks.ICrossedRail;
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.other.Util;
 import net.minecraft.block.Block;
@@ -13,19 +15,42 @@ import net.minecraft.state.EnumProperty;
 import net.minecraft.state.Property;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.state.properties.DoorHingeSide;
 import net.minecraft.state.properties.RailShape;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.feature.structure.MineshaftPieces;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 
-public class SwitchSimpleSlip extends Switch  {
+public class SwitchSimpleSlip extends Switch implements ICrossedRail {
 
     private RailShape fixedRailShape =RailShape.NORTH_SOUTH;
+
+    //Position of the switch from the facing direction :
+    // NORTH :
+    //             |
+    //          W ---
+    //            \|
+    //             S
+    // EAST :      N
+    //            /|
+    //          W ---
+    //             |
+    // SOUTH :     N
+    //             |\
+    //            --- E
+    //             |
+    // WEST :
+    //             |
+    //            --- E
+    //             |/
+    //             S
+    // Switch in the quadrant dir.getOpposite and dir.getCCW
 
     public SwitchSimpleSlip() {
         super(Properties.of(Material.METAL)
@@ -90,39 +115,18 @@ public class SwitchSimpleSlip extends Switch  {
                         entity.zo > pos.getZ() &&
                         entity.zo < pos.getZ()+1
         );
-
     }
+
+
     public RailShape getRailShapeFromEntityAndState(BlockPos pos, AbstractMinecartEntity entity,BlockState state) {
         Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         Corners actualState = state.getValue(SWITCH_POSITION_STANDARD);
-        if (entity.xo<pos.getX() || entity.xo> pos.getX()+1) {
-            switch (direction) {
-                case NORTH:
-                    return (actualState == Corners.TURN) ? RailShape.SOUTH_WEST : RailShape.EAST_WEST;
-                case SOUTH:
-                    return (actualState == Corners.TURN) ? RailShape.NORTH_EAST : RailShape.EAST_WEST;
-                case WEST:
-                    return (actualState == Corners.TURN) ? RailShape.SOUTH_EAST : RailShape.EAST_WEST;
-                case EAST:
-                    return (actualState == Corners.TURN) ? RailShape.NORTH_WEST : RailShape.EAST_WEST;
-                default:
-                    throw new IllegalArgumentException("no such direction for tjs block");
-            }
-        } else {
-            switch (direction) {
-                case NORTH:
-                    return (actualState == Corners.TURN) ? RailShape.SOUTH_WEST : RailShape.NORTH_SOUTH;
-                case SOUTH:
-                    return (actualState == Corners.TURN) ? RailShape.NORTH_EAST : RailShape.NORTH_SOUTH;
-                case WEST:
-                    return (actualState == Corners.TURN) ? RailShape.SOUTH_EAST : RailShape.NORTH_SOUTH;
-                case EAST:
-                    return (actualState == Corners.TURN) ? RailShape.NORTH_WEST : RailShape.NORTH_SOUTH;
-                default:
-                    throw new IllegalArgumentException("no such direction for tjs block");
-            }
+        if (actualState == Corners.STRAIGHT){
+            return ICrossedRail.super.getRailShapeFromEntityAndState(pos,entity);
+        }else {
+            // look at first comment to understand the two directions
+            return Util.getShapeFromDirection(direction.getOpposite(),direction.getCounterClockWise());
         }
-        //  ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
     }
 
 }

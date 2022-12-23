@@ -1,6 +1,11 @@
 package fr.mattmouss.switchrail.enum_rail;
 
+import net.minecraft.state.properties.DoorHingeSide;
+import net.minecraft.util.Direction;
 import net.minecraft.util.IStringSerializable;
+import org.lwjgl.system.CallbackI;
+
+import javax.annotation.Nullable;
 
 public enum Corners implements IStringSerializable {
     TURN_LEFT("turn_left",0b10),
@@ -44,5 +49,27 @@ public enum Corners implements IStringSerializable {
         // warning : turn right is activated by the left down part and turn left is activated by the right up part (see double slip switch scheme)
         int newDssActive = this.dssActive ^ (1<<(isLeftDown?0:1));
         return Corners.asCorner(newDssActive);
+    }
+
+    public Direction getHeelDirection(Direction pointDirection){
+        return getHeelDirection(pointDirection,null);
+    }
+
+    //heel is the part of the switch where there is multiple direction
+    //point is the part of the switch where there is the common direction
+    public Direction getHeelDirection(Direction pointDirection, @Nullable DoorHingeSide side){
+        switch (this){
+            case STRAIGHT:
+                return pointDirection.getOpposite();
+            case TURN_LEFT:
+                return pointDirection.getOpposite().getCounterClockWise();
+            case TURN_RIGHT:
+                return pointDirection.getOpposite().getClockWise();
+            case TURN:
+                if (side == null)return null;
+                else return ((side == DoorHingeSide.LEFT)? Corners.TURN_LEFT : Corners.TURN_RIGHT).getHeelDirection(pointDirection);
+            default:
+                return null;
+        }
     }
 }

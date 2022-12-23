@@ -1,5 +1,7 @@
 package fr.mattmouss.switchrail.switchblock;
 
+import fr.mattmouss.switchrail.blocks.CrossedRail;
+import fr.mattmouss.switchrail.blocks.ICrossedRail;
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.other.Util;
 import net.minecraft.block.Block;
@@ -13,6 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.state.EnumProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.state.properties.DoorHingeSide;
 import net.minecraft.state.properties.RailShape;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
@@ -20,13 +23,14 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import org.lwjgl.system.CallbackI;
 
 import javax.annotation.Nullable;
 
 //check correct behaviour of method getRailShape()
 
 
-public class SwitchDoubleSlip extends Switch {
+public class SwitchDoubleSlip extends Switch implements ICrossedRail {
 
     private RailShape fixedRailShape= RailShape.NORTH_SOUTH;
 
@@ -141,62 +145,30 @@ public class SwitchDoubleSlip extends Switch {
     public RailShape getRailShapeFromEntityAndState(BlockPos pos, AbstractMinecartEntity entity) {
         Corners tjd_position = entity.getCommandSenderWorld().getBlockState(pos).getValue(DSS_POSITION);
         Direction.Axis tjd_axis = entity.getCommandSenderWorld().getBlockState(pos).getValue(BlockStateProperties.HORIZONTAL_AXIS);
-
-        //minecart come from west
-        if (entity.xo<pos.getX()){
-            switch (tjd_position) {
-                case STRAIGHT:
-                    return RailShape.EAST_WEST ;
-                case TURN_LEFT:
-                case TURN:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.SOUTH_WEST : RailShape.NORTH_WEST;
-                case TURN_RIGHT:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.NORTH_EAST : RailShape.SOUTH_EAST;
-                default:
-                    throw new IllegalArgumentException("no such direction for tjs block");
-            }
-        //minecart come from east
-        }else if (entity.xo> pos.getX()+1) {
-            switch (tjd_position) {
-                case STRAIGHT:
-                    return RailShape.EAST_WEST ;
-                case TURN_LEFT:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.SOUTH_WEST : RailShape.NORTH_WEST;
-                case TURN_RIGHT:
-                case TURN:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.NORTH_EAST : RailShape.SOUTH_EAST;
-                default:
-                    throw new IllegalArgumentException("no such direction for tjs block");
-            }
-        //minecart come from north
-        }else if (entity.zo<pos.getZ()) {
-            switch (tjd_position) {
-                case STRAIGHT:
-                    return RailShape.NORTH_SOUTH ;
-                case TURN_LEFT:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.SOUTH_WEST : RailShape.NORTH_WEST;
-                case TURN_RIGHT:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.NORTH_EAST : RailShape.SOUTH_EAST;
-                case TURN:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.NORTH_EAST : RailShape.NORTH_WEST;
-                default:
-                    throw new IllegalArgumentException("no such direction for tjs block");
-            }
-        //minecart come from south
-        }else {
-            switch (tjd_position) {
-                case STRAIGHT:
-                    return RailShape.NORTH_SOUTH ;
-                case TURN_LEFT:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.SOUTH_WEST : RailShape.NORTH_WEST;
-                case TURN_RIGHT:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.NORTH_EAST : RailShape.SOUTH_EAST;
-                case TURN:
-                    return (tjd_axis == Direction.Axis.Z) ? RailShape.SOUTH_WEST : RailShape.SOUTH_EAST;
-                default:
-                    throw new IllegalArgumentException("no such direction for tjs block");
-            }
-
+        if (tjd_position == Corners.STRAIGHT){
+            return ICrossedRail.super.getRailShapeFromEntityAndState(pos,entity);
+        }else if (tjd_position == Corners.TURN_LEFT){
+            return (tjd_axis == Direction.Axis.Z) ? RailShape.SOUTH_WEST : RailShape.NORTH_WEST;
+        }else if (tjd_position == Corners.TURN_RIGHT){
+            return (tjd_axis == Direction.Axis.Z) ? RailShape.NORTH_EAST : RailShape.SOUTH_EAST;
         }
+        Direction pointDirection = getMinecartComingDirection(entity,pos);
+        return Util.getShapeFromDirection(pointDirection,
+                tjd_position.getHeelDirection(
+                        pointDirection,
+                        (tjd_axis == Direction.Axis.Z? DoorHingeSide.LEFT : DoorHingeSide.RIGHT)));
+    }
+
+    private Direction getMinecartComingDirection(AbstractMinecartEntity minecart,BlockPos pos){
+        if (minecart.xo<pos.getX()){
+            return Direction.EAST;
+        }else if (minecart.xo> pos.getX()+1){
+            return Direction.WEST;
+        }else if (minecart.zo< pos.getZ()){
+            return Direction.NORTH;
+        }else if (minecart.zo> pos.getZ()+1){
+            return Direction.SOUTH;
+        }
+        return null;
     }
 }

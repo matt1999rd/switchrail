@@ -1,5 +1,6 @@
 package fr.mattmouss.switchrail.blocks;
 
+import fr.mattmouss.switchrail.other.Util;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.PoweredRailBlock;
@@ -50,7 +51,7 @@ public class OneWayPoweredRail extends PoweredRailBlock {
     @Override
     public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (placer != null) {
-            Direction dir = getDirectionFromEntity(placer,pos);
+            Direction dir = Util.getDirectionFromEntity(placer,pos,false);
             RailShape shape = (dir.getAxis() == Direction.Axis.X) ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
             boolean firstWayPowered =
                     ((dir == Direction.SOUTH) && shape == RailShape.NORTH_SOUTH) ||
@@ -66,14 +67,6 @@ public class OneWayPoweredRail extends PoweredRailBlock {
         return (tag == BlockTags.RAILS);
     }
 
-    private Direction getDirectionFromEntity(LivingEntity placer, BlockPos pos) {
-        Vector3d vec = placer.position();
-        Direction d = Direction.getNearest(vec.x-pos.getX(),vec.y-pos.getY(),vec.z-pos.getZ());
-        if (d==Direction.DOWN || d==Direction.UP){
-            return Direction.NORTH;
-        }
-        return d;
-    }
 
     //get the direction where the rail is powered
     private Direction getDirectionFromState(RailShape shape,boolean firstWayPowered){

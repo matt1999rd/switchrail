@@ -74,6 +74,7 @@ public class SwitchRailMod {
             blockRegistryEvent.getRegistry().register(new Bumper());
             blockRegistryEvent.getRegistry().register(new OneWayPoweredRail());
             blockRegistryEvent.getRegistry().register(new SwitchTerminal());
+            blockRegistryEvent.getRegistry().register(new OneWayDetectorRail());
         }
 
 
@@ -91,6 +92,7 @@ public class SwitchRailMod {
             blockRegistryEvent.getRegistry().register(new SwitchLever(properties.stacksTo(1)));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.ONE_WAY_POWERED_RAIL,properties.stacksTo(64).rarity(Rarity.COMMON)).setRegistryName("one_way_powered_rail"));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.SWITCH_TERMINAL,properties).setRegistryName("switch_terminal"));
+            blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.ONE_WAY_DETECTOR_RAIL,properties.stacksTo(64).rarity(Rarity.COMMON)).setRegistryName("one_way_detector_rail"));
 
 
 

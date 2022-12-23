@@ -59,56 +59,11 @@ public class SwitchTriple extends Switch {
 
     @Override
     public RailShape getRailDirection(BlockState state, IBlockReader reader, BlockPos pos, @Nullable AbstractMinecartEntity entity) {
-        switch (state.getValue(BlockStateProperties.HORIZONTAL_FACING)){
-            case EAST:
-                switch (state.getValue(THREE_WAY_SWITCH_POSITION)) {
-                    case TURN_LEFT:
-                        return RailShape.NORTH_WEST;
-                    case STRAIGHT:
-                        return RailShape.EAST_WEST;
-                    case TURN_RIGHT:
-                        return RailShape.SOUTH_WEST;
-                    default:
-                        throw new IllegalArgumentException("no such direction for triple switch block");
-                }
-            case WEST:
-                switch (state.getValue(THREE_WAY_SWITCH_POSITION)) {
-                    case TURN_LEFT:
-                        return RailShape.SOUTH_EAST;
-                    case STRAIGHT:
-                        return RailShape.EAST_WEST;
-                    case TURN_RIGHT:
-                        return RailShape.NORTH_EAST;
-                    default:
-                        throw new IllegalArgumentException("no such direction for triple switch block");
-                }
-            case NORTH:
-                switch (state.getValue(THREE_WAY_SWITCH_POSITION)) {
-                    case TURN_LEFT:
-                        return RailShape.SOUTH_WEST;
-                    case STRAIGHT:
-                        return RailShape.NORTH_SOUTH;
-                    case TURN_RIGHT:
-                        return RailShape.SOUTH_EAST;
-                    default:
-                        throw new IllegalArgumentException("no such direction for triple switch block");
-                }
-            case SOUTH:
-                switch (state.getValue(THREE_WAY_SWITCH_POSITION)) {
-                    case TURN_LEFT:
-                        return RailShape.NORTH_WEST;
-                    case STRAIGHT:
-                        return RailShape.NORTH_SOUTH;
-                    case TURN_RIGHT:
-                        return RailShape.NORTH_EAST;
-                    default:
-                        throw new IllegalArgumentException("no such direction for triple switch block");
-                }
-            default:
-                throw new IllegalArgumentException("no such direction for triple switch block");
-        }
+        Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+        Corners swPosition = state.getValue(THREE_WAY_SWITCH_POSITION);
+        Direction trailingDirection = swPosition.getHeelDirection(facing.getOpposite());
+        return Util.getShapeFromDirection(facing.getOpposite(),trailingDirection);
     }
-
 
 
     @Nonnull

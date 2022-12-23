@@ -12,6 +12,7 @@ import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.common.util.Constants.BlockFlags;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
@@ -118,19 +119,20 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
     // can be done when a blocked terminal is released
     public void actionOnPowered(){
         assert this.level != null;
-        if (tryBlockTerminal())return;
+        if (tryBlockTerminal())return; // if the terminal is blocked, no switch will be blocked
         Set<BlockPos> switchPos = getSwitches();
         for (BlockPos pos : switchPos){
             BlockState state = getSwitchValue(pos);
-            level.setBlock(pos,state,3);
+            level.setBlock(pos,state, BlockFlags.DEFAULT);
         }
         this.blockAllSwitch();
     }
 
     // action done only once when the redstone is not entering the terminal block yet
-    public void actionOnUnpowered(){
-        this.freeAllSwitch();
-        changeTerminalAuthoring(false);
+    public void actionOnUnpowered(){ // need to check if the terminal is blocked
+        boolean isBlocked = this.getBlockState().getValue(SwitchTerminal.IS_BLOCKED);
+        if (!isBlocked)this.freeAllSwitch(); // if the terminal was not blocked, switch has indeed been blocked and we ought to free them
+        else changeTerminalAuthoring(false); // elsewhere, we just unblock the terminal
     }
 
     //the boolean specify if the terminal is unblocked

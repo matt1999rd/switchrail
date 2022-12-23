@@ -8,19 +8,18 @@
       "y": 90
     },
     "axis=z,dss_active_rail=turn_left": {
-      "model": "switchrail:block/switch_tjd_one_turn"
+      "model": "switchrail:block/switch_tjd_turn_left"
     },
     "axis=x,dss_active_rail=turn_left": {
-      "model": "switchrail:block/switch_tjd_one_turn",
+      "model": "switchrail:block/switch_tjd_turn_left",
       "y": 90
     },
     "axis=z,dss_active_rail=turn_right": {
-      "model": "switchrail:block/switch_tjd_one_turn",
-      "y": 180
+      "model": "switchrail:block/switch_tjd_turn_right"
     },
     "axis=x,dss_active_rail=turn_right": {
-      "model": "switchrail:block/switch_tjd_one_turn",
-      "y": 270
+      "model": "switchrail:block/switch_tjd_turn_right",
+      "y": 90
     },
     "axis=z,dss_active_rail=turn": {
       "model": "switchrail:block/switch_tjd_turn"

@@ -110,7 +110,7 @@ public class TerminalScreen extends RailScreen {
 
     private void drawHoveringText(MatrixStack stack,int mouseX,int mouseY){
         ArrayList<ITextProperties> textLines = Lists.newArrayList();
-        textLines.add(ITextProperties.of("Conflict Switch", Style.EMPTY.applyFormats(TextFormatting.BOLD,TextFormatting.RED)));
+        textLines.add(ITextProperties.of("Conflict Switch", Style.EMPTY.applyFormats(TextFormatting.BOLD, TextFormatting.RED)));
         Vector2i relative = getRelative();
         assert minecraft != null;
         GuiUtils.drawHoveringText(stack,textLines,mouseX,mouseY,WIDTH,HEIGHT,WIDTH+relative.x-mouseX,minecraft.font);

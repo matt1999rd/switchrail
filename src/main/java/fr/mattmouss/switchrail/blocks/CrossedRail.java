@@ -18,7 +18,7 @@ import net.minecraft.world.World;
 import javax.annotation.Nullable;
 
 
-public class CrossedRail extends AbstractRailBlock {
+public class CrossedRail extends AbstractRailBlock implements ICrossedRail {
 
     private static final EnumProperty<RailShape> RAIL_STRAIGHT_FLAT;
 
@@ -80,18 +80,11 @@ public class CrossedRail extends AbstractRailBlock {
     public boolean minecartArrivedOnBlock(AbstractMinecartEntity entity, BlockPos pos) {
         return (entity.getCommandSenderWorld().isClientSide ||
                 entity.xo > pos.getX() &&
-                        entity.xo < pos.getX()+1 &&
+                        entity.xo < pos.getX() + 1 &&
                         entity.zo > pos.getZ() &&
-                        entity.zo < pos.getZ()+1
+                        entity.zo < pos.getZ() + 1
         );
-
     }
-
-    public RailShape getRailShapeFromEntityAndState(BlockPos pos, AbstractMinecartEntity entity) {
-        return (entity.xo<pos.getX() || entity.xo> pos.getX()+1) ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
-    }
-
-
 
     @Override
 

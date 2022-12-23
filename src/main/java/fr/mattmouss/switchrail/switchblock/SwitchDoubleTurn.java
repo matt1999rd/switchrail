@@ -87,19 +87,7 @@ public class SwitchDoubleTurn extends Switch {
     public RailShape getRailDirection(BlockState state, IBlockReader reader, BlockPos pos, @Nullable AbstractMinecartEntity minecartEntity) {
         Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         Corners actualState = state.getValue(Y_SWITCH_POSITION);
-
-        switch (direction) {
-            case NORTH:
-                return (actualState == Corners.TURN_LEFT)? RailShape.SOUTH_WEST : RailShape.SOUTH_EAST;
-            case SOUTH:
-                return (actualState == Corners.TURN_LEFT)? RailShape.NORTH_EAST : RailShape.NORTH_WEST;
-            case WEST:
-                return (actualState == Corners.TURN_LEFT)? RailShape.SOUTH_EAST : RailShape.NORTH_EAST;
-            case EAST:
-                return (actualState == Corners.TURN_LEFT)? RailShape.NORTH_WEST : RailShape.SOUTH_WEST;
-            default:
-                throw new IllegalArgumentException("no such direction for double turn block");
-        }
+        return Util.getShapeFromDirection(direction.getOpposite(),actualState.getHeelDirection(direction.getOpposite()));
     }
 
     @Nonnull

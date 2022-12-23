@@ -50,6 +50,10 @@ public class ModBlock {
 
     public static  OneWayPoweredRail ONE_WAY_POWERED_RAIL = new OneWayPoweredRail();
 
+    @ObjectHolder("switchrail:one_way_detector_rail")
+
+    public static OneWayDetectorRail ONE_WAY_DETECTOR_RAIL = new OneWayDetectorRail();
+
     @ObjectHolder("switchrail:switch_terminal")
 
     public static SwitchTerminal SWITCH_TERMINAL = new SwitchTerminal();

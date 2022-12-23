@@ -8,6 +8,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.World;
 
 public class Util {
     public static Vector2f add(Vector2f... vectors){
@@ -50,12 +51,16 @@ public class Util {
     }
 
     public static Direction getDirectionFromEntity(LivingEntity placer, BlockPos pos){
+        return getDirectionFromEntity(placer,pos,true);
+    }
+
+    public static Direction getDirectionFromEntity(LivingEntity placer, BlockPos pos,boolean takeOpposite){
         Vector3d vec3d = placer.position();
         Direction d= Direction.getNearest(vec3d.x-pos.getX(),vec3d.y-pos.getY(),vec3d.z-pos.getZ());
         if (d== Direction.DOWN || d== Direction.UP){
             return Direction.NORTH;
         }
-        return d.getOpposite();
+        return takeOpposite?d.getOpposite():d;
     }
 
     public static DoorHingeSide getHingeSideFromEntity(LivingEntity entity, BlockPos pos, Direction direction) {
@@ -102,6 +107,23 @@ public class Util {
         long value = nbt.getLong("position");
         return BlockPos.of(value);
     }
+
+    //gives the axis direction that is the motion of the train from the railshape
+    public static Direction.Axis getRailShapeAxis(RailShape shape){
+        switch (shape){
+            case EAST_WEST:
+            case ASCENDING_EAST:
+            case ASCENDING_WEST:
+                return Direction.Axis.X;
+            case NORTH_SOUTH:
+            case ASCENDING_NORTH:
+            case ASCENDING_SOUTH:
+                return Direction.Axis.Z;
+            default:
+                return null;
+        }
+    }
+
 
 
 
