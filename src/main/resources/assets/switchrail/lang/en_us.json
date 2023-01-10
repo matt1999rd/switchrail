@@ -11,6 +11,8 @@
 	"block.switchrail.one_way_powered_rail": "One Way Powered Rail",
 	"block.switchrail.one_way_detector_rail": "One Way Detector Rail",
 	"block.switchrail.switch_terminal": "Switch Terminal",
+	"block.switchrail.axle_counter_point": "Axle Counter Point",
+	"block.switchrail.axle_counter_rail": "Axle Counter Rail",
 
 	"item.switchrail.switch_lever": "Switch Lever",
 	"item.switchrail.switch_register": "Switch Register"

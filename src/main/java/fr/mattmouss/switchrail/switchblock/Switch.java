@@ -1,5 +1,6 @@
 package fr.mattmouss.switchrail.switchblock;
 
+import fr.mattmouss.switchrail.blocks.IAxleCounterDetector;
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.Block;
@@ -18,7 +19,7 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
 
-public abstract class Switch extends AbstractRailBlock {
+public abstract class Switch extends AbstractRailBlock implements IAxleCounterDetector {
 
     public static EnumProperty<RailShape> RAIL_STRAIGHT_FLAT;
     public static EnumProperty<Corners>
@@ -39,7 +40,7 @@ public abstract class Switch extends AbstractRailBlock {
     public Property<RailShape> getShapeProperty() {
         return RAIL_STRAIGHT_FLAT;
     }
-    
+
     protected Switch(Properties p_i48444_2_) {
         super(true, p_i48444_2_);
         this.registerDefaultState(this.defaultBlockState().setValue(BlockStateProperties.ENABLED,true));
@@ -74,5 +75,18 @@ public abstract class Switch extends AbstractRailBlock {
     @Override
     protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(BlockStateProperties.ENABLED);
+    }
+
+    @Override
+    public void onMinecartPass(BlockState state, World world, BlockPos pos, AbstractMinecartEntity cart) {
+        RailShape shape = this.getRailDirection(state,world,pos,cart);
+        onMinecartPass(world,pos,cart,shape);
+        super.onMinecartPass(state, world, pos, cart);
+    }
+
+    @Override
+    public void onRemove(BlockState oldState, World world, BlockPos pos, BlockState actualState, boolean p_196243_5_) {
+        removeCP(world,oldState,actualState,pos);
+        super.onRemove(oldState, world, pos, actualState, p_196243_5_);
     }
 }

@@ -11,5 +11,7 @@
 	"block.switchrail.one_way_powered_rail": "Rail Accélérateur A Une Direction",
 	"block.switchrail.one_way_detector_rail": "Rail Détecteur A Une Direction",
 	"block.switchrail.switch_terminal": "Terminal de Commande d'Aiguille par Redstone",
+	"block.switchrail.axle_counter_point": "Point de comptage d'essieux",
+	"block.switchrail.axle_counter_rail": "Rail avec pédale de comptage d'essieux",
 	"block.switchrail.bumper": "Heurtoir"
 }

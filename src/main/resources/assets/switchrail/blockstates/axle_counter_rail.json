@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "shape=north_south": { "model": "switchrail:block/axle_counter_rail" },
+    "shape=east_west": { "model": "switchrail:block/axle_counter_rail", "y": 90 },
+    "shape=ascending_north": { "model": "switchrail:block/axle_counter_rail_raised", "y": 180 },
+    "shape=ascending_west": { "model": "switchrail:block/axle_counter_rail_raised", "y": 90 },
+    "shape=ascending_east": { "model": "switchrail:block/axle_counter_rail_raised", "y": 270 },
+    "shape=ascending_south": { "model": "switchrail:block/axle_counter_rail_raised" },
+    "shape=south_west": { "model": "switchrail:block/axle_counter_rail_corner" },
+    "shape=north_west": { "model": "switchrail:block/axle_counter_rail_corner", "y": 90 },
+    "shape=north_east": { "model": "switchrail:block/axle_counter_rail_corner", "y": 180 },
+    "shape=south_east": { "model": "switchrail:block/axle_counter_rail_corner", "y": 270 }
+  }
+}

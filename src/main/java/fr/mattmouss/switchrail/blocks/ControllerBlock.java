@@ -1,6 +1,7 @@
 package fr.mattmouss.switchrail.blocks;
 
 
+import fr.mattmouss.switchrail.enum_rail.ScreenType;
 import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.network.OpenScreenPacket;
 import net.minecraft.block.*;
@@ -62,7 +63,7 @@ public class ControllerBlock extends Block {
     public ActionResultType use(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
         System.out.println("opening gui !!");
         if (!worldIn.isClientSide){
-            Networking.INSTANCE.sendTo(new OpenScreenPacket(pos,true),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            Networking.INSTANCE.sendTo(new OpenScreenPacket(pos, ScreenType.CONTROLLER),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
         return ActionResultType.SUCCESS;
     }

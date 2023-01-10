@@ -5,7 +5,7 @@ package fr.mattmouss.switchrail;
 
 import fr.mattmouss.switchrail.blocks.*;
 import fr.mattmouss.switchrail.item.SwitchLever;
-import fr.mattmouss.switchrail.other.PosStorageCapability;
+import fr.mattmouss.switchrail.other.PosAndZoomStorageCapability;
 import fr.mattmouss.switchrail.setup.*;
 import fr.mattmouss.switchrail.switchblock.*;
 
@@ -47,7 +47,7 @@ public class SwitchRailMod {
     }
 
     public void preInit(FMLCommonSetupEvent evt) {
-        PosStorageCapability.register();
+        PosAndZoomStorageCapability.register();
 
     }
 
@@ -74,7 +74,9 @@ public class SwitchRailMod {
             blockRegistryEvent.getRegistry().register(new Bumper());
             blockRegistryEvent.getRegistry().register(new OneWayPoweredRail());
             blockRegistryEvent.getRegistry().register(new SwitchTerminal());
+            blockRegistryEvent.getRegistry().register(new AxleCounterPoint());
             blockRegistryEvent.getRegistry().register(new OneWayDetectorRail());
+            blockRegistryEvent.getRegistry().register(new AxleCounterRail());
         }
 
 
@@ -93,8 +95,8 @@ public class SwitchRailMod {
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.ONE_WAY_POWERED_RAIL,properties.stacksTo(64).rarity(Rarity.COMMON)).setRegistryName("one_way_powered_rail"));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.SWITCH_TERMINAL,properties).setRegistryName("switch_terminal"));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.ONE_WAY_DETECTOR_RAIL,properties.stacksTo(64).rarity(Rarity.COMMON)).setRegistryName("one_way_detector_rail"));
-
-
+            blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.AXLE_COUNTER,properties.stacksTo(64).rarity(Rarity.COMMON)).setRegistryName("axle_counter_point"));
+            blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.AXLE_COUNTER_RAIL,properties).setRegistryName("axle_counter_rail"));
 
         }
 
@@ -107,6 +109,9 @@ public class SwitchRailMod {
                     .build(null).setRegistryName("bumper"));
             event.getRegistry().register(TileEntityType.Builder.of(TerminalTile::new,ModBlock.SWITCH_TERMINAL)
                     .build(null).setRegistryName("switch_terminal"));
+            event.getRegistry().register(TileEntityType.Builder.of(AxleCounterTile::new,ModBlock.AXLE_COUNTER)
+                    .build(null).setRegistryName("axle_counter_point")
+            );
         }
 
 

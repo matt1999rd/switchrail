@@ -1,7 +1,7 @@
 package fr.mattmouss.switchrail.enum_rail;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.systems.RenderSystem;
+import fr.mattmouss.switchrail.blocks.AxleCounterRail;
 import fr.mattmouss.switchrail.blocks.ControllerBlock;
 import fr.mattmouss.switchrail.blocks.CrossedRail;
 import fr.mattmouss.switchrail.other.Util;
@@ -9,21 +9,16 @@ import fr.mattmouss.switchrail.switchblock.*;
 import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.state.EnumProperty;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.state.properties.DoorHingeSide;
 import net.minecraft.state.properties.RailShape;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector2f;
-
-import java.util.stream.Collectors;
 
 public enum RailType {
     CROSSED_RAIL(10,CrossedRail.class),
+    AXLE_COUNTER(0, AxleCounterRail.class),
     CONTROLLER_BLOCK(11,ControllerBlock.class),
     SIMPLE(12, SwitchStraight.class),
     Y(28,SwitchDoubleTurn.class),
@@ -31,6 +26,7 @@ public enum RailType {
     SINGLE_SLIP(48, SwitchSimpleSlip.class),
     DOUBLE_SLIP(56, SwitchDoubleSlip.class),
     RAIL(0,AbstractRailBlock.class);
+
     final int shift;
     final Class<? extends Block> instanceClass;
     final Vector2f uvDimension = Util.makeVector(32F/256F);
@@ -56,16 +52,54 @@ public enum RailType {
     }
 
     public boolean isSwitch(){
-        return this != CROSSED_RAIL && this != CONTROLLER_BLOCK && this != RAIL;
+        return this != CROSSED_RAIL && this != CONTROLLER_BLOCK && this != RAIL && this != AXLE_COUNTER;
     }
 
+    public boolean canContainCP(){
+        return this.isSwitch() || this == AXLE_COUNTER;
+    }
+
+    public boolean isNormalRail(){
+        return this == RAIL || this == AXLE_COUNTER;
+    }
+
+    // it returns the possible direction where there is no need to add an arrow in counter screen
+
+    public Direction getUnusedDirection(BlockState state){
+        // if all direction are used, it returns null (triple switch and switch double or single slip)
+        if (state.getBlock() instanceof SwitchDoubleSlip || state.getBlock() instanceof SwitchSimpleSlip || state.getBlock() instanceof SwitchTriple){
+            return null;
+        }
+        Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+        // facing in switch double turn correspond to the only side where no rail is heading
+        if (state.getBlock() instanceof SwitchDoubleTurn){
+            return facing;
+        }
+        // facing in switch straight correspond to the straight rail on trail-facing part
+        // therefore the free part is on the right if hinge is left (clockwise) and on the left if hinge is right (counterclockwise)
+        if (state.getBlock() instanceof SwitchStraight){
+            DoorHingeSide doorSide = state.getValue(BlockStateProperties.DOOR_HINGE);
+            return (doorSide == DoorHingeSide.LEFT)? facing.getClockWise() : facing.getCounterClockWise();
+        }
+        throw new IllegalStateException("Expect a switch in this function as blockstate ! This block was given :"+state.getBlock());
+    }
+
+    // return the UV Shift in this order :
+    // 0  1  2  3  4  5  6  7
+    // 8  9  10 11 12 13 14 15
+    // 16 17 18 19 20 21 22 23
+    // 24 25 26 27 28 29 30 31
+    // 32 33 34 35 36 37 38 39
+    // 40 41 42 43 44 45 46 47
+    // 48 49 50 51 52 53 54 55
+    // 56 57 58 59 60 61 62 63
     public int getUVShift(BlockState state){
         int bs_shift = 0;
         if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING) && this != CONTROLLER_BLOCK){
             Direction dir = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
             bs_shift+=dir.get2DDataValue();
         }
-        if (this == RAIL){
+        if (this.isNormalRail()){
             EnumProperty<RailShape> properties = (EnumProperty<RailShape>) state.getProperties().stream().filter(property -> property.getValueClass() == RailShape.class).findAny().get();
             RailShape shape = state.getValue(properties);
             bs_shift+=shape.ordinal();
@@ -112,22 +146,7 @@ public enum RailType {
     public void render(MatrixStack stack, Vector2f posOnBoard, Vector2f iconDimension, BlockState blockState,boolean isEnable){
         int uvShift = this.getUVShift(blockState);
         Vector2f uvOrigin = Util.directMult(new Vector2f(uvShift%8,(float)(uvShift/8)),uvDimension);
-        renderQuad(stack,posOnBoard, Util.add(posOnBoard,iconDimension),uvOrigin,Util.add(uvOrigin,uvDimension),isEnable);
-    }
-
-    private void renderQuad(MatrixStack stack, Vector2f origin, Vector2f end, Vector2f uvOrigin, Vector2f uvEnd,boolean isEnable){
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuilder();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        Matrix4f matrix4f = stack.last().pose();
-        float colorMask = (isEnable) ? 1.0F : 0.5F;
-        RenderSystem.color3f(colorMask,colorMask,colorMask);
-        bufferbuilder.vertex(matrix4f, origin.x, origin.y, (float)0).uv(uvOrigin.x, uvOrigin.y).endVertex();
-        bufferbuilder.vertex(matrix4f, origin.x, end.y, (float)0).uv(uvOrigin.x, uvEnd.y).endVertex();
-        bufferbuilder.vertex(matrix4f, end.x, end.y, (float)0).uv(uvEnd.x, uvEnd.y).endVertex();
-        bufferbuilder.vertex(matrix4f, end.x, origin.y, (float)0).uv(uvEnd.x, uvOrigin.y).endVertex();
-        tessellator.end();
-        RenderSystem.color3f(1.0F,1.0F,1.0F);
+        Util.renderQuad(stack,posOnBoard, Util.add(posOnBoard,iconDimension),uvOrigin,Util.add(uvOrigin,uvDimension),isEnable);
     }
 
 }

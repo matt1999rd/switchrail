@@ -9,37 +9,44 @@ import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 
 
-public class PosStorageCapability
+public class PosAndZoomStorageCapability
 {
-    @CapabilityInject(PosStorage.class)
-    public static Capability<PosStorage> POS_STORAGE_CAPABILITY = null ;
+    @CapabilityInject(PosAndZoomStorage.class)
+    public static Capability<PosAndZoomStorage> POS_AND_ZOOM_STORAGE_CAPABILITY = null ;
 
     public static void register()
     {
-        CapabilityManager.INSTANCE.register(PosStorage.class, new Capability.IStorage<PosStorage>() {
+        CapabilityManager.INSTANCE.register(PosAndZoomStorage.class, new Capability.IStorage<PosAndZoomStorage>() {
 
             @Override
-            public INBT writeNBT(Capability<PosStorage> capability, PosStorage instance, Direction side)
+            public INBT writeNBT(Capability<PosAndZoomStorage> capability, PosAndZoomStorage instance, Direction side)
             {
                 BlockPos pos = instance.getBasePos();
+                Vector2i zoom = instance.getZoom();
                 CompoundNBT nbt = new CompoundNBT();
                 nbt.putInt("x",pos.getX());
                 nbt.putInt("y",pos.getY());
                 nbt.putInt("z",pos.getZ());
+                nbt.putInt("zoomX", zoom.x);
+                nbt.putInt("zoomY", zoom.y);
                 return nbt;
             }
 
             @Override
-            public void readNBT(Capability<PosStorage> capability, PosStorage instance, Direction side, INBT nbt) {
+            public void readNBT(Capability<PosAndZoomStorage> capability, PosAndZoomStorage instance, Direction side, INBT nbt) {
                 if (instance == null)
                     throw new IllegalArgumentException("Can not deserialize to an instance that isn't the default implementation");
                 CompoundNBT compoundNBT = (CompoundNBT)nbt;
                 int posX = compoundNBT.getInt("x");
                 int posY = compoundNBT.getInt("y");
                 int posZ = compoundNBT.getInt("z");
+                int zoomX = compoundNBT.getInt("zoomX");
+                int zoomY = compoundNBT.getInt("zoomY");
                 instance.setBasePos(new BlockPos(posX,posY,posZ));
+                instance.setZoomX(zoomX);
+                instance.setZoomY(zoomY);
             }
-        }, PosStorage::new);
+        }, PosAndZoomStorage::new);
 
     }
 

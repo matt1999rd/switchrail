@@ -4,13 +4,13 @@ package fr.mattmouss.switchrail.gui;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import fr.mattmouss.switchrail.SwitchRailMod;
-import fr.mattmouss.switchrail.blocks.IPosBaseTileEntity;
+import fr.mattmouss.switchrail.blocks.IPosZoomTileEntity;
 import fr.mattmouss.switchrail.enum_rail.RailType;
 import fr.mattmouss.switchrail.network.ChangePosPacket;
+import fr.mattmouss.switchrail.network.ChangeZoomPacket;
 import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.other.Util;
 import fr.mattmouss.switchrail.other.Vector2i;
-import fr.mattmouss.switchrail.switchblock.SwitchDoubleSlip;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -21,14 +21,12 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.World;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -59,6 +57,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     private final NumberTextField[] scaleTextFields = new NumberTextField[2];
 
+    // this pos is fixed and is the position of the block associated with this screen
     protected final BlockPos pos;
 
     public RailScreen(BlockPos pos) {
@@ -105,6 +104,17 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
         addButton(setDefaultPosButton);
 
+        Button setDefaultZoomButton = new Button(relative.x + endInternalGuiX,
+                relative.y + 5,
+                60,
+                20,
+                ITextComponent.nullToEmpty("Reset Zoom"),
+                button -> {
+                    resetZoom();
+                });
+
+        addButton(setDefaultZoomButton);
+
         ZoomInButton = new Button(relative.x + endInternalGuiX,
                 relative.y + 26,
                 50,
@@ -121,8 +131,9 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         addButton(ZoomInButton);
         addButton(ZoomOutButton);
 
-        IPosBaseTileEntity tile = getTileEntity();
+        IPosZoomTileEntity tile = getTileEntity();
         BlockPos basePos = tile.getBasePos();
+        Vector2i zoom = tile.getZoom();
 
         assert minecraft != null;
         for (Direction.Axis axis : Direction.Axis.values()){
@@ -138,8 +149,20 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
             addButton(posTextFields[axis.ordinal()]);
         }
 
-        scaleTextFields[0] = new NumberTextField(minecraft.font,16,relative,endInternalGuiX + 5,69,1,50, s -> {});
-        scaleTextFields[1] = new NumberTextField(minecraft.font,11,relative,endInternalGuiX + 5,91,1,50, s -> decimalPartScaleY = 0.0F);
+        Consumer<String> responderX = s -> {
+            tile.setZoomX(Integer.parseInt(s));
+            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),pos,true));
+        };
+
+        Consumer<String> responderY = s -> {
+            tile.setZoomY(Integer.parseInt(s));
+            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),pos,false));
+            decimalPartScaleY = 0.0F;
+        };
+
+
+        scaleTextFields[0] = new NumberTextField(minecraft.font,zoom.x,relative,endInternalGuiX + 5,69,1,50, responderX);
+        scaleTextFields[1] = new NumberTextField(minecraft.font,zoom.y,relative,endInternalGuiX + 5,91,1,50, responderY);
         addButton(scaleTextFields[0]);
         addButton(scaleTextFields[1]);
 
@@ -261,6 +284,11 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         System.out.println("Zoom "+(sign==-1 ? "-":"+")+" active");
     }
 
+    private void resetZoom(){
+        scaleTextFields[0].setValue(String.valueOf(Util.DEFAULT_ZOOM.x));
+        scaleTextFields[1].setValue(String.valueOf(Util.DEFAULT_ZOOM.y));
+    }
+
     private int getScale(Direction.Axis axis){
         if (axis == Direction.Axis.Z)return -1;
         return Integer.parseInt(scaleTextFields[axis.ordinal()].getValue());
@@ -269,6 +297,16 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     @Override
     public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+        Vector2i relative = getRelative();
+        renderBackground(stack);
+        super.render(stack,mouseX, mouseY, partialTicks);
+        ZoomOutButton.active = (isZoomAuthorised(+1));
+        ZoomInButton.active = (isZoomAuthorised(-1));
+        //function that display all icons on screen
+        displayIcons(stack,relative);
+    }
+
+    public void renderBackground(MatrixStack stack){
         Vector2i relative = getRelative();
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         assert this.minecraft != null;
@@ -279,11 +317,6 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         drawString(stack,"RailSystem",10,10,Color.WHITE);
         drawString(stack,"O",2,20,Color.GREEN);
         drawString(stack,"Position of Block O",12,142,Color.GREEN);
-        super.render(stack,mouseX, mouseY, partialTicks);
-        ZoomOutButton.active = (isZoomAuthorised(+1));
-        ZoomInButton.active = (isZoomAuthorised(-1));
-        //function that display all icons on screen
-        displayIcons(stack,relative);
     }
 
     protected void drawString(MatrixStack stack, String content, int offsetX, int offsetY, Color color){
@@ -295,7 +328,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
     private void displayIcons(MatrixStack stack,Vector2i relative){
         Map<BlockPos, RailType> blockToDisplay = getBlockOnBoard(true);
         assert this.minecraft != null;
-        this.minecraft.getTextureManager().bind(ICONS);
+        this.minecraft.getTextureManager().bind(getIcon());
         blockToDisplay.forEach((pos,type)->{
             Vector2f posOnBoard = getPosOnBoard(pos,relative);
             boolean isDisabled = type.isSwitch() && isDisabled(pos);
@@ -304,7 +337,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         });
     }
 
-    private Map<BlockPos, RailType> getBlockOnBoard(boolean allowNormalRail){
+    protected Map<BlockPos, RailType> getBlockOnBoard(boolean allowNormalRail){
         Map<BlockPos, RailType> map = new HashMap<>();
         BlockPos basePos = getTileEntity().getBasePos();
         int scaleX = getScale(Direction.Axis.X);
@@ -316,7 +349,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 Block block = Objects.requireNonNull(this.minecraft.level).getBlockState(pos).getBlock();
                 RailType type = RailType.getType(block);
                 if (type != null){
-                    if (type.isSwitch() || allowNormalRail) map.put(pos,type);
+                    if (isRelevantRail(type) || allowNormalRail) map.put(pos,type);
                 }
             }
         }
@@ -332,7 +365,9 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 (pos.getZ() >= basePos.getZ() && pos.getZ() < basePos.getZ()+getScale(Direction.Axis.Y));
     }
 
-    protected abstract IPosBaseTileEntity getTileEntity();
+    protected abstract IPosZoomTileEntity getTileEntity();
+
+    protected abstract boolean isRelevantRail(RailType type);
 
     protected Vector2f getPosOnBoard(BlockPos pos, Vector2i relative){
         if (!isOnBoard(pos)){
@@ -351,7 +386,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         );
     }
 
-    private Vector2f getDimensionOnBoard(){
+    protected Vector2f getDimensionOnBoard(){
         return new Vector2f(
                 internalGuiWidth /(getScale(Direction.Axis.X)*1.0F),
                 internalGuiHeight/(getScale(Direction.Axis.Y)*1.0F));
@@ -364,8 +399,8 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         boolean mouseClicked = super.mouseClicked(mouseX,mouseY,button);
         Vector2i relative = getRelative();
         Pair<RailType,BlockPos> data = getSwitchClicked(mouseX,mouseY,relative);
-        if (data != null ) {
-            boolean actionDone = onSwitchClicked(data,mouseX,mouseY,relative,button);
+        if (data != null) {
+            boolean actionDone = onRailClicked(data,mouseX,mouseY,relative,button);
             if (actionDone)Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             return true;
         }
@@ -400,7 +435,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         if (!keyPressed){
             System.out.println(keyChar);
             if (keyChar>261 && keyChar<266){
-                // the different arrow are coded with this character :
+                // the different arrow are coded with this character : (look at GLFW for a list of all keyboard button)
                 // ↑ : 265 -> 2 -> NORTH,
                 // ↓ : 264 -> 3 -> SOUTH,
                 // ← : 263 -> 4 -> WEST,
@@ -412,15 +447,22 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         return keyPressed;
     }
 
-    public abstract boolean onSwitchClicked(Pair<RailType,BlockPos> data, double mouseX, double mouseY, Vector2i relative, int button);
+    public abstract boolean onRailClicked(Pair<RailType,BlockPos> data, double mouseX, double mouseY, Vector2i relative, int button);
 
     public abstract boolean isDisabled(BlockPos pos);
+
+    //function specific to other icons to display in the same grid type
+    protected ResourceLocation getIcon(){
+        return ICONS;
+    }
 
     public BlockState getBlockState(BlockPos pos){
         assert this.minecraft != null;
         return Objects.requireNonNull(this.minecraft.level).getBlockState(pos);
     }
 
+    // this function return the switch clicked if it is a controller or a terminal screen
+    // for counter screen, it is switch and axle counter rail
     protected Pair<RailType,BlockPos> getSwitchClicked(double mouseX, double mouseY, Vector2i relative) {
         Map<BlockPos,RailType> switchOnBoard = getBlockOnBoard(false);
         for (BlockPos pos : switchOnBoard.keySet()){
@@ -432,28 +474,27 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         return null;
     }
 
-    // isRightUpNearestOnScreen function return a boolean that specified if the mouse is nearer from the right up switch part on the screen than the left down switch for tjd switch
-    // if axis of the switch is Z (dir = North), the ld part is in left down, so we use the diagonal from left up to right down as border
-    // its equation is Y = iconHeight/iconLength * X (origin is in left up)
-    // ld is nearer when mouseY > Y (y is from up to down) => mouseY > iconHeight/iconLength * mouseX => iconLength *mouseY > iconHeight * mouseX
-    // if axis of the switch is X (dir = East), the ld part is in right up, so we use the diagonal from left up to right down as border
-    // its equation is Y = iconHeight - iconHeight/iconLength * X (origin is in left up)
-    // ld is nearer when mouseY < Y (y is from up to down) => mouseY < iconHeight - iconHeight/iconLength * mouseX => mouseY * iconLength < iconArea - iconHeight * mouseX
-    // IMPORTANT : all the function is inverted -> we calculate the boolean that indicates if left down is nearest and we return the opposite boolean
+    // function return a boolean that indicates if the mouse is above the 45° diagonal of a single rail icon (descending diagonal if boolean desc is true)
+    // iconLength : iL, iconHeight : iH
+    // if desc is true, we use the diagonal from left up to right down as border
+    // its equation is Y = iH/iL * X (origin is in left up)
+    // mouse is above diagonal when mouseY > Y (y is from up to down) => mouseY > iH/iL * mouseX => iL * mouseY > iH * mouseX
+    // if desc is false, we use the diagonal from left down to right up as border
+    // its equation is Y = iH - iH/iconLength * X (origin is in left up)
+    // mouse is above diagonal when mouseY < Y (y is from up to down) => mouseY < iH - iH/iL * mouseX => mouseY * iL < iH (iL - mouseX)
 
-    protected boolean isRightUpNearestOnScreen(BlockPos pos, Vector2i relative, double mouseX, double mouseY){
+    protected boolean isMouseAbove45degDiagonal(BlockPos pos,boolean desc, Vector2i relative, double mouseX, double mouseY){
         Vector2f posOnBoard = getPosOnBoard(pos,relative);
         float iconLength = (float) internalGuiWidth / getScale(Direction.Axis.X);
         float iconHeight = (float) internalGuiHeight / getScale(Direction.Axis.Y);
         double relativeMouseX = mouseX-posOnBoard.x;
         double relativeMouseY = mouseY-posOnBoard.y;
-        assert this.minecraft != null;
-        World world = this.minecraft.level;
-        assert world != null;
-        BlockState state = world.getBlockState(pos);
-        Direction.Axis axis= state.getValue(BlockStateProperties.HORIZONTAL_AXIS);
-        return (axis == Direction.Axis.Z) ? !(relativeMouseY * iconLength > iconHeight * relativeMouseX) : !(relativeMouseY * iconLength < iconHeight * (iconLength - relativeMouseX));
+        return desc ? relativeMouseY * iconLength < iconHeight * relativeMouseX : relativeMouseY * iconLength < iconHeight * (iconLength - relativeMouseX);
     }
+
+
+
+
 
 }
 

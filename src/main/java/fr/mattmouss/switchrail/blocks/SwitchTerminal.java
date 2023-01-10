@@ -1,5 +1,6 @@
 package fr.mattmouss.switchrail.blocks;
 
+import fr.mattmouss.switchrail.enum_rail.ScreenType;
 import fr.mattmouss.switchrail.network.ActionOnTilePacket;
 import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.network.OpenScreenPacket;
@@ -34,8 +35,6 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class SwitchTerminal extends Block {
-
-    //todo : removing block is not releasing the switch bind to it
     
     public static final BooleanProperty IS_BLOCKED = BooleanProperty.create("is_blocked");
     public SwitchTerminal() {
@@ -107,7 +106,6 @@ public class SwitchTerminal extends Block {
             world.setBlock(pos, state.setValue(BlockStateProperties.POWERED, isPowered), BlockFlags.DEFAULT);
             if (isPowered != wasPowered)actionOnPoweredBSPModification(world, pos, isPowered);
         }
-        //world.neighborChanged(controlDirPos,this,pos);
     }
 
     // done when block is powered or unpowered
@@ -138,7 +136,7 @@ public class SwitchTerminal extends Block {
     public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult rayTraceResult) {
         if (!world.isClientSide){
             //send a packet to client to open screen
-            Networking.INSTANCE.sendTo(new OpenScreenPacket(pos,false),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            Networking.INSTANCE.sendTo(new OpenScreenPacket(pos, ScreenType.TERMINAL),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
         return ActionResultType.SUCCESS;
     }

@@ -2,7 +2,7 @@ package fr.mattmouss.switchrail.gui;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import fr.mattmouss.switchrail.blocks.IPosBaseTileEntity;
+import fr.mattmouss.switchrail.blocks.IPosZoomTileEntity;
 import fr.mattmouss.switchrail.blocks.SwitchTerminal;
 import fr.mattmouss.switchrail.blocks.TerminalTile;
 import fr.mattmouss.switchrail.enum_rail.Corners;
@@ -12,16 +12,17 @@ import fr.mattmouss.switchrail.network.TerminalScreenPacket;
 import fr.mattmouss.switchrail.other.Vector2i;
 import fr.mattmouss.switchrail.switchblock.Switch;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.state.EnumProperty;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextProperties;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.gui.GuiUtils;
 import com.mojang.datafixers.util.Pair;
+import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -33,15 +34,15 @@ public class TerminalScreen extends RailScreen {
     private static final String conflictError = "Conflict Error : one of the switch is already activated by another terminal";
     private int ErrorState = 0;
     private static final int ERROR_SCREEN_WIDTH = 107;
-    private static final int ERROR_SCREEN_BEGINNING_X = 161;
-    private static final int ERROR_SCREEN_BEGINNING_Y = 0;
+    private static final int ERROR_SCREEN_BEGINNING_X = WIDTH - 22;
+    private static final int ERROR_SCREEN_BEGINNING_Y = 77;
 
-    protected TerminalScreen(BlockPos pos) {
+    public TerminalScreen(BlockPos pos) {
         super(pos);
     }
 
     @Override
-    protected IPosBaseTileEntity getTileEntity() {
+    protected IPosZoomTileEntity getTileEntity() {
         assert this.minecraft != null;
         assert this.minecraft.level != null;
         TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
@@ -50,6 +51,20 @@ public class TerminalScreen extends RailScreen {
         }
         assert tileEntity != null;
         throw new IllegalStateException("BlockPos of the terminal screen ("+pos+") is not associated with a correct tile entity (found tile entity of type "+tileEntity.getClass()+" ) !");
+    }
+
+    @Override
+    protected boolean isRelevantRail(RailType type) {
+        return type.isSwitch();
+    }
+
+    @Override
+    public void renderBackground(MatrixStack stack) {
+        super.renderBackground(stack);
+        assert this.minecraft != null;
+        this.minecraft.getTextureManager().bind(POS_BUTTON);
+        Vector2i relative = getRelative();
+        this.blit(stack,relative.x+ERROR_SCREEN_BEGINNING_X,relative.y+ERROR_SCREEN_BEGINNING_Y,0,26,124,26);
     }
 
     @Override
@@ -128,7 +143,7 @@ public class TerminalScreen extends RailScreen {
     }
 
     @Override
-    public boolean onSwitchClicked(Pair<RailType,BlockPos> data, double mouseX, double mouseY, Vector2i relative, int button) {
+    public boolean onRailClicked(Pair<RailType,BlockPos> data, double mouseX, double mouseY, Vector2i relative, int button) {
         TerminalTile tile = (TerminalTile) getTileEntity();
         TerminalScreenPacket packet = null;
         BlockPos switchBlockPos = data.getSecond();
@@ -138,7 +153,7 @@ public class TerminalScreen extends RailScreen {
         //      if flag = 0x01 -> set position of dds knowing that right up was clicked
         //      if flag = 0x11 -> set position of dds knowing that left down was clicked
         byte flag = 0;
-        if (button == 0){
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT){
             //when we click on a switch with the left button of the mouse, we add or modify the switch
             if (isDisabled(switchBlockPos)){
                 tile.addSwitch(switchBlockPos);
@@ -152,7 +167,8 @@ public class TerminalScreen extends RailScreen {
                 EnumProperty<Corners> property = switchBlock.getSwitchPositionProperty();
                 if (data.getFirst() == RailType.DOUBLE_SLIP){
                     flag += 1;
-                    boolean isLeftDownNearest = isRightUpNearestOnScreen(switchBlockPos, relative, mouseX, mouseY);
+                    Direction.Axis axis = state.getValue(BlockStateProperties.HORIZONTAL_AXIS);
+                    boolean isLeftDownNearest = !isMouseAbove45degDiagonal(switchBlockPos, axis == Direction.Axis.Z, relative, mouseX, mouseY);
                     if (isLeftDownNearest)flag += 2;
                     Corners corners = state.getValue(property);
                     tile.setPosition(switchBlockPos,state.setValue(property,corners.moveDssSwitch(isLeftDownNearest)));
@@ -161,7 +177,7 @@ public class TerminalScreen extends RailScreen {
                 }
                 packet = new TerminalScreenPacket(flag,pos,switchBlockPos,SET_SWITCH_ACTION);
             }
-        }else if (button == 1){
+        }else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT){
             //when we click on a switch with the right button of the mouse, we remove the switch if it is present
             if (!isDisabled(switchBlockPos)){
                 tile.removeSwitch(switchBlockPos);
@@ -188,9 +204,5 @@ public class TerminalScreen extends RailScreen {
             return state;
         }
 
-    }
-
-    public static void open(BlockPos pos){
-        Minecraft.getInstance().setScreen(new TerminalScreen(pos));
     }
 }

@@ -1,7 +1,7 @@
 package fr.mattmouss.switchrail.network;
 
 
-import fr.mattmouss.switchrail.blocks.IPosBaseTileEntity;
+import fr.mattmouss.switchrail.blocks.IPosZoomTileEntity;
 import net.minecraft.network.PacketBuffer;
 
 import net.minecraft.util.Direction;
@@ -38,7 +38,7 @@ public class ChangePosPacket {
 
     public void handle(Supplier<NetworkEvent.Context> context){
         context.get().enqueueWork(()->{
-            IPosBaseTileEntity te = (IPosBaseTileEntity) Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(te_pos);
+            IPosZoomTileEntity te = (IPosZoomTileEntity) Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(te_pos);
             assert te != null;
             te.setBasePos(axis,newPos);
         });

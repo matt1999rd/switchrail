@@ -100,6 +100,4 @@ public class SwitchStraight extends Switch {
     protected BlockState updateDir(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull BlockState state, boolean b) {
         return state;
     }
-
-
 }

@@ -4,13 +4,12 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.common.util.INBTSerializable;
 
 import java.util.HashMap;
 import java.util.Map;
 
 
-public class TerminalStorage extends PosStorage implements INBTSerializable<CompoundNBT> {
+public class TerminalStorage extends PosAndZoomStorage {
 
     // the switch map store the position of all switch associated with the byte value of the switch position
     // the byte value is also storing a flag that indicates if the switch was disabled by this tile

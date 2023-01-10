@@ -3,16 +3,18 @@ package fr.mattmouss.switchrail.network;
 import fr.mattmouss.switchrail.SwitchRailMod;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.event.EventNetworkChannel;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 public class Networking {
     public static SimpleChannel INSTANCE;
+    private static final String PROTOCOL_VERSION = "1";
     private static int ID =0;
 
     public static int nextID(){ return ID++; }
 
     public static void registerMessages(){
-        INSTANCE = NetworkRegistry.newSimpleChannel(new ResourceLocation(SwitchRailMod.MOD_ID,"switchrail"),()->"1.0", s -> true, s -> true);
+        INSTANCE = NetworkRegistry.newSimpleChannel(new ResourceLocation(SwitchRailMod.MOD_ID,"switchrail"),()->PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
 
         INSTANCE.registerMessage(nextID(),
                 ChangePosPacket.class,
@@ -39,10 +41,34 @@ public class Networking {
                 OpenScreenPacket::handle);
 
         INSTANCE.registerMessage(nextID(),
+                OpenCounterScreenPacket.class,
+                OpenCounterScreenPacket::toBytes,
+                OpenCounterScreenPacket::new,
+                OpenCounterScreenPacket::handle);
+
+        INSTANCE.registerMessage(nextID(),
                 ActionOnTilePacket.class,
                 ActionOnTilePacket::toBytes,
                 ActionOnTilePacket::new,
                 ActionOnTilePacket::handle);
+
+        INSTANCE.registerMessage(nextID(),
+                UpdateCounterPointPacket.class,
+                UpdateCounterPointPacket::toBytes,
+                UpdateCounterPointPacket::new,
+                UpdateCounterPointPacket::handle);
+
+        INSTANCE.registerMessage(nextID(),
+                SetAxleNumberPacket.class,
+                SetAxleNumberPacket::toBytes,
+                SetAxleNumberPacket::new,
+                SetAxleNumberPacket::handle);
+
+        INSTANCE.registerMessage(nextID(),
+                ChangeZoomPacket.class,
+                ChangeZoomPacket::toBytes,
+                ChangeZoomPacket::new,
+                ChangeZoomPacket::handle);
 
     }
 

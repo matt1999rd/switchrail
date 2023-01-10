@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=true": {
+      "model": "switchrail:block/axle_counter_on"
+    },
+    "powered=false": {
+      "model": "switchrail:block/axle_counter_off"
+    }
+  }
+}

@@ -1,12 +1,11 @@
 package fr.mattmouss.switchrail.blocks;
 
-import fr.mattmouss.switchrail.other.PosStorage;
-import fr.mattmouss.switchrail.other.PosStorageCapability;
+import fr.mattmouss.switchrail.other.PosAndZoomStorage;
+import fr.mattmouss.switchrail.other.PosAndZoomStorageCapability;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
@@ -15,12 +14,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-public class ControllerTile extends TileEntity implements IPosBaseTileEntity {
+public class ControllerTile extends TileEntity implements IPosZoomTileEntity {
     //we cannot store the tile entities because in order to get them we need a world object that is not yet defined when the world is being loaded
 
     //solution : we will store the data of each switch in a new object SwitchData which will be sent little by little via PosStorage
 
-    private final LazyOptional<PosStorage> pos_store = LazyOptional.of(this::createPos).cast();
+    private final LazyOptional<PosAndZoomStorage> pos_store = LazyOptional.of(this::createPos).cast();
     private final Supplier<IllegalArgumentException> storageErrorSupplier = () -> new IllegalArgumentException("no storage found in Controller Tile Entity !");
 
     public ControllerTile() {
@@ -28,29 +27,32 @@ public class ControllerTile extends TileEntity implements IPosBaseTileEntity {
     }
 
 
-    private PosStorage createPos(){
-        return new PosStorage(this.worldPosition);
+    @Nonnull
+    private PosAndZoomStorage createPos(){
+        return new PosAndZoomStorage(this.worldPosition);
     }
 
 
-    public BlockPos getBasePos() {
-        return pos_store.map(PosStorage::getBasePos).orElseThrow(storageErrorSupplier);
+    @Override
+    public LazyOptional<PosAndZoomStorage> getStorage() {
+        return pos_store;
     }
 
     @Override
-    public void setBasePos(Direction.Axis axis, int newPos) {
-        pos_store.ifPresent(posStorage -> posStorage.setBasePos(axis,newPos));
+    public Supplier<IllegalArgumentException> getErrorSupplier() {
+        return storageErrorSupplier;
     }
 
     @Override
-    public void load(BlockState state,CompoundNBT compound) {
+    public void load(@Nonnull BlockState state, CompoundNBT compound) {
         CompoundNBT pos_tag = compound.getCompound("pos");
         pos_store.ifPresent(switchStorage -> ((INBTSerializable<CompoundNBT>)switchStorage).deserializeNBT(pos_tag));
         super.load(state,compound);
     }
 
+    @Nonnull
     @Override
-    public CompoundNBT save(CompoundNBT tag) {
+    public CompoundNBT save(@Nonnull CompoundNBT tag) {
         pos_store.ifPresent(posStorage -> {
             CompoundNBT compoundNBT = ((INBTSerializable<CompoundNBT>)posStorage).serializeNBT();
             tag.put("pos",compoundNBT);
@@ -61,12 +63,13 @@ public class ControllerTile extends TileEntity implements IPosBaseTileEntity {
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        if (cap == PosStorageCapability.POS_STORAGE_CAPABILITY){
+        if (cap == PosAndZoomStorageCapability.POS_AND_ZOOM_STORAGE_CAPABILITY){
             return pos_store.cast();
         }
         return super.getCapability(cap, side);
     }
 
+    @Nonnull
     @Override
     public CompoundNBT getUpdateTag() {
         return this.save(new CompoundNBT());

@@ -11,6 +11,8 @@
 	"block.switchrail.one_way_powered_rail": "Однонаправленный ускоритель рельса",
 	"block.switchrail.switch_terminal": "Терминал управления иглой",
 	"block.switchrail.one_way_detector_rail": "Однонаправленный детектор рельса",
+	"block.switchrail.axle_counter_point": "счетчик осей (зона)",
+	"block.switchrail.axle_counter_rail": "счетчик осей (рельса)",
 
 	"item.switchrail.switch_lever": "рычаг направления"
 }

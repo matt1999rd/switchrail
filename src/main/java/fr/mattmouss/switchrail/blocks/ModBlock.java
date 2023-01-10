@@ -5,7 +5,6 @@ import net.minecraft.tileentity.TileEntityType;
 import net.minecraftforge.registries.ObjectHolder;
 
 public class ModBlock {
-
     @ObjectHolder("switchrail:switch_straight")
 
     public static SwitchStraight SWITCH_STRAIGHT = new SwitchStraight();
@@ -61,6 +60,18 @@ public class ModBlock {
     @ObjectHolder("switchrail:switch_terminal")
 
     public static TileEntityType<TerminalTile> TERMINAL_TILE;
+
+    @ObjectHolder("switchrail:axle_counter_point")
+
+    public static AxleCounterPoint AXLE_COUNTER = new AxleCounterPoint();
+
+    @ObjectHolder("switchrail:axle_counter_rail")
+
+    public static AxleCounterRail AXLE_COUNTER_RAIL = new AxleCounterRail();
+
+    @ObjectHolder("switchrail:axle_counter_point")
+
+    public static TileEntityType<AxleCounterTile> AXLE_COUNTER_TILE;
 
 
 

@@ -1,16 +1,37 @@
 package fr.mattmouss.switchrail.other;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
+import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
+import fr.mattmouss.switchrail.blocks.AxleCounterTile;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.state.properties.DoorHingeSide;
 import net.minecraft.state.properties.RailShape;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 
+import javax.swing.*;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
 public class Util {
+
+    public static final Vector2i DEFAULT_ZOOM = new Vector2i(16,11);
+
     public static Vector2f add(Vector2f... vectors){
         float x = 0.0F;
         float y = 0.0F;
@@ -108,7 +129,7 @@ public class Util {
         return BlockPos.of(value);
     }
 
-    //gives the axis direction that is the motion of the train from the railshape
+    //gives the axis direction that is the motion of the train from the rail-shape
     public static Direction.Axis getRailShapeAxis(RailShape shape){
         switch (shape){
             case EAST_WEST:
@@ -124,7 +145,98 @@ public class Util {
         }
     }
 
+    public static void renderQuad(MatrixStack stack, Vector2f origin, Vector2f end, Vector2f uvOrigin, Vector2f uvEnd, boolean isEnable){
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
+        Matrix4f matrix4f = stack.last().pose();
+        float colorMask = (isEnable) ? 1.0F : 0.5F;
+        RenderSystem.color3f(colorMask,colorMask,colorMask);
+        bufferbuilder.vertex(matrix4f, origin.x, origin.y, (float)0).uv(uvOrigin.x, uvOrigin.y).endVertex();
+        bufferbuilder.vertex(matrix4f, origin.x, end.y, (float)0).uv(uvOrigin.x, uvEnd.y).endVertex();
+        bufferbuilder.vertex(matrix4f, end.x, end.y, (float)0).uv(uvEnd.x, uvEnd.y).endVertex();
+        bufferbuilder.vertex(matrix4f, end.x, origin.y, (float)0).uv(uvEnd.x, uvOrigin.y).endVertex();
+        tessellator.end();
+        RenderSystem.color3f(1.0F,1.0F,1.0F);
+    }
 
+    public static AxleCounterTile getAxleTileEntity(World world, BlockPos pos){
+        TileEntity tile = world.getBlockEntity(pos);
+        if (tile instanceof AxleCounterTile) {
+            return (AxleCounterTile) tile;
+        }else {
+            throw new IllegalStateException("Error on Minecart pass behaviour : Axle counter in question has no axle counter tile ! The tile in question is : "+tile);
+        }
+    }
 
+    // write map function is adding to the compoundNBT nbt the HashMap map with the string tag as UUID,
+    // and it uses generify type T to represent (on switchrail only !) Set<CounterPoint> or UUID.
+    // writeTinNBTConsumer is a function that indicates how to save variable of type T in the given CompoundNBT
+    // this function takes in account if the map is empty
+    // Use it with the readMap function
+    public static <T> void writeMap(CompoundNBT nbt, String tag, HashMap<BlockPos,T> map, BiConsumer<CompoundNBT,T> writeTinNBTConsumer){
+        if (!map.isEmpty()){
+            ListNBT listNBT = new ListNBT();
+            map.forEach(((pos, t) -> {
+                CompoundNBT internNBT = new CompoundNBT();
+                writeTinNBTConsumer.accept(internNBT,t);
+                Util.putPos(internNBT,pos);
+                listNBT.add(internNBT);
+            }));
+            nbt.put(tag,listNBT);
+        }
+    }
+
+    // read map function is extracting from the compoundNBT nbt the HashMap stored with the string tag as UUID,
+    // and it uses generify type T to represent (on switchrail only !) Set<CounterPoint> or UUID.
+    // readTinNBTFunction is a function that indicates how to extract variable of type T in the given CompoundNBT
+    // this function takes in account if the map is empty and return an empty map if it is the case
+    // Use it with the writeMap function
+    public static <T> HashMap<BlockPos,T> readMap(CompoundNBT nbt, String tag, Function<CompoundNBT,T> readTinNBTFunction){
+        HashMap<BlockPos,T> map = new HashMap<>();
+        if (nbt.contains(tag)){
+            INBT inbt = nbt.get(tag);
+            if (!(inbt instanceof ListNBT)){
+                throw new IllegalStateException("Error in loading of nbt : the NBT stored is not a list ! Use this function with writeMap !");
+            }
+            ListNBT listNBT = (ListNBT) (nbt.get(tag));
+            assert listNBT != null;
+            listNBT.forEach(inbt1 -> {
+                if (!(inbt1 instanceof CompoundNBT)){
+                    throw new IllegalStateException("Error in loading of nbt : the NBT stored is not a compound NBT ! Use this function with writeMap !");
+                }
+                CompoundNBT internNBT = (CompoundNBT) inbt1;
+                T t = readTinNBTFunction.apply(internNBT);
+                BlockPos pos = Util.getPosFromNbt(internNBT);
+                map.put(pos,t);
+            });
+        }
+        return map;
+    }
+
+    public static WorldCounterPoints getWorldCounterPoint(World world){
+        return Objects.requireNonNull(world.getServer()).overworld()
+                .getDataStorage().computeIfAbsent(WorldCounterPoints::new,"world_cp");
+    }
+
+    //this function is a string test to know if the shape "shape" has a part in the direction "direction"
+    public static boolean test(RailShape shape,Direction direction){
+        return shape == RailShape.valueOf("ASCENDING_"+direction.getOpposite().getName().toUpperCase()) || shape.getSerializedName().contains(direction.getName());
+    }
+
+    //this function decompose the Rail shape as a pair of two directions (the horizontal direction where the rail is leading the train)
+    public static Pair<Direction,Direction> getDirections(RailShape shape){
+        if (shape == null)return null;
+        if (shape.isAscending()){
+            int n = "ascending_".length();
+            String name = shape.getSerializedName().substring(n);
+            Direction dir = Direction.byName(name);
+            assert dir != null;
+            return Pair.of(dir,dir.getOpposite()); //specificity : if ascending west or ascending south is given, we get west east and south north
+        }
+        String[] str = shape.getSerializedName().split("_");
+        // str has length 2
+        return Pair.of(Direction.byName(str[0]),Direction.byName(str[1]));
+    }
 
 }

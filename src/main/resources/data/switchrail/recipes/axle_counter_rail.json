@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " r ",
+    " a ",
+    "   "
+  ],
+  "key": {
+    "a": {
+      "item": "switchrail:axle_counter_point"
+    },
+    "r": {
+      "item": "minecraft:rail"
+    }
+  },
+  "result": {
+    "item": "switchrail:axle_counter_rail",
+    "count": 5
+  }
+}

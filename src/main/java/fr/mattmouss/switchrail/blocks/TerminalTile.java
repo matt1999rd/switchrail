@@ -2,6 +2,7 @@ package fr.mattmouss.switchrail.blocks;
 
 import com.google.common.collect.Lists;
 import fr.mattmouss.switchrail.enum_rail.Corners;
+import fr.mattmouss.switchrail.other.PosAndZoomStorage;
 import fr.mattmouss.switchrail.other.TerminalStorage;
 import fr.mattmouss.switchrail.switchblock.Switch;
 import net.minecraft.block.BlockState;
@@ -10,17 +11,17 @@ import net.minecraft.state.EnumProperty;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants.BlockFlags;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class TerminalTile extends TileEntity implements ITickableTileEntity,IPosBaseTileEntity {
+public class TerminalTile extends TileEntity implements ITickableTileEntity, IPosZoomTileEntity {
 
     private final LazyOptional<TerminalStorage> storage = LazyOptional.of(this::createStorage).cast();
     private final Supplier<IllegalArgumentException> storageErrorSupplier = () -> new IllegalArgumentException("no storage found in Terminal Tile Entity !");
@@ -29,6 +30,7 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
         super(ModBlock.TERMINAL_TILE);
     }
 
+    @Nonnull
     public TerminalStorage createStorage(){
         return new TerminalStorage(this.worldPosition);
     }
@@ -189,14 +191,14 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
     @Override
     public void load(BlockState state, CompoundNBT nbt) {
         CompoundNBT storage_tag = nbt.getCompound("terminal");
-        storage.ifPresent(switchStorage -> ((INBTSerializable<CompoundNBT>)switchStorage).deserializeNBT(storage_tag));
+        storage.ifPresent(terminalStorage -> ((INBTSerializable<CompoundNBT>)terminalStorage).deserializeNBT(storage_tag));
         super.load(state, nbt);
     }
 
     @Override
     public CompoundNBT save(CompoundNBT nbt) {
-        storage.ifPresent(posStorage -> {
-            CompoundNBT compoundNBT = ((INBTSerializable<CompoundNBT>)posStorage).serializeNBT();
+        storage.ifPresent(terminalStorage -> {
+            CompoundNBT compoundNBT = ((INBTSerializable<CompoundNBT>)terminalStorage).serializeNBT();
             nbt.put("terminal",compoundNBT);
         });
         return super.save(nbt);
@@ -205,17 +207,6 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
     @Override
     public CompoundNBT getUpdateTag() {
         return this.save(new CompoundNBT());
-    }
-
-
-    @Override
-    public BlockPos getBasePos() {
-        return storage.map(TerminalStorage::getBasePos).orElseThrow(storageErrorSupplier);
-    }
-
-    @Override
-    public void setBasePos(Direction.Axis axis, int newPos) {
-        storage.ifPresent(storage->storage.setBasePos(axis,newPos));
     }
 
     public byte getMaxValue(BlockPos pos){
@@ -241,5 +232,15 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity,IPos
         for (BlockPos pos : switchesPos){
             this.blockSwitch(pos);
         }
+    }
+
+    @Override
+    public LazyOptional<PosAndZoomStorage> getStorage() {
+        return storage.cast();
+    }
+
+    @Override
+    public Supplier<IllegalArgumentException> getErrorSupplier() {
+        return storageErrorSupplier;
     }
 }
