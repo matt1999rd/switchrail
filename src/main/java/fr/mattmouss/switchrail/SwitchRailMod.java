@@ -1,10 +1,10 @@
 package fr.mattmouss.switchrail;
 
-
-
-
+import com.dannyandson.tinyredstone.TinyRedstone;
 import fr.mattmouss.switchrail.blocks.*;
+import fr.mattmouss.switchrail.item.AxleCounterPointCellItem;
 import fr.mattmouss.switchrail.item.SwitchLever;
+import fr.mattmouss.switchrail.item.TerminalCellItem;
 import fr.mattmouss.switchrail.other.PosAndZoomStorageCapability;
 import fr.mattmouss.switchrail.setup.*;
 import fr.mattmouss.switchrail.switchblock.*;
@@ -22,6 +22,7 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -92,6 +93,14 @@ public class SwitchRailMod {
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.CONTROLLER_BLOCK,properties).setRegistryName("controller_block"));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.BUMPER,properties).setRegistryName("bumper"));
             blockRegistryEvent.getRegistry().register(new SwitchLever(properties.stacksTo(1)));
+            if (ModList.get().isLoaded("tinyredstone")){
+                TerminalCellItem terminalCellItem = new TerminalCellItem(properties);
+                blockRegistryEvent.getRegistry().register(terminalCellItem);
+                TinyRedstone.registerPanelCell(TerminalCell.class, terminalCellItem);
+                AxleCounterPointCellItem axleCounterPointCellItem = new AxleCounterPointCellItem(properties);
+                blockRegistryEvent.getRegistry().register(axleCounterPointCellItem);
+                TinyRedstone.registerPanelCell(AxleCounterPointCell.class, axleCounterPointCellItem);
+            }
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.ONE_WAY_POWERED_RAIL,properties.stacksTo(64).rarity(Rarity.COMMON)).setRegistryName("one_way_powered_rail"));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.SWITCH_TERMINAL,properties).setRegistryName("switch_terminal"));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.ONE_WAY_DETECTOR_RAIL,properties.stacksTo(64).rarity(Rarity.COMMON)).setRegistryName("one_way_detector_rail"));
