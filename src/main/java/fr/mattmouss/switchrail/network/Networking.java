@@ -3,7 +3,6 @@ package fr.mattmouss.switchrail.network;
 import fr.mattmouss.switchrail.SwitchRailMod;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.network.NetworkRegistry;
-import net.minecraftforge.fml.network.event.EventNetworkChannel;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 public class Networking {
@@ -35,10 +34,16 @@ public class Networking {
                 TerminalScreenPacket::handle);
 
         INSTANCE.registerMessage(nextID(),
-                OpenScreenPacket.class,
-                OpenScreenPacket::toBytes,
-                OpenScreenPacket::new,
-                OpenScreenPacket::handle);
+                OpenControllerScreenPacket.class,
+                OpenControllerScreenPacket::toBytes,
+                OpenControllerScreenPacket::new,
+                OpenControllerScreenPacket::handle);
+
+        INSTANCE.registerMessage(nextID(),
+                OpenTerminalScreenPacket.class,
+                OpenTerminalScreenPacket::toBytes,
+                OpenTerminalScreenPacket::new,
+                OpenTerminalScreenPacket::handle);
 
         INSTANCE.registerMessage(nextID(),
                 OpenCounterScreenPacket.class,

@@ -1,9 +1,9 @@
 package fr.mattmouss.switchrail.blocks;
 
 
-import fr.mattmouss.switchrail.enum_rail.ScreenType;
 import fr.mattmouss.switchrail.network.Networking;
-import fr.mattmouss.switchrail.network.OpenScreenPacket;
+import fr.mattmouss.switchrail.network.OpenControllerScreenPacket;
+import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 
@@ -26,7 +26,9 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkDirection;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 
 public class ControllerBlock extends Block {
@@ -53,17 +55,20 @@ public class ControllerBlock extends Block {
     }
 
     @Override
-    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+    @ParametersAreNonnullByDefault
+    public void setPlacedBy( World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (placer != null){
             worldIn.setBlockAndUpdate(pos,state.setValue(BlockStateProperties.HORIZONTAL_FACING,Util.getDirectionFromEntity(placer,pos,false)));
         }
     }
 
+    @Nonnull
     @Override
+    @ParametersAreNonnullByDefault
     public ActionResultType use(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
         System.out.println("opening gui !!");
         if (!worldIn.isClientSide){
-            Networking.INSTANCE.sendTo(new OpenScreenPacket(pos, ScreenType.CONTROLLER),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            Networking.INSTANCE.sendTo(new OpenControllerScreenPacket(pos),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
         return ActionResultType.SUCCESS;
     }

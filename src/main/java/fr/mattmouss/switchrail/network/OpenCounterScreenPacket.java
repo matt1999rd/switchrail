@@ -28,9 +28,7 @@ public class OpenCounterScreenPacket {
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            Minecraft.getInstance().setScreen(new CounterScreen(acPos, cpInfo));
-        });
+        ctx.get().enqueueWork(() -> Minecraft.getInstance().setScreen(new CounterScreen(acPos, cpInfo)));
         ctx.get().setPacketHandled(true);
     }
 }

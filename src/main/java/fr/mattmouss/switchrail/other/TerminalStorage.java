@@ -5,6 +5,7 @@ import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.math.BlockPos;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +24,12 @@ public class TerminalStorage extends PosAndZoomStorage {
         switchMap = new HashMap<>();
     }
 
+    public TerminalStorage(){
+        super();
+        switchMap = new HashMap<>();
+    }
+
+    @Nonnull
     @Override
     public CompoundNBT serializeNBT() {
         CompoundNBT tag = super.serializeNBT();

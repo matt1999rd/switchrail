@@ -9,7 +9,7 @@ import fr.mattmouss.switchrail.axle_point.CounterPoint;
 import fr.mattmouss.switchrail.axle_point.CounterPointInfo;
 import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
 import fr.mattmouss.switchrail.blocks.AxleCounterTile;
-import fr.mattmouss.switchrail.blocks.IPosZoomTileEntity;
+import fr.mattmouss.switchrail.blocks.IPosZoomStorageHandler;
 import fr.mattmouss.switchrail.enum_rail.RailType;
 import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.network.SetAxleNumberPacket;
@@ -29,6 +29,7 @@ import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.text.ITextComponent;
 import org.lwjgl.glfw.GLFW;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.awt.*;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -60,7 +61,7 @@ public class CounterScreen extends RailScreen{
     }
 
     @Override
-    protected IPosZoomTileEntity getTileEntity() {
+    protected IPosZoomStorageHandler getTileEntity() {
         assert this.minecraft != null;
         assert this.minecraft.level != null;
         TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
@@ -141,6 +142,7 @@ public class CounterScreen extends RailScreen{
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public void renderBackground(MatrixStack stack) {
         super.renderBackground(stack);
         Vector2i relative = getRelative();
@@ -157,6 +159,7 @@ public class CounterScreen extends RailScreen{
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
         Vector2i relative = getRelative();
         super.render(stack, mouseX, mouseY, partialTicks);

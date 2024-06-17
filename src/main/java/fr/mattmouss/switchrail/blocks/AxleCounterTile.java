@@ -13,7 +13,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
-public class AxleCounterTile extends TileEntity implements IPosZoomTileEntity {
+public class AxleCounterTile extends TileEntity implements IPosZoomStorageHandler {
 
     private final LazyOptional<CounterStorage> storage = LazyOptional.of(this::createStorage);
     private final Supplier<IllegalArgumentException> storageErrorSupplier = () -> new IllegalArgumentException("no storage found in Axle Counter Tile Entity !");

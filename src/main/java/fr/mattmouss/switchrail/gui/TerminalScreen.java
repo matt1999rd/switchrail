@@ -1,9 +1,12 @@
 package fr.mattmouss.switchrail.gui;
 
+import com.dannyandson.tinyredstone.api.IPanelCell;
+import com.dannyandson.tinyredstone.blocks.PanelCellPos;
+import com.dannyandson.tinyredstone.blocks.PanelTile;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import fr.mattmouss.switchrail.blocks.IPosZoomTileEntity;
-import fr.mattmouss.switchrail.blocks.SwitchTerminal;
+import fr.mattmouss.switchrail.blocks.ITerminalHandler;
+import fr.mattmouss.switchrail.blocks.TerminalCell;
 import fr.mattmouss.switchrail.blocks.TerminalTile;
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.enum_rail.RailType;
@@ -24,8 +27,10 @@ import net.minecraftforge.fml.client.gui.GuiUtils;
 import com.mojang.datafixers.util.Pair;
 import org.lwjgl.glfw.GLFW;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class TerminalScreen extends RailScreen {
     public static final byte ADD_SWITCH_ACTION = 0;
@@ -36,18 +41,30 @@ public class TerminalScreen extends RailScreen {
     private static final int ERROR_SCREEN_WIDTH = 107;
     private static final int ERROR_SCREEN_BEGINNING_X = WIDTH - 22;
     private static final int ERROR_SCREEN_BEGINNING_Y = 77;
+    private final int index; // -1 if no index is given. Bad usage to my mind but optional is forbidden
 
-    public TerminalScreen(BlockPos pos) {
+    public TerminalScreen(BlockPos pos,int index) {
         super(pos);
+        this.index = index;
     }
 
     @Override
-    protected IPosZoomTileEntity getTileEntity() {
+    protected ITerminalHandler getTileEntity() {
         assert this.minecraft != null;
         assert this.minecraft.level != null;
         TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
         if (tileEntity instanceof TerminalTile){
-            return (TerminalTile) tileEntity;
+            return (ITerminalHandler) tileEntity;
+        }else if (tileEntity instanceof PanelTile){
+            PanelTile panelTile = (PanelTile) tileEntity;
+            if (index == -1) throw new IllegalStateException("Try to open a screen for a tiny switch terminal while no cell position on the panel was given from the server");
+            PanelCellPos cellPos = PanelCellPos.fromIndex(panelTile,index);
+            IPanelCell panelCell = cellPos.getPanelTile().getIPanelCell(cellPos);
+            if (panelCell instanceof TerminalCell){
+                return (ITerminalHandler) panelCell;
+            }
+            throw new IllegalStateException("Panel cell found in the cell pos is not a terminal cell as it was expected !");
+
         }
         assert tileEntity != null;
         throw new IllegalStateException("BlockPos of the terminal screen ("+pos+") is not associated with a correct tile entity (found tile entity of type "+tileEntity.getClass()+" ) !");
@@ -59,6 +76,7 @@ public class TerminalScreen extends RailScreen {
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public void renderBackground(MatrixStack stack) {
         super.renderBackground(stack);
         assert this.minecraft != null;
@@ -68,22 +86,22 @@ public class TerminalScreen extends RailScreen {
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
         super.render(stack, mouseX, mouseY, partialTicks);
         assert this.minecraft != null;
         this.minecraft.getTextureManager().bind(POS_BUTTON);
         Vector2i relative = getRelative();
         this.blit(stack,relative.x+ERROR_SCREEN_BEGINNING_X,relative.y+ERROR_SCREEN_BEGINNING_Y,0,26,124,26);
-        TerminalTile tile = (TerminalTile) getTileEntity();
-        BlockState state = tile.getBlockState();
-        if (state.getValue(BlockStateProperties.POWERED)){
-            if (state.getValue(SwitchTerminal.IS_BLOCKED)){
+        ITerminalHandler tile = getTileEntity();
+        if (tile.isPowered()){
+            if (tile.isBlocked()){
                 tile.tryUnblockTerminal();
             }else {
                 tile.tryBlockTerminal();
             }
         }
-        if (tile.getBlockState().getValue(SwitchTerminal.IS_BLOCKED)){
+        if (tile.isBlocked()){
             renderErrorWithMovement(stack);
             if (isSwitchHoveredDisabled(mouseX, mouseY)){
                 drawHoveringText(stack, mouseX, mouseY);
@@ -144,7 +162,7 @@ public class TerminalScreen extends RailScreen {
 
     @Override
     public boolean onRailClicked(Pair<RailType,BlockPos> data, double mouseX, double mouseY, Vector2i relative, int button) {
-        TerminalTile tile = (TerminalTile) getTileEntity();
+        ITerminalHandler tile = getTileEntity();
         TerminalScreenPacket packet = null;
         BlockPos switchBlockPos = data.getSecond();
         // flag is a byte that indicates boolean used for action on set switch part
@@ -157,7 +175,7 @@ public class TerminalScreen extends RailScreen {
             //when we click on a switch with the left button of the mouse, we add or modify the switch
             if (isDisabled(switchBlockPos)){
                 tile.addSwitch(switchBlockPos);
-                packet = new TerminalScreenPacket(flag,pos,switchBlockPos, ADD_SWITCH_ACTION);
+                packet = new TerminalScreenPacket(flag,pos,index,switchBlockPos, ADD_SWITCH_ACTION);
             }else {
                 BlockState state = tile.getSwitchValue(switchBlockPos);
                 if (!(state.getBlock() instanceof Switch)){
@@ -175,13 +193,13 @@ public class TerminalScreen extends RailScreen {
                 }else {
                     tile.setPosition(switchBlockPos,state.cycle(property));
                 }
-                packet = new TerminalScreenPacket(flag,pos,switchBlockPos,SET_SWITCH_ACTION);
+                packet = new TerminalScreenPacket(flag,pos,index,switchBlockPos,SET_SWITCH_ACTION);
             }
         }else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT){
             //when we click on a switch with the right button of the mouse, we remove the switch if it is present
             if (!isDisabled(switchBlockPos)){
                 tile.removeSwitch(switchBlockPos);
-                packet = new TerminalScreenPacket(flag,pos,switchBlockPos,REMOVE_SWITCH_ACTION);
+                packet = new TerminalScreenPacket(flag,pos,index,switchBlockPos,REMOVE_SWITCH_ACTION);
             }
         }
         if (packet != null)Networking.INSTANCE.sendToServer(packet);
@@ -190,14 +208,14 @@ public class TerminalScreen extends RailScreen {
 
     @Override
     public boolean isDisabled(BlockPos pos) {
-        TerminalTile tile = (TerminalTile) getTileEntity();
+        ITerminalHandler tile = getTileEntity();
         return !tile.hasSwitch(pos);
     }
 
     @Override
     public BlockState getBlockState(BlockPos pos) {
         BlockState state = super.getBlockState(pos);
-        TerminalTile tile = (TerminalTile) getTileEntity();
+        ITerminalHandler tile = getTileEntity();
         if (tile.hasSwitch(pos)){
             return tile.getSwitchValue(pos);
         }else {

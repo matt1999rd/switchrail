@@ -1,10 +1,11 @@
 package fr.mattmouss.switchrail.blocks;
 
-import fr.mattmouss.switchrail.enum_rail.ScreenType;
 import fr.mattmouss.switchrail.network.ActionOnTilePacket;
 import fr.mattmouss.switchrail.network.Networking;
-import fr.mattmouss.switchrail.network.OpenScreenPacket;
+import fr.mattmouss.switchrail.network.OpenControllerScreenPacket;
+import fr.mattmouss.switchrail.network.OpenTerminalScreenPacket;
 import fr.mattmouss.switchrail.other.Util;
+import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -31,8 +32,11 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants.BlockFlags;
 import net.minecraftforge.fml.network.NetworkDirection;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
+import java.util.Optional;
 
 public class SwitchTerminal extends Block {
     
@@ -43,7 +47,9 @@ public class SwitchTerminal extends Block {
         this.registerDefaultState(this.defaultBlockState().setValue(BlockStateProperties.POWERED, Boolean.FALSE).setValue(IS_BLOCKED,false));
     }
 
+    @Nonnull
     @Override
+    @ParametersAreNonnullByDefault
     public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
         return VoxelShapes.or(
                 Block.box(0,0,0,16,1,16), //bottom part
@@ -57,6 +63,7 @@ public class SwitchTerminal extends Block {
     public BlockState getStateForPlacement(BlockItemUseContext blockItemUseContext) {
         BlockPos pos = blockItemUseContext.getClickedPos();
         LivingEntity placer = blockItemUseContext.getPlayer();
+        assert placer != null;
         Direction direction = Util.getDirectionFromEntity(placer,pos,true);
         return this.defaultBlockState().setValue(BlockStateProperties.POWERED, blockItemUseContext.getLevel()
                 .getSignal(blockItemUseContext.getClickedPos(),getCommandDirection(direction)) > 0).setValue(BlockStateProperties.HORIZONTAL_FACING,direction);
@@ -64,7 +71,7 @@ public class SwitchTerminal extends Block {
 
     // used for modification of redstone wire already placed nearby
     @Override
-    public void onPlace(BlockState state, World world, BlockPos pos, BlockState p_220082_4_, boolean b) {
+    public void onPlace(BlockState state, World world, BlockPos pos, @Nonnull BlockState p_220082_4_, boolean b) {
         Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         world.updateNeighborsAt(pos.relative(getCommandDirection(facing)),this);
         world.updateNeighborsAt(pos.relative(getControlDirection(facing)),this);
@@ -88,7 +95,9 @@ public class SwitchTerminal extends Block {
     }
 
     // this function remove the block if the block below it is not a solid block
+    @Nonnull
     @Override
+    @ParametersAreNonnullByDefault
     public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
         if (facing == Direction.DOWN && !facingState.getMaterial().blocksMotion()){
             return Blocks.AIR.defaultBlockState();
@@ -97,6 +106,7 @@ public class SwitchTerminal extends Block {
     }
 
     // used to power the terminal block if nearby block can power it
+    @ParametersAreNonnullByDefault
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos pos1, boolean bd) {
         Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         boolean wasPowered = state.getValue(BlockStateProperties.POWERED);
@@ -132,16 +142,19 @@ public class SwitchTerminal extends Block {
 
     // open the GUI when block is clicked
 
+    @Nonnull
     @Override
+    @ParametersAreNonnullByDefault
     public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult rayTraceResult) {
         if (!world.isClientSide){
             //send a packet to client to open screen
-            Networking.INSTANCE.sendTo(new OpenScreenPacket(pos, ScreenType.TERMINAL),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            Networking.INSTANCE.sendTo(new OpenTerminalScreenPacket(pos, -1),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
         return ActionResultType.SUCCESS;
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public int getSignal(BlockState state, IBlockReader reader, BlockPos pos, Direction dir) {
         Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         boolean isBlocked = state.getValue(IS_BLOCKED);
@@ -159,6 +172,7 @@ public class SwitchTerminal extends Block {
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public void onRemove(BlockState state, World world, BlockPos pos, BlockState futureState, boolean bool) {
         if (state.is(futureState.getBlock())) {
             super.onRemove(state, world, pos, futureState, bool);

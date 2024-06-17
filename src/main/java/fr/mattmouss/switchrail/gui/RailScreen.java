@@ -4,7 +4,7 @@ package fr.mattmouss.switchrail.gui;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import fr.mattmouss.switchrail.SwitchRailMod;
-import fr.mattmouss.switchrail.blocks.IPosZoomTileEntity;
+import fr.mattmouss.switchrail.blocks.IPosZoomStorageHandler;
 import fr.mattmouss.switchrail.enum_rail.RailType;
 import fr.mattmouss.switchrail.network.ChangePosPacket;
 import fr.mattmouss.switchrail.network.ChangeZoomPacket;
@@ -28,6 +28,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.text.ITextComponent;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,9 +110,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 60,
                 20,
                 ITextComponent.nullToEmpty("Reset Zoom"),
-                button -> {
-                    resetZoom();
-                });
+                button -> resetZoom());
 
         addButton(setDefaultZoomButton);
 
@@ -131,7 +130,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         addButton(ZoomInButton);
         addButton(ZoomOutButton);
 
-        IPosZoomTileEntity tile = getTileEntity();
+        IPosZoomStorageHandler tile = getTileEntity();
         BlockPos basePos = tile.getBasePos();
         Vector2i zoom = tile.getZoom();
 
@@ -143,7 +142,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
             int highLimit = (axis == Direction.Axis.Y) ? 255 : ((chunkPos + 12 + 1) << 4) - 1;
             Consumer<String> responder = s -> {
                 tile.setBasePos(axis,Integer.parseInt(s));
-                Networking.INSTANCE.sendToServer(new ChangePosPacket(Integer.parseInt(s),pos,axis));
+                Networking.INSTANCE.sendToServer(new ChangePosPacket(Integer.parseInt(s),tile,axis));
             };
             posTextFields[axis.ordinal()] = new NumberTextField(minecraft.font,basePos.get(axis),relative,16+axis.ordinal()*44,151,lowLimit,highLimit,responder);
             addButton(posTextFields[axis.ordinal()]);
@@ -151,12 +150,12 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
         Consumer<String> responderX = s -> {
             tile.setZoomX(Integer.parseInt(s));
-            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),pos,true));
+            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),tile,true));
         };
 
         Consumer<String> responderY = s -> {
             tile.setZoomY(Integer.parseInt(s));
-            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),pos,false));
+            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),tile,false));
             decimalPartScaleY = 0.0F;
         };
 
@@ -296,6 +295,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
 
     @Override
+    @ParametersAreNonnullByDefault
     public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
         Vector2i relative = getRelative();
         renderBackground(stack);
@@ -306,6 +306,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         displayIcons(stack,relative);
     }
 
+    @ParametersAreNonnullByDefault
     public void renderBackground(MatrixStack stack){
         Vector2i relative = getRelative();
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -365,7 +366,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 (pos.getZ() >= basePos.getZ() && pos.getZ() < basePos.getZ()+getScale(Direction.Axis.Y));
     }
 
-    protected abstract IPosZoomTileEntity getTileEntity();
+    protected abstract IPosZoomStorageHandler getTileEntity();
 
     protected abstract boolean isRelevantRail(RailType type);
 

@@ -8,7 +8,7 @@ import net.minecraftforge.common.util.LazyOptional;
 
 import java.util.function.Supplier;
 
-public interface IPosZoomTileEntity {
+public interface IPosZoomStorageHandler {
     // this interface is used in all rail screen block (terminal, controller, axle counter)
     LazyOptional<PosAndZoomStorage> getStorage();
     Supplier<IllegalArgumentException> getErrorSupplier();

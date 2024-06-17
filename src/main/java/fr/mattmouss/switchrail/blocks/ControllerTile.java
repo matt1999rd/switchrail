@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-public class ControllerTile extends TileEntity implements IPosZoomTileEntity {
+public class ControllerTile extends TileEntity implements IPosZoomStorageHandler {
     //we cannot store the tile entities because in order to get them we need a world object that is not yet defined when the world is being loaded
 
     //solution : we will store the data of each switch in a new object SwitchData which will be sent little by little via PosStorage

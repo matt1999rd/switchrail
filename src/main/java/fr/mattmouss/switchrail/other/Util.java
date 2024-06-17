@@ -1,10 +1,14 @@
 package fr.mattmouss.switchrail.other;
 
+import com.dannyandson.tinyredstone.api.IPanelCell;
+import com.dannyandson.tinyredstone.blocks.PanelCellPos;
+import com.dannyandson.tinyredstone.blocks.PanelTile;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
 import fr.mattmouss.switchrail.blocks.AxleCounterTile;
+import fr.mattmouss.switchrail.blocks.IPosZoomStorageHandler;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -21,12 +25,15 @@ import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.network.NetworkEvent;
 
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Util {
 
@@ -237,6 +244,25 @@ public class Util {
         String[] str = shape.getSerializedName().split("_");
         // str has length 2
         return Pair.of(Direction.byName(str[0]),Direction.byName(str[1]));
+    }
+
+    //this function extract the IPosZoomStorageHandler from the context object of a packet send through network
+    public static IPosZoomStorageHandler extractHandler(Supplier<NetworkEvent.Context> context, BlockPos tePos, int index){
+        TileEntity te = Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(tePos);
+        if (index != -1){
+            if (te instanceof PanelTile){
+                PanelTile panelTile = (PanelTile)te;
+                IPanelCell panelCell = panelTile.getIPanelCell(PanelCellPos.fromIndex(panelTile,index));
+                if (panelCell instanceof IPosZoomStorageHandler){
+                    return (IPosZoomStorageHandler) panelCell;
+                }
+            }
+        }else {
+            if (te instanceof IPosZoomStorageHandler){
+                return (IPosZoomStorageHandler) te;
+            }
+        }
+        throw new IllegalStateException("Expect either a tile entity or a cell object (within the panel tile entity) with pos and zoom storage !");
     }
 
 }

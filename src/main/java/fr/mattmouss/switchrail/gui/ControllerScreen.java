@@ -2,7 +2,7 @@ package fr.mattmouss.switchrail.gui;
 
 import com.mojang.datafixers.util.Pair;
 import fr.mattmouss.switchrail.blocks.ControllerTile;
-import fr.mattmouss.switchrail.blocks.IPosZoomTileEntity;
+import fr.mattmouss.switchrail.blocks.IPosZoomStorageHandler;
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.enum_rail.RailType;
 import fr.mattmouss.switchrail.network.ChangeSwitchPacket;
@@ -27,7 +27,7 @@ public class ControllerScreen extends RailScreen implements IGuiEventListener {
         super(pos);
     }
 
-    protected IPosZoomTileEntity getTileEntity(){
+    protected IPosZoomStorageHandler getTileEntity(){
         assert this.minecraft != null;
         assert this.minecraft.level != null;
         TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);

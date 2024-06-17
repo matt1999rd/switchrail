@@ -1,46 +1,59 @@
 package fr.mattmouss.switchrail.network;
 
 
-import fr.mattmouss.switchrail.blocks.IPosZoomTileEntity;
+import fr.mattmouss.switchrail.blocks.IPosZoomStorageHandler;
+import fr.mattmouss.switchrail.blocks.ISRCell;
+import fr.mattmouss.switchrail.other.Util;
 import net.minecraft.network.PacketBuffer;
 
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 
-import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class ChangePosPacket {
     private final int newPos;
     private final Direction.Axis axis;
-    private final BlockPos te_pos;
+    private final BlockPos tePos;
+    private final int index; // -1 if no index is given. Bad usage to my mind but optional is forbidden
 
 
     public ChangePosPacket(PacketBuffer buf) {
         newPos = buf.readInt();
         axis = buf.readEnum(Direction.Axis.class);
-        te_pos = buf.readBlockPos();
+        tePos = buf.readBlockPos();
+        index = buf.readInt();
     }
 
-    public ChangePosPacket(int newPos,BlockPos pos,Direction.Axis axis){
+    public ChangePosPacket(int newPos,IPosZoomStorageHandler tile,Direction.Axis axis){
         this.newPos = newPos;
         this.axis = axis;
-        te_pos = pos;
+        if (tile instanceof TileEntity){
+            tePos = ((TileEntity) tile).getBlockPos();
+            index = -1;
+        }else if (tile instanceof ISRCell){
+            tePos = ((ISRCell) tile).getPanelPos();
+            index = ((ISRCell) tile).getCellIndex();
+        }else {
+            throw new IllegalStateException("Expect only tile entity or cell object in this packet");
+        }
     }
 
     public void toBytes(PacketBuffer buf){
         buf.writeInt(newPos);
         buf.writeEnum(axis);
-        buf.writeBlockPos(te_pos);
+        buf.writeBlockPos(tePos);
+        buf.writeInt(index);
     }
 
     public void handle(Supplier<NetworkEvent.Context> context){
         context.get().enqueueWork(()->{
-            IPosZoomTileEntity te = (IPosZoomTileEntity) Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(te_pos);
-            assert te != null;
-            te.setBasePos(axis,newPos);
+            IPosZoomStorageHandler handler = Util.extractHandler(context,tePos,index);
+            handler.setBasePos(axis,newPos);
         });
         context.get().setPacketHandled(true);
     }
