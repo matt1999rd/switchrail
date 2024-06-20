@@ -1,26 +1,16 @@
 package fr.mattmouss.switchrail.blocks;
 
-import com.google.common.collect.Lists;
-import fr.mattmouss.switchrail.enum_rail.Corners;
-import fr.mattmouss.switchrail.other.PosAndZoomStorage;
 import fr.mattmouss.switchrail.other.TerminalStorage;
-import fr.mattmouss.switchrail.switchblock.Switch;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.state.EnumProperty;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.common.util.Constants.BlockFlags;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 
 public class TerminalTile extends TileEntity implements ITickableTileEntity, ITerminalHandler {

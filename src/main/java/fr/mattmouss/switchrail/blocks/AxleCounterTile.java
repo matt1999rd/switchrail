@@ -13,7 +13,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
-public class AxleCounterTile extends TileEntity implements IPosZoomStorageHandler {
+public class AxleCounterTile extends TileEntity implements ICounterHandler {
 
     private final LazyOptional<CounterStorage> storage = LazyOptional.of(this::createStorage);
     private final Supplier<IllegalArgumentException> storageErrorSupplier = () -> new IllegalArgumentException("no storage found in Axle Counter Tile Entity !");
@@ -25,11 +25,6 @@ public class AxleCounterTile extends TileEntity implements IPosZoomStorageHandle
     @Nonnull
     public CounterStorage createStorage(){
         return new CounterStorage(this.worldPosition);
-    }
-
-    @Override
-    public LazyOptional<PosAndZoomStorage> getStorage() {
-        return storage.cast();
     }
 
     @Override
@@ -60,37 +55,20 @@ public class AxleCounterTile extends TileEntity implements IPosZoomStorageHandle
         return this.save(new CompoundNBT());
     }
 
-    public int getAxle(){
-        return storage.map(CounterStorage::getAxle).orElseThrow(storageErrorSupplier);
-    }
-
-    public boolean isFree(){
-        return storage.map(CounterStorage::isFree).orElseThrow(storageErrorSupplier);
-    }
-
-    public void freePoint() {
-        storage.ifPresent(CounterStorage::freePoint);
-        setPowered(true);
-    }
-
-    public void addAxle() {
-        if (isFree()){
-            setPowered(false);
-        }
-        storage.ifPresent(CounterStorage::addAxle);
-    }
-
-    public void removeAxle() {
-        storage.ifPresent(CounterStorage::removeAxle);
-        if (isFree()){
-            setPowered(true);
-        }
-    }
-
     public void setPowered(boolean powered){
         BlockState state= this.getBlockState();
         assert level != null;
         level.setBlock(worldPosition,state.setValue(BlockStateProperties.POWERED,powered), Constants.BlockFlags.DEFAULT);
+    }
+
+    @Override
+    public LazyOptional<CounterStorage> getCounterStorage() {
+        return storage;
+    }
+
+    @Override
+    public TileEntity getTile() {
+        return this;
     }
 }
 

@@ -13,6 +13,11 @@ public class CounterStorage extends PosAndZoomStorage {
          this.axle_number = 0;
     }
 
+    public CounterStorage(){
+        super();
+        this.axle_number = 0;
+    }
+
     public int getAxle(){
          return axle_number;
      }

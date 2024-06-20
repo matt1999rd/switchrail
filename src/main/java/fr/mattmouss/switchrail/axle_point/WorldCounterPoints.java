@@ -30,23 +30,28 @@ public class WorldCounterPoints extends WorldSavedData {
     }
 
 
-    public void doActionServerSide(BlockPos cpPos,int type, Optional<CounterPoint> counterPoint, Optional<BlockPos> acPos, Optional<Direction> side) {
+    public void doActionServerSide(BlockPos cpPos,int type, CounterPoint counterPoint, BlockPos acPos, Direction side,int index) {
         Supplier<IllegalStateException> errorIfOptionalIsNull = () -> new IllegalStateException("Error in Packet transmission. Type is not inline with optional obtained !");
         switch (type){
             case ADD_COUNTER_PT:
-                this.addCounterPoint(cpPos,counterPoint.orElseThrow(errorIfOptionalIsNull));
+                if (counterPoint == null) throw errorIfOptionalIsNull.get();
+                this.addCounterPoint(cpPos,counterPoint);
                 break;
             case REMOVE_COUNTER_PT:
-                this.removeCounterPoint(cpPos,acPos.orElseThrow(errorIfOptionalIsNull),side.orElseThrow(errorIfOptionalIsNull));
+                if (acPos == null || side == null) throw errorIfOptionalIsNull.get();
+                this.removeCounterPoint(cpPos,acPos,side,index);
                 break;
             case TOGGLE_COUNTING:
-                this.toggleCounting(cpPos,acPos.orElseThrow(errorIfOptionalIsNull),side.orElseThrow(errorIfOptionalIsNull));
+                if (acPos == null || side == null) throw errorIfOptionalIsNull.get();
+                this.toggleCounting(cpPos,acPos,side,index);
                 break;
             case TOGGLE_DIRECTION:
-                this.toggleDirection(cpPos,acPos.orElseThrow(errorIfOptionalIsNull),side.orElseThrow(errorIfOptionalIsNull));
+                if (acPos == null || side == null) throw errorIfOptionalIsNull.get();
+                this.toggleDirection(cpPos,acPos,side,index);
                 break;
             case TOGGLE_BIDIRECTIONAL:
-                this.toggleBidirectional(cpPos,acPos.orElseThrow(errorIfOptionalIsNull),side.orElseThrow(errorIfOptionalIsNull));
+                if (acPos == null || side == null) throw errorIfOptionalIsNull.get();
+                this.toggleBidirectional(cpPos,acPos,side,index);
                 break;
             default:
                 throw new IllegalStateException("Expect a type within the 5 numbers possible : 0 to 4. We get the number : "+type);
@@ -63,8 +68,8 @@ public class WorldCounterPoints extends WorldSavedData {
         this.setDirty();
     }
 
-    public void removeCounterPoint(BlockPos cpPos,BlockPos acPos, Direction side){
-        CounterPoint point = getCounterPoint(cpPos,acPos,side);
+    public void removeCounterPoint(BlockPos cpPos,BlockPos acPos, Direction side,int index){
+        CounterPoint point = getCounterPoint(cpPos,acPos,side,index);
         if (counterPoints.containsKey(cpPos)) {
             counterPoints.get(cpPos).remove(point);
             if (counterPoints.get(cpPos).isEmpty()){
@@ -76,24 +81,24 @@ public class WorldCounterPoints extends WorldSavedData {
         }
     }
 
-    public void toggleDirection(BlockPos cpPos,BlockPos acPos, Direction side) {
-        CounterPoint point = getCounterPoint(cpPos,acPos,side);
+    public void toggleDirection(BlockPos cpPos,BlockPos acPos, Direction side,int index) {
+        CounterPoint point = getCounterPoint(cpPos,acPos,side,index);
         counterPoints.get(cpPos).remove(point);
         point.toggleDirection();
         counterPoints.get(cpPos).add(point);
         this.setDirty();
     }
 
-    public void toggleCounting(BlockPos cpPos,BlockPos acPos, Direction side) {
-        CounterPoint point = getCounterPoint(cpPos,acPos,side);
+    public void toggleCounting(BlockPos cpPos,BlockPos acPos, Direction side,int index) {
+        CounterPoint point = getCounterPoint(cpPos,acPos,side,index);
         counterPoints.get(cpPos).remove(point);
         point.toggleCounting();
         counterPoints.get(cpPos).add(point);
         this.setDirty();
     }
 
-    public void toggleBidirectional(BlockPos cpPos, BlockPos acPos, Direction side){
-        CounterPoint point = getCounterPoint(cpPos,acPos,side);
+    public void toggleBidirectional(BlockPos cpPos, BlockPos acPos, Direction side,int index){
+        CounterPoint point = getCounterPoint(cpPos,acPos,side,index);
         counterPoints.get(cpPos).remove(point);
         point.toggleBidirectional();
         counterPoints.get(cpPos).add(point);
@@ -110,8 +115,8 @@ public class WorldCounterPoints extends WorldSavedData {
                 ).collect(Collectors.toList());
     }
 
-    public CounterPoint getCounterPoint(BlockPos cpPos,BlockPos acPos, Direction side){
-        Optional<CounterPoint> opt = counterPoints.get(cpPos).stream().filter(cp -> cp.test(acPos,side)).findAny();
+    public CounterPoint getCounterPoint(BlockPos cpPos,BlockPos acPos, Direction side,int index){
+        Optional<CounterPoint> opt = counterPoints.get(cpPos).stream().filter(cp -> cp.test(acPos,side,index)).findAny();
         return opt.orElseThrow(() -> new IllegalStateException("Try to find a counterPoint that doesn't exists !"));
     }
 
@@ -138,10 +143,10 @@ public class WorldCounterPoints extends WorldSavedData {
     }
 
     // only use to make client side map for rendering
-    public CounterPointInfo getCPInfo(BlockPos acPos) {
+    public CounterPointInfo getCPInfo(BlockPos acPos,int index) {
         CounterPointInfo cpInfo = new CounterPointInfo();
         counterPoints.forEach((bp,cpSet) ->{
-            Set<CounterPoint> cps = cpSet.stream().filter(cp->cp.getACPos().equals(acPos)).collect(Collectors.toSet());
+            Set<CounterPoint> cps = cpSet.stream().filter(cp->cp.testPos(acPos,index)).collect(Collectors.toSet());
             cpInfo.addCounterPoints(bp,cps);
         });
         return cpInfo;

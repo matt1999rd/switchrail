@@ -9,22 +9,31 @@ import net.minecraft.util.math.BlockPos;
 
 // a unique counting point (WARNING : work in both direction if bidirectional is true)
 public class CounterPoint {
-    private final BlockPos acPos ;
+    private final BlockPos acPos;
+    private final int index;  // -1 if no index is given. Bad usage to my mind but optional is forbidden
     private final Config config;
 
-    public CounterPoint(BlockPos pos,Config config){
+    public CounterPoint(BlockPos pos,Config config,int index){
          this.acPos = pos;
          this.config = config;
+         this.index = index;
     }
 
-    public CounterPoint(BlockPos pos, Direction direction, boolean addAxle, boolean fromOutside, boolean bidirectional){
+    public CounterPoint(BlockPos pos,int index, Direction direction, boolean addAxle, boolean fromOutside, boolean bidirectional){
         this.acPos = pos;
         this.config = new Config(direction, addAxle, fromOutside, bidirectional);
+        this.index = index;
     }
 
     public BlockPos getACPos(){
         return acPos;
     }
+
+    public boolean testPos(BlockPos acPos,int index){
+        return this.acPos.equals(acPos) && (this.index == index);
+    }
+
+    public int getIndex(){ return index; }
 
     public Direction getCountingDirection(){
         return config.getCountingDirection();
@@ -46,24 +55,27 @@ public class CounterPoint {
 
     public void toggleBidirectional() { config.toggleBidirectional(); }
 
-    public boolean test(BlockPos pos,Direction side){
-        return this.getACPos().equals(pos) && this.getCountingDirection().equals(side);
+    public boolean test(BlockPos pos,Direction side,int index){
+        return this.testPos(pos,index) && this.getCountingDirection().equals(side);
     }
 
     public CounterPoint(PacketBuffer buf){
         this.acPos = buf.readBlockPos();
         this.config = new Config(buf);
+        this.index = buf.readInt();
     }
 
     public void toBytes(PacketBuffer buf){
         buf.writeBlockPos(acPos);
         config.toBytes(buf);
+        buf.writeInt(index);
     }
 
     public INBT write(){
         CompoundNBT nbt = new CompoundNBT();
         Util.putPos(nbt,acPos);
         config.write(nbt);
+        nbt.putInt("index",index);
         return nbt;
     }
 
@@ -71,7 +83,13 @@ public class CounterPoint {
         CompoundNBT nbt1 = (CompoundNBT) nbt;
         BlockPos pos = Util.getPosFromNbt(nbt1);
         Config config = Config.read(nbt1);
-        return new CounterPoint(pos,config);
+        int index;
+        if (nbt1.contains("index")){
+            index = nbt1.getInt("index");
+        }else {
+            index = -1;
+        }
+        return new CounterPoint(pos,config,index);
     }
 
     public static class Config{

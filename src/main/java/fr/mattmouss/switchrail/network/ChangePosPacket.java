@@ -12,7 +12,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 
-import java.util.Optional;
+
 import java.util.function.Supplier;
 
 public class ChangePosPacket {
@@ -29,17 +29,17 @@ public class ChangePosPacket {
         index = buf.readInt();
     }
 
-    public ChangePosPacket(int newPos,IPosZoomStorageHandler tile,Direction.Axis axis){
+    public ChangePosPacket(int newPos,IPosZoomStorageHandler handler,Direction.Axis axis){
         this.newPos = newPos;
         this.axis = axis;
-        if (tile instanceof TileEntity){
-            tePos = ((TileEntity) tile).getBlockPos();
+        if (handler instanceof TileEntity){
+            tePos = ((TileEntity) handler).getBlockPos();
             index = -1;
-        }else if (tile instanceof ISRCell){
-            tePos = ((ISRCell) tile).getPanelPos();
-            index = ((ISRCell) tile).getCellIndex();
+        }else if (handler instanceof ISRCell){
+            tePos = ((ISRCell) handler).getPanelPos();
+            index = ((ISRCell) handler).getCellIndex();
         }else {
-            throw new IllegalStateException("Expect only tile entity or cell object in this packet");
+            throw new IllegalStateException("Expect only handler (tile entity or cell object) in this packet");
         }
     }
 

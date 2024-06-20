@@ -30,7 +30,6 @@ import org.lwjgl.glfw.GLFW;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Optional;
 
 public class TerminalScreen extends RailScreen {
     public static final byte ADD_SWITCH_ACTION = 0;
@@ -49,7 +48,7 @@ public class TerminalScreen extends RailScreen {
     }
 
     @Override
-    protected ITerminalHandler getTileEntity() {
+    protected ITerminalHandler getHandler() {
         assert this.minecraft != null;
         assert this.minecraft.level != null;
         TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
@@ -93,7 +92,7 @@ public class TerminalScreen extends RailScreen {
         this.minecraft.getTextureManager().bind(POS_BUTTON);
         Vector2i relative = getRelative();
         this.blit(stack,relative.x+ERROR_SCREEN_BEGINNING_X,relative.y+ERROR_SCREEN_BEGINNING_Y,0,26,124,26);
-        ITerminalHandler tile = getTileEntity();
+        ITerminalHandler tile = getHandler();
         if (tile.isPowered()){
             if (tile.isBlocked()){
                 tile.tryUnblockTerminal();
@@ -162,7 +161,7 @@ public class TerminalScreen extends RailScreen {
 
     @Override
     public boolean onRailClicked(Pair<RailType,BlockPos> data, double mouseX, double mouseY, Vector2i relative, int button) {
-        ITerminalHandler tile = getTileEntity();
+        ITerminalHandler tile = getHandler();
         TerminalScreenPacket packet = null;
         BlockPos switchBlockPos = data.getSecond();
         // flag is a byte that indicates boolean used for action on set switch part
@@ -208,14 +207,14 @@ public class TerminalScreen extends RailScreen {
 
     @Override
     public boolean isDisabled(BlockPos pos) {
-        ITerminalHandler tile = getTileEntity();
+        ITerminalHandler tile = getHandler();
         return !tile.hasSwitch(pos);
     }
 
     @Override
     public BlockState getBlockState(BlockPos pos) {
         BlockState state = super.getBlockState(pos);
-        ITerminalHandler tile = getTileEntity();
+        ITerminalHandler tile = getHandler();
         if (tile.hasSwitch(pos)){
             return tile.getSwitchValue(pos);
         }else {

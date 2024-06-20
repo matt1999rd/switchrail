@@ -1,5 +1,8 @@
 package fr.mattmouss.switchrail.gui;
 
+import com.dannyandson.tinyredstone.api.IPanelCell;
+import com.dannyandson.tinyredstone.blocks.PanelCellPos;
+import com.dannyandson.tinyredstone.blocks.PanelTile;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.datafixers.util.Pair;
@@ -8,8 +11,7 @@ import fr.mattmouss.switchrail.axle_point.CPFlag;
 import fr.mattmouss.switchrail.axle_point.CounterPoint;
 import fr.mattmouss.switchrail.axle_point.CounterPointInfo;
 import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
-import fr.mattmouss.switchrail.blocks.AxleCounterTile;
-import fr.mattmouss.switchrail.blocks.IPosZoomStorageHandler;
+import fr.mattmouss.switchrail.blocks.*;
 import fr.mattmouss.switchrail.enum_rail.RailType;
 import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.network.SetAxleNumberPacket;
@@ -49,10 +51,12 @@ public class CounterScreen extends RailScreen{
     private static final int AXLE_SCREEN_Y_BEGINNING = HEIGHT - additionalScreenDimension.y;
     private ImageButton removeAxleButton;
     private final CounterPointInfo cpInfo;
+    private final int index; // -1 if no index is given. Bad usage to my mind but optional is forbidden
 
-    public CounterScreen(BlockPos pos, CounterPointInfo cpInfo) {
+    public CounterScreen(BlockPos pos, CounterPointInfo cpInfo,int index) {
         super(pos);
         this.cpInfo = cpInfo;
+        this.index = index;
     }
 
     @Override
@@ -61,12 +65,22 @@ public class CounterScreen extends RailScreen{
     }
 
     @Override
-    protected IPosZoomStorageHandler getTileEntity() {
+    protected ICounterHandler getHandler() {
         assert this.minecraft != null;
         assert this.minecraft.level != null;
         TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
         if (tileEntity instanceof AxleCounterTile){
-            return (AxleCounterTile) tileEntity;
+            return (ICounterHandler) tileEntity;
+        }else if (tileEntity instanceof PanelTile) {
+            PanelTile panelTile = (PanelTile) tileEntity;
+            if (index == -1) throw new IllegalStateException("Try to open a screen for a tiny switch terminal while no cell position on the panel was given from the server");
+            PanelCellPos cellPos = PanelCellPos.fromIndex(panelTile,index);
+            IPanelCell panelCell = cellPos.getPanelTile().getIPanelCell(cellPos); // There is a strange bug here : the panel cell changes between init function and this function call
+            if (panelCell instanceof AxleCounterPointCell){
+                return (ICounterHandler) panelCell;
+            }else {
+                throw new IllegalStateException("Found a tiny block that is not an axle counter. It is a cell of type : "+ (panelCell == null ? "null" : panelCell.getClass()));
+            }
         }
         String teType = (tileEntity == null) ? "null" : String.valueOf(tileEntity.getClass());
         throw new IllegalStateException("BlockPos of the axle counter screen ("+pos+") is not associated with a correct tile entity (found tile entity of type "+teType+" ) !");
@@ -111,8 +125,8 @@ public class CounterScreen extends RailScreen{
                 buttonLength,button0Height,
                 xText+2*buttonLength,yText,button0Height,
                 POS_BUTTON, button -> freePoint());
-        AxleCounterTile tile = (AxleCounterTile) getTileEntity();
-        if (tile.isFree()){
+        ICounterHandler handler = getHandler();
+        if (handler.isFree()){
             removeAxleButton.visible = false;
         }
         addButton(addAxleButton);
@@ -121,24 +135,24 @@ public class CounterScreen extends RailScreen{
     }
 
     private void addAxle(){
-        AxleCounterTile tile = (AxleCounterTile) getTileEntity();
-        tile.addAxle();
+        ICounterHandler handler = getHandler();
+        handler.addAxle();
         if (!removeAxleButton.visible) removeAxleButton.visible = true;
-        Networking.INSTANCE.sendToServer(new SetAxleNumberPacket(this.pos,1));
+        Networking.INSTANCE.sendToServer(new SetAxleNumberPacket(this.pos,1,index));
     }
 
     private void removeAxle(){
-        AxleCounterTile tile = (AxleCounterTile) getTileEntity();
-        tile.removeAxle();
-        if (tile.isFree())removeAxleButton.visible = false;
-        Networking.INSTANCE.sendToServer(new SetAxleNumberPacket(this.pos,-1));
+        ICounterHandler handler = getHandler();
+        handler.removeAxle();
+        if (handler.isFree())removeAxleButton.visible = false;
+        Networking.INSTANCE.sendToServer(new SetAxleNumberPacket(this.pos,-1,index));
     }
 
     private void freePoint(){
-        AxleCounterTile tile = (AxleCounterTile) getTileEntity();
-        tile.freePoint();
+        ICounterHandler handler = getHandler();
+        handler.freePoint();
         removeAxleButton.visible = false;
-        Networking.INSTANCE.sendToServer(new SetAxleNumberPacket(this.pos,0));
+        Networking.INSTANCE.sendToServer(new SetAxleNumberPacket(this.pos,0,index));
     }
 
     @Override
@@ -150,8 +164,8 @@ public class CounterScreen extends RailScreen{
         this.minecraft.getTextureManager().bind(POS_BUTTON);
         this.blit(stack,relative.x+AXLE_SCREEN_X_BEGINNING,relative.y+AXLE_SCREEN_Y_BEGINNING,
                 0,offsetV,additionalScreenDimension.x,additionalScreenDimension.y);
-        AxleCounterTile tile = (AxleCounterTile) getTileEntity();
-        int axleNumber = tile.getAxle();
+        ICounterHandler handler = getHandler();
+        int axleNumber = handler.getAxle();
         drawString(stack,axleNumber+"",
                 AXLE_SCREEN_X_BEGINNING + 10,
                 AXLE_SCREEN_Y_BEGINNING + 10,
@@ -340,24 +354,24 @@ public class CounterScreen extends RailScreen{
                     return false;
                 }else {
                     if (isCTRLDown){
-                        Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos, WorldCounterPoints.TOGGLE_COUNTING,null,acPos,side));
+                        Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos, WorldCounterPoints.TOGGLE_COUNTING,null,acPos,side,index));
                         cpInfo.toggleCounting(cpPos,side);
                     }else if (isShiftDown) {
-                        Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos,WorldCounterPoints.TOGGLE_BIDIRECTIONAL,null,acPos,side));
+                        Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos,WorldCounterPoints.TOGGLE_BIDIRECTIONAL,null,acPos,side,index));
                         cpInfo.toggleBiDirectional(cpPos,side);
                     }else {
-                        Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos,WorldCounterPoints.TOGGLE_DIRECTION,null,acPos,side));
+                        Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos,WorldCounterPoints.TOGGLE_DIRECTION,null,acPos,side,index));
                         cpInfo.toggleDirection(cpPos,side);
                     }
                     return true;
                 }
             }else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT){
                 if (!cpInfo.containsKey(cpPos,side)){
-                    CounterPoint counterPoint = new CounterPoint(acPos,side,false,false,false);
-                    Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos,WorldCounterPoints.ADD_COUNTER_PT,counterPoint,null,null));
+                    CounterPoint counterPoint = new CounterPoint(acPos,index,side,false,false,false);
+                    Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos,WorldCounterPoints.ADD_COUNTER_PT,counterPoint,null,null,index));
                     cpInfo.addCounterPoint(cpPos,counterPoint);
                 }else {
-                    Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos,WorldCounterPoints.REMOVE_COUNTER_PT,null,acPos,side));
+                    Networking.INSTANCE.sendToServer(new UpdateCounterPointPacket(cpPos,WorldCounterPoints.REMOVE_COUNTER_PT,null,acPos,side,index));
                     cpInfo.removeCounterPoint(cpPos,side);
                 }
             }

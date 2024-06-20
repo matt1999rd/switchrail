@@ -1,10 +1,5 @@
 package fr.mattmouss.switchrail.blocks;
 
-import fr.mattmouss.switchrail.axle_point.CounterPointInfo;
-import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
-import fr.mattmouss.switchrail.network.Networking;
-import fr.mattmouss.switchrail.network.OpenCounterScreenPacket;
-import fr.mattmouss.switchrail.other.Util;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -25,12 +20,11 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkDirection;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class AxleCounterPoint extends Block {
+public class AxleCounterPoint extends Block implements ICounterPoint {
     public AxleCounterPoint() {
         super(Properties.of(Material.METAL).strength(2.0F).noOcclusion());
         setRegistryName("axle_counter_point");
@@ -47,8 +41,7 @@ public class AxleCounterPoint extends Block {
     public void onRemove(BlockState oldState, @Nonnull World world, @Nonnull BlockPos pos, BlockState actualState, boolean p_196243_5_) {
         // this function is done only server side
         if (actualState.getBlock() != oldState.getBlock()) {
-            WorldCounterPoints worldCP = Util.getWorldCounterPoint(world);
-            worldCP.onACRemove(pos);
+            this.onACRemove(world,pos);
             super.onRemove(oldState, world, pos, actualState, p_196243_5_);
         }
     }
@@ -98,15 +91,9 @@ public class AxleCounterPoint extends Block {
     @Override
     public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult rayTraceResult) {
         if (!world.isClientSide){
-            CounterPointInfo cpInfo = getCPInfo(world,pos.immutable());
-            //send a packet to client to open screen
-            Networking.INSTANCE.sendTo(new OpenCounterScreenPacket(pos, cpInfo),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            this.onBlockClicked(world,pos, (ServerPlayerEntity) player,-1);
         }
         return ActionResultType.SUCCESS;
     }
 
-    private CounterPointInfo getCPInfo(World world, BlockPos acPos){
-        WorldCounterPoints worldCP = Util.getWorldCounterPoint(world);
-        return worldCP.getCPInfo(acPos);
-    }
 }

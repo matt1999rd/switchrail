@@ -27,7 +27,7 @@ public class ControllerScreen extends RailScreen implements IGuiEventListener {
         super(pos);
     }
 
-    protected IPosZoomStorageHandler getTileEntity(){
+    protected IPosZoomStorageHandler getHandler(){
         assert this.minecraft != null;
         assert this.minecraft.level != null;
         TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);

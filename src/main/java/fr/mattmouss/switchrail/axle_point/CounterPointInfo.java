@@ -10,7 +10,7 @@ import java.util.Set;
 
 public class CounterPointInfo {
     private final HashMap<Pair<BlockPos, Direction>,Byte> info = new HashMap<>();
-
+    // Counter point info is an object just for the GUI to save the same state as the world saved data state (we can hope !)
     public CounterPointInfo(){
     }
 

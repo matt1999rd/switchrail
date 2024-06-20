@@ -130,9 +130,9 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         addButton(ZoomInButton);
         addButton(ZoomOutButton);
 
-        IPosZoomStorageHandler tile = getTileEntity();
-        BlockPos basePos = tile.getBasePos();
-        Vector2i zoom = tile.getZoom();
+        IPosZoomStorageHandler handler = getHandler();
+        BlockPos basePos = handler.getBasePos();
+        Vector2i zoom = handler.getZoom();
 
         assert minecraft != null;
         for (Direction.Axis axis : Direction.Axis.values()){
@@ -141,21 +141,21 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
             int lowLimit = (axis == Direction.Axis.Y) ? 0 : (chunkPos - 12) << 4;
             int highLimit = (axis == Direction.Axis.Y) ? 255 : ((chunkPos + 12 + 1) << 4) - 1;
             Consumer<String> responder = s -> {
-                tile.setBasePos(axis,Integer.parseInt(s));
-                Networking.INSTANCE.sendToServer(new ChangePosPacket(Integer.parseInt(s),tile,axis));
+                getHandler().setBasePos(axis,Integer.parseInt(s));
+                Networking.INSTANCE.sendToServer(new ChangePosPacket(Integer.parseInt(s),getHandler(),axis));
             };
             posTextFields[axis.ordinal()] = new NumberTextField(minecraft.font,basePos.get(axis),relative,16+axis.ordinal()*44,151,lowLimit,highLimit,responder);
             addButton(posTextFields[axis.ordinal()]);
         }
 
         Consumer<String> responderX = s -> {
-            tile.setZoomX(Integer.parseInt(s));
-            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),tile,true));
+            handler.setZoomX(Integer.parseInt(s));
+            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),handler,true));
         };
 
         Consumer<String> responderY = s -> {
-            tile.setZoomY(Integer.parseInt(s));
-            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),tile,false));
+            handler.setZoomY(Integer.parseInt(s));
+            Networking.INSTANCE.sendToServer(new ChangeZoomPacket(Integer.parseInt(s),handler,false));
             decimalPartScaleY = 0.0F;
         };
 
@@ -340,7 +340,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     protected Map<BlockPos, RailType> getBlockOnBoard(boolean allowNormalRail){
         Map<BlockPos, RailType> map = new HashMap<>();
-        BlockPos basePos = getTileEntity().getBasePos();
+        BlockPos basePos = getHandler().getBasePos();
         int scaleX = getScale(Direction.Axis.X);
         int scaleY = getScale(Direction.Axis.Y);
         for (int i=0;i<scaleX;i++){
@@ -360,13 +360,13 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
     //indicates if a block with position pos is to be rendered on screen
 
     protected boolean isOnBoard(BlockPos pos) {
-        BlockPos basePos = getTileEntity().getBasePos();
+        BlockPos basePos = getHandler().getBasePos();
         return (pos.getY() == basePos.getY()) &&
                 (pos.getX() >= basePos.getX() && pos.getX() < basePos.getX()+getScale(Direction.Axis.X)) && // the blockPos corresponds to the point at the top left of the screen
                 (pos.getZ() >= basePos.getZ() && pos.getZ() < basePos.getZ()+getScale(Direction.Axis.Y));
     }
 
-    protected abstract IPosZoomStorageHandler getTileEntity();
+    protected abstract IPosZoomStorageHandler getHandler();
 
     protected abstract boolean isRelevantRail(RailType type);
 
@@ -381,7 +381,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                         getDimensionOnBoard(),
                         Util.subtract(
                                 Util.makeVector(pos),
-                                Util.makeVector(getTileEntity().getBasePos())
+                                Util.makeVector(getHandler().getBasePos())
                         )
                 )
         );

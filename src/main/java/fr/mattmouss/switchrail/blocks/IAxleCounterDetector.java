@@ -1,5 +1,7 @@
 package fr.mattmouss.switchrail.blocks;
 
+import com.dannyandson.tinyredstone.blocks.PanelCellPos;
+import com.dannyandson.tinyredstone.blocks.PanelTile;
 import com.mojang.datafixers.util.Pair;
 import fr.mattmouss.switchrail.axle_point.CounterPoint;
 import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
@@ -9,19 +11,22 @@ import fr.mattmouss.switchrail.other.Util;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
 import net.minecraft.state.properties.RailShape;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.PacketDistributor;
+import org.lwjgl.system.CallbackI;
 
 import java.util.List;
 
 public interface IAxleCounterDetector {
 
+    // test of the registering of cart in the world data
     default boolean isMinecartComing(WorldCounterPoints worldCP, BlockPos pos, AbstractMinecartEntity cart){
         boolean res = !worldCP.getCart(pos).isPresent();
-        if (res)worldCP.onCartPassing(pos,cart.getUUID());
+        if (res)worldCP.onCartPassing(pos,cart.getUUID());  // add cart uuid
         return res;
     }
 
@@ -69,17 +74,30 @@ public interface IAxleCounterDetector {
         if (!sideCPoints.isEmpty()){
             sideCPoints.forEach(cp->{
                 BlockPos acPos = cp.getACPos();
-                AxleCounterTile acTile = Util.getAxleTileEntity(world,acPos);
+                int index = cp.getIndex();
                 boolean directionMatch = cp.countIfMinecartArrive() == !isLeaving;
                 boolean addAxle = (!cp.isAddingAxle() && cp.isBidirectional() && !directionMatch) ||
                         cp.isAddingAxle() && (!cp.isBidirectional() || directionMatch);
+                ICounterHandler handler;
+                if (index == -1){
+                    handler = Util.getAxleTileEntity(world,acPos);
+                }else{
+                    TileEntity te = world.getBlockEntity(acPos);
+                    if (te instanceof PanelTile){
+                        PanelTile panelTile = (PanelTile) te;
+                        handler = (ICounterHandler) panelTile.getIPanelCell(PanelCellPos.fromIndex(panelTile,index));
+                    }else {
+                        throw new IllegalStateException("Index is not -1 and we get a tile entity which is not a panel tile !");
+                    }
+                }
+                assert handler != null;
                 if (addAxle){
-                    acTile.addAxle();
+                    handler.addAxle();
                     // we add or remove axle server side => need to add or remove axle client side as well
-                    Networking.INSTANCE.send(PacketDistributor.ALL.noArg(), new SetAxleNumberPacket(acPos, 1));
+                    Networking.INSTANCE.send(PacketDistributor.ALL.noArg(), new SetAxleNumberPacket(acPos, 1,index));
                 }else {
-                    acTile.removeAxle();
-                    Networking.INSTANCE.send(PacketDistributor.ALL.noArg(), new SetAxleNumberPacket(acPos, -1));
+                    handler.removeAxle();
+                    Networking.INSTANCE.send(PacketDistributor.ALL.noArg(), new SetAxleNumberPacket(acPos, -1,index));
                 }
             });
         }
