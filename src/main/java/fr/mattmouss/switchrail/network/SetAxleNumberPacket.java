@@ -5,16 +5,15 @@ import com.dannyandson.tinyredstone.blocks.PanelTile;
 import fr.mattmouss.switchrail.blocks.AxleCounterTile;
 import fr.mattmouss.switchrail.blocks.ICounterHandler;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkDirection;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
-import java.awt.*;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -30,13 +29,13 @@ public class SetAxleNumberPacket {
         this.index = index;
     }
 
-    public SetAxleNumberPacket(PacketBuffer buf) {
+    public SetAxleNumberPacket(FriendlyByteBuf buf) {
         this.acPos = buf.readBlockPos();
         this.axleOffset = buf.readInt();
         this.index = buf.readInt();
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeBlockPos(acPos);
         buf.writeInt(axleOffset);
         buf.writeInt(index);
@@ -44,7 +43,7 @@ public class SetAxleNumberPacket {
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            World world;
+            Level world;
             if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_SERVER){
                 world = Objects.requireNonNull(ctx.get().getSender()).getLevel();
                 handlePacket(world,acPos,axleOffset,index);
@@ -60,8 +59,8 @@ public class SetAxleNumberPacket {
         ctx.get().setPacketHandled(true);
     }
 
-    public static void handlePacket(World world,BlockPos acPos,int axleOffset,int index){
-        TileEntity tile = world.getBlockEntity(acPos);
+    public static void handlePacket(Level world,BlockPos acPos,int axleOffset,int index){
+        BlockEntity tile = world.getBlockEntity(acPos);
         ICounterHandler handler;
         if (tile instanceof AxleCounterTile){
             if (index != -1) {

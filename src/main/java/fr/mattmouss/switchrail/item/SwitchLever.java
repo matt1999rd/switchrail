@@ -1,22 +1,24 @@
 package fr.mattmouss.switchrail.item;
 
 import fr.mattmouss.switchrail.switchblock.Switch;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 
 
 
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.item.Rarity;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.Rarity;
 
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.BlockPos;
 
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 
+
+import net.minecraft.world.item.Item.Properties;
 
 public class SwitchLever extends Item {
 
@@ -31,13 +33,13 @@ public class SwitchLever extends Item {
 
 
     @Override
-    public ActionResultType useOn(ItemUseContext context) {
+    public InteractionResult useOn(UseOnContext context) {
 
         BlockPos pos=context.getClickedPos();
 
-        World world = context.getLevel();
+        Level world = context.getLevel();
 
-        PlayerEntity player= context.getPlayer();
+        Player player= context.getPlayer();
 
         Block clickedBlock = world.getBlockState(pos).getBlock();
 
@@ -47,14 +49,14 @@ public class SwitchLever extends Item {
             if (state != null && state.getValue(BlockStateProperties.ENABLED)) {
                 System.out.println("item lever use successfully");
                 sw.updatePoweredState(world, state, pos,player,7,false);
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
-            return ActionResultType.FAIL;
+            return InteractionResult.FAIL;
 
         }
 
 
-        return ActionResultType.FAIL;
+        return InteractionResult.FAIL;
     }
 
 }

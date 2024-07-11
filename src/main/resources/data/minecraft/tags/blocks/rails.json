@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "switchrail:switch_straight",
+    "switchrail:switch_tjd",
+    "switchrail:double_turn_switch",
+    "switchrail:switch_tjs",
+    "switchrail:triple_switch",
+    "switchrail:axle_counter_rail",
+    "switchrail:crossed_rail",
+    "switchrail:one_way_powered_rail",
+    "switchrail:one_way_detector_rail"
+   ]
+}

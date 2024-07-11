@@ -3,12 +3,12 @@ package fr.mattmouss.switchrail.network;
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.switchblock.Switch;
 import fr.mattmouss.switchrail.switchblock.SwitchDoubleSlip;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -23,19 +23,19 @@ public class ChangeSwitchPacket {
         sw_pos = pos;
         flag = flag_in;
     }
-    public ChangeSwitchPacket(PacketBuffer buf){
+    public ChangeSwitchPacket(FriendlyByteBuf buf){
         sw_pos = buf.readBlockPos();
         flag = buf.readByte();
     }
 
-    public void toBytes(PacketBuffer buf){
+    public void toBytes(FriendlyByteBuf buf){
         buf.writeBlockPos(sw_pos);
         buf.writeByte(flag);
     }
 
     public void handle(Supplier<NetworkEvent.Context> context){
         context.get().enqueueWork(()->{
-            ServerWorld world = Objects.requireNonNull(context.get().getSender()).getLevel();
+            ServerLevel world = Objects.requireNonNull(context.get().getSender()).getLevel();
             BlockState state = world.getBlockState(sw_pos);
             Block block = state.getBlock();
             if (block instanceof Switch) {

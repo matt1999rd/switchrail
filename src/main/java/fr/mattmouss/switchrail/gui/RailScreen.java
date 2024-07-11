@@ -1,7 +1,7 @@
 package fr.mattmouss.switchrail.gui;
 
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import fr.mattmouss.switchrail.SwitchRailMod;
 import fr.mattmouss.switchrail.blocks.IPosZoomStorageHandler;
@@ -12,21 +12,21 @@ import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.other.Util;
 import fr.mattmouss.switchrail.other.Vector2i;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.SimpleSound;
-import net.minecraft.client.gui.IGuiEventListener;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector2f;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.network.chat.Component;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.awt.*;
@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public abstract class RailScreen extends Screen implements IGuiEventListener {
+public abstract class RailScreen extends Screen implements GuiEventListener {
 
     private final ResourceLocation GUI = new ResourceLocation(SwitchRailMod.MOD_ID, "textures/gui/controller_gui.png");
     protected final ResourceLocation POS_BUTTON = new ResourceLocation(SwitchRailMod.MOD_ID,"textures/gui/posbutton.png");
@@ -43,7 +43,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     protected static final int WIDTH = 227;
     protected static final int HEIGHT = 175;
-    private static final Vector2f internalGuiDimension = new Vector2f(13,22);
+    private static final Vec2 internalGuiDimension = new Vec2(13,22);
     private static final int internalGuiWidth = 146;
     private static final int internalGuiHeight = 99;
     private static final int endInternalGuiX = 161;
@@ -54,7 +54,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     private Button ZoomOutButton;
 
-    private final TextFieldWidget[] posTextFields = new TextFieldWidget[3];
+    private final EditBox[] posTextFields = new EditBox[3];
 
     private final NumberTextField[] scaleTextFields = new NumberTextField[2];
 
@@ -62,7 +62,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
     protected final BlockPos pos;
 
     public RailScreen(BlockPos pos) {
-        super(ITextComponent.nullToEmpty("RailSystem"));
+        super(Component.nullToEmpty("RailSystem"));
         this.pos = pos;
     }
 
@@ -87,48 +87,48 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 relative.y + 122,
                 146,
                 20,
-                ITextComponent.nullToEmpty("Done"),
+                Component.nullToEmpty("Done"),
                 button -> onClose());
 
-        addButton(doneButton);
+        addRenderableWidget(doneButton);
 
         Button setDefaultPosButton = new Button(relative.x + endInternalGuiX,
                 relative.y + 106,
                 60,
                 20,
-                ITextComponent.nullToEmpty("Reset Pos"),
+                Component.nullToEmpty("Reset Pos"),
                 button -> {
                     for (Direction.Axis axis : Direction.Axis.values()){
                         changePos(pos.get(axis),axis);
                     }
                 });
 
-        addButton(setDefaultPosButton);
+        addRenderableWidget(setDefaultPosButton);
 
         Button setDefaultZoomButton = new Button(relative.x + endInternalGuiX,
                 relative.y + 5,
                 60,
                 20,
-                ITextComponent.nullToEmpty("Reset Zoom"),
+                Component.nullToEmpty("Reset Zoom"),
                 button -> resetZoom());
 
-        addButton(setDefaultZoomButton);
+        addRenderableWidget(setDefaultZoomButton);
 
         ZoomInButton = new Button(relative.x + endInternalGuiX,
                 relative.y + 26,
                 50,
                 20,
-                ITextComponent.nullToEmpty("Zoom+"),
+                Component.nullToEmpty("Zoom+"),
                 button -> Zoom(-1));
         ZoomOutButton = new Button(relative.x + endInternalGuiX,
                 relative.y + 47,
                 50,
                 20,
-                ITextComponent.nullToEmpty("Zoom-"),
+                Component.nullToEmpty("Zoom-"),
                 button -> Zoom(+1));
 
-        addButton(ZoomInButton);
-        addButton(ZoomOutButton);
+        addRenderableWidget(ZoomInButton);
+        addRenderableWidget(ZoomOutButton);
 
         IPosZoomStorageHandler handler = getHandler();
         BlockPos basePos = handler.getBasePos();
@@ -145,7 +145,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 Networking.INSTANCE.sendToServer(new ChangePosPacket(Integer.parseInt(s),getHandler(),axis));
             };
             posTextFields[axis.ordinal()] = new NumberTextField(minecraft.font,basePos.get(axis),relative,16+axis.ordinal()*44,151,lowLimit,highLimit,responder);
-            addButton(posTextFields[axis.ordinal()]);
+            addRenderableWidget(posTextFields[axis.ordinal()]);
         }
 
         Consumer<String> responderX = s -> {
@@ -162,8 +162,8 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
         scaleTextFields[0] = new NumberTextField(minecraft.font,zoom.x,relative,endInternalGuiX + 5,69,1,50, responderX);
         scaleTextFields[1] = new NumberTextField(minecraft.font,zoom.y,relative,endInternalGuiX + 5,91,1,50, responderY);
-        addButton(scaleTextFields[0]);
-        addButton(scaleTextFields[1]);
+        addRenderableWidget(scaleTextFields[0]);
+        addRenderableWidget(scaleTextFields[1]);
 
 
         //Definition of all button that shift the origin position
@@ -236,12 +236,12 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
                 diffText,
                 POS_BUTTON,
                 buttons -> changePos(Direction.DOWN));
-        addButton(northButton);
-        addButton(southButton);
-        addButton(westButton);
-        addButton(eastButton);
-        addButton(upButton);
-        addButton(downButton);
+        addRenderableWidget(northButton);
+        addRenderableWidget(southButton);
+        addRenderableWidget(westButton);
+        addRenderableWidget(eastButton);
+        addRenderableWidget(upButton);
+        addRenderableWidget(downButton);
 
     }
 
@@ -296,7 +296,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     @Override
     @ParametersAreNonnullByDefault
-    public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+    public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
         Vector2i relative = getRelative();
         renderBackground(stack);
         super.render(stack,mouseX, mouseY, partialTicks);
@@ -307,11 +307,11 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
     }
 
     @ParametersAreNonnullByDefault
-    public void renderBackground(MatrixStack stack){
+    public void renderBackground(PoseStack stack){
         Vector2i relative = getRelative();
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.clearColor(1.0F, 1.0F, 1.0F, 1.0F);
         assert this.minecraft != null;
-        this.minecraft.getTextureManager().bind(GUI);
+        RenderSystem.setShaderTexture(0,GUI);
         this.blit(stack,relative.x, relative.y, 0, 0, WIDTH, HEIGHT);
         drawString(stack, " X ",endInternalGuiX + 19,83,Color.WHITE);
         //display of origin block position
@@ -320,18 +320,18 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         drawString(stack,"Position of Block O",12,142,Color.GREEN);
     }
 
-    protected void drawString(MatrixStack stack, String content, int offsetX, int offsetY, Color color){
+    protected void drawString(PoseStack stack, String content, int offsetX, int offsetY, Color color){
         Vector2i relative = getRelative();
         assert minecraft != null;
         drawString(stack,minecraft.font,content,relative.x+offsetX,relative.y+offsetY,color.getRGB());
     }
 
-    private void displayIcons(MatrixStack stack,Vector2i relative){
+    private void displayIcons(PoseStack stack,Vector2i relative){
         Map<BlockPos, RailType> blockToDisplay = getBlockOnBoard(true);
         assert this.minecraft != null;
-        this.minecraft.getTextureManager().bind(getIcon());
+        RenderSystem.setShaderTexture(0,getIcon());
         blockToDisplay.forEach((pos,type)->{
-            Vector2f posOnBoard = getPosOnBoard(pos,relative);
+            Vec2 posOnBoard = getPosOnBoard(pos,relative);
             boolean isDisabled = type.isSwitch() && isDisabled(pos);
             BlockState state = getBlockState(pos);
             type.render(stack,posOnBoard,getDimensionOnBoard(), state,!isDisabled);
@@ -370,9 +370,9 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
 
     protected abstract boolean isRelevantRail(RailType type);
 
-    protected Vector2f getPosOnBoard(BlockPos pos, Vector2i relative){
+    protected Vec2 getPosOnBoard(BlockPos pos, Vector2i relative){
         if (!isOnBoard(pos)){
-            return Vector2f.ZERO;
+            return Vec2.ZERO;
         }
         return Util.add(
                 relative.toFloatVector(),
@@ -387,8 +387,8 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         );
     }
 
-    protected Vector2f getDimensionOnBoard(){
-        return new Vector2f(
+    protected Vec2 getDimensionOnBoard(){
+        return new Vec2(
                 internalGuiWidth /(getScale(Direction.Axis.X)*1.0F),
                 internalGuiHeight/(getScale(Direction.Axis.Y)*1.0F));
     }
@@ -402,7 +402,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
         Pair<RailType,BlockPos> data = getSwitchClicked(mouseX,mouseY,relative);
         if (data != null) {
             boolean actionDone = onRailClicked(data,mouseX,mouseY,relative,button);
-            if (actionDone)Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            if (actionDone)Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             return true;
         }
         return mouseClicked;
@@ -467,7 +467,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
     protected Pair<RailType,BlockPos> getSwitchClicked(double mouseX, double mouseY, Vector2i relative) {
         Map<BlockPos,RailType> switchOnBoard = getBlockOnBoard(false);
         for (BlockPos pos : switchOnBoard.keySet()){
-            Vector2f posOnBoard = getPosOnBoard(pos,relative);
+            Vec2 posOnBoard = getPosOnBoard(pos,relative);
             if (Util.isIn(posOnBoard,getDimensionOnBoard(),mouseX,mouseY)){
                 return new Pair<>(switchOnBoard.get(pos),pos);
             }
@@ -485,7 +485,7 @@ public abstract class RailScreen extends Screen implements IGuiEventListener {
     // mouse is above diagonal when mouseY < Y (y is from up to down) => mouseY < iH - iH/iL * mouseX => mouseY * iL < iH (iL - mouseX)
 
     protected boolean isMouseAbove45degDiagonal(BlockPos pos,boolean desc, Vector2i relative, double mouseX, double mouseY){
-        Vector2f posOnBoard = getPosOnBoard(pos,relative);
+        Vec2 posOnBoard = getPosOnBoard(pos,relative);
         float iconLength = (float) internalGuiWidth / getScale(Direction.Axis.X);
         float iconHeight = (float) internalGuiHeight / getScale(Direction.Axis.Y);
         double relativeMouseX = mouseX-posOnBoard.x;

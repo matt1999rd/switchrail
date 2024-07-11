@@ -2,27 +2,29 @@ package fr.mattmouss.switchrail.switchblock;
 
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.other.Util;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.Property;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.state.properties.RailShape;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.RailShape;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+
+import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
 
 public class SwitchDoubleTurn extends Switch {
 
@@ -45,12 +47,12 @@ public class SwitchDoubleTurn extends Switch {
 
 
     @Override
-    public boolean canMakeSlopes(BlockState p_canMakeSlopes_1_, IBlockReader p_canMakeSlopes_2_, BlockPos p_canMakeSlopes_3_) {
+    public boolean canMakeSlopes(BlockState p_canMakeSlopes_1_, BlockGetter p_canMakeSlopes_2_, BlockPos p_canMakeSlopes_3_) {
         return false;
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader worldIn, BlockPos pos) {
+    public boolean canSurvive(BlockState state, LevelReader worldIn, BlockPos pos) {
         return true;
     }
 
@@ -58,7 +60,7 @@ public class SwitchDoubleTurn extends Switch {
 
 
     @Override
-    public void setPlacedBy(World world, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
         if (entity !=null) {
             world.setBlockAndUpdate(pos,state
                     .setValue(BlockStateProperties.HORIZONTAL_FACING, Util.getFacingFromEntity(entity, pos,true))
@@ -70,7 +72,7 @@ public class SwitchDoubleTurn extends Switch {
 
 
     @Override
-    public void createBlockStateDefinition(StateContainer.Builder<Block,BlockState> builder){
+    public void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder){
         builder.add(BlockStateProperties.HORIZONTAL_FACING,
                 Y_SWITCH_POSITION,
                 RAIL_STRAIGHT_FLAT);
@@ -84,7 +86,7 @@ public class SwitchDoubleTurn extends Switch {
 
 
     @Override
-    public RailShape getRailDirection(BlockState state, IBlockReader reader, BlockPos pos, @Nullable AbstractMinecartEntity minecartEntity) {
+    public RailShape getRailDirection(BlockState state, BlockGetter reader, BlockPos pos, @Nullable AbstractMinecart minecartEntity) {
         Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         Corners actualState = state.getValue(Y_SWITCH_POSITION);
         return Util.getShapeFromDirection(direction.getOpposite(),actualState.getHeelDirection(direction.getOpposite()));

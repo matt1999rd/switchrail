@@ -2,12 +2,12 @@ package fr.mattmouss.switchrail.blocks;
 
 import fr.mattmouss.switchrail.other.CounterStorage;
 import fr.mattmouss.switchrail.other.PosAndZoomStorage;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.util.LazyOptional;
 
 public interface ICounterHandler extends IPosZoomStorageHandler{
     LazyOptional<CounterStorage> getCounterStorage();
-    TileEntity getTile();
+    BlockEntity getTile();
     void setPowered(boolean powered);
     @Override
     default LazyOptional<PosAndZoomStorage> getStorage() {

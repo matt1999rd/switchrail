@@ -4,28 +4,30 @@ import fr.mattmouss.switchrail.blocks.CrossedRail;
 import fr.mattmouss.switchrail.blocks.ICrossedRail;
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.other.Util;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.Property;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.state.properties.DoorHingeSide;
-import net.minecraft.state.properties.RailShape;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
-import net.minecraft.world.gen.feature.structure.MineshaftPieces;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+//import net.minecraft.state.properties.DoorHingeSide;
+import net.minecraft.world.level.block.state.properties.RailShape;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+//import net.minecraft.world.gen.feature.structure.MineshaftPieces;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+
+import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
 
 public class SwitchSimpleSlip extends Switch implements ICrossedRail {
 
@@ -67,7 +69,7 @@ public class SwitchSimpleSlip extends Switch implements ICrossedRail {
     }
 
     @Override
-    public void setPlacedBy(World world, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
         if (entity !=null) {
 
             world.setBlockAndUpdate(pos,state
@@ -79,7 +81,7 @@ public class SwitchSimpleSlip extends Switch implements ICrossedRail {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(BlockStateProperties.HORIZONTAL_FACING,
                 SWITCH_POSITION_STANDARD,RAIL_STRAIGHT_FLAT);
         super.createBlockStateDefinition(builder);
@@ -97,7 +99,7 @@ public class SwitchSimpleSlip extends Switch implements ICrossedRail {
     }
 
     @Override
-    public RailShape getRailDirection(BlockState state, IBlockReader reader, BlockPos pos, @Nullable AbstractMinecartEntity entity) {
+    public RailShape getRailDirection(BlockState state, BlockGetter reader, BlockPos pos, @Nullable AbstractMinecart entity) {
         if (entity != null){
             RailShape railShape = getRailShapeFromEntityAndState(pos,entity,state);
             if (!minecartArrivedOnBlock(entity,pos)){
@@ -108,7 +110,7 @@ public class SwitchSimpleSlip extends Switch implements ICrossedRail {
 
     }
 
-    private boolean minecartArrivedOnBlock(AbstractMinecartEntity entity, BlockPos pos) {
+    private boolean minecartArrivedOnBlock(AbstractMinecart entity, BlockPos pos) {
         return (entity.getCommandSenderWorld().isClientSide ||
                 entity.xo > pos.getX() &&
                         entity.xo < pos.getX()+1 &&
@@ -118,7 +120,7 @@ public class SwitchSimpleSlip extends Switch implements ICrossedRail {
     }
 
 
-    public RailShape getRailShapeFromEntityAndState(BlockPos pos, AbstractMinecartEntity entity,BlockState state) {
+    public RailShape getRailShapeFromEntityAndState(BlockPos pos, AbstractMinecart entity,BlockState state) {
         Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         Corners actualState = state.getValue(SWITCH_POSITION_STANDARD);
         if (actualState == Corners.STRAIGHT){

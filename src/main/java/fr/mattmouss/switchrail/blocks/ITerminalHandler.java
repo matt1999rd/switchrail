@@ -5,13 +5,12 @@ import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.other.PosAndZoomStorage;
 import fr.mattmouss.switchrail.other.TerminalStorage;
 import fr.mattmouss.switchrail.switchblock.Switch;
-import net.minecraft.block.BlockState;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.LazyOptional;
 
 import java.util.List;
@@ -22,7 +21,7 @@ public interface ITerminalHandler extends IPosZoomStorageHandler{
     LazyOptional<TerminalStorage> getTerminalStorage();
     boolean isPowered();
     boolean isBlocked();
-    TileEntity getTile();
+    BlockEntity getTile();
     void setBlockedFlag(boolean isBlocked);
 
     default boolean onTick(){
@@ -94,7 +93,7 @@ public interface ITerminalHandler extends IPosZoomStorageHandler{
 
     default void setEnabledProperty(BlockPos pos,boolean value){
         getTerminalStorage().ifPresent(terminalStorage -> terminalStorage.setSwitchBlockingFlag(pos,!value));
-        World level = getTile().getLevel();
+        Level level = getTile().getLevel();
         assert level != null;
         BlockState state = level.getBlockState(pos);
         if (state.getBlock() instanceof Switch && state.hasProperty(BlockStateProperties.ENABLED)){
@@ -107,7 +106,7 @@ public interface ITerminalHandler extends IPosZoomStorageHandler{
         if (value>getMaxValue(pos)){
             throw new IllegalStateException("The value to define is not in the range authorised");
         }
-        World level = getTile().getLevel();
+        Level level = getTile().getLevel();
         assert level != null;
         BlockState state = level.getBlockState(pos);
         if (!(state.getBlock() instanceof Switch)){
@@ -124,7 +123,7 @@ public interface ITerminalHandler extends IPosZoomStorageHandler{
     }
 
     default byte getMaxValue(BlockPos pos){
-        World level = getTile().getLevel();
+        Level level = getTile().getLevel();
         assert level != null;
         BlockState state = level.getBlockState(pos);
         if (state.getBlock() instanceof Switch){
@@ -184,13 +183,13 @@ public interface ITerminalHandler extends IPosZoomStorageHandler{
     // action done only once when the redstone is entering the terminal block
     // can be done when a blocked terminal is released
     default void actionOnPowered(){
-        World level = getTile().getLevel();
+        Level level = getTile().getLevel();
         assert level != null;
         if (tryBlockTerminal())return; // if the terminal is blocked, no switch will be blocked
         Set<BlockPos> switchPos = getSwitches();
         for (BlockPos pos : switchPos){
             BlockState state = getSwitchValue(pos);
-            level.setBlock(pos,state, Constants.BlockFlags.DEFAULT);
+            level.setBlock(pos,state, 3);
         }
         this.blockAllSwitch();
     }
@@ -205,7 +204,7 @@ public interface ITerminalHandler extends IPosZoomStorageHandler{
     default void updateSwitch() {
         Set<BlockPos> switches = getSwitches();
         List<BlockPos> switchToRemove = Lists.newArrayList();
-        World level = getTile().getLevel();
+        Level level = getTile().getLevel();
         for (BlockPos switchPos : switches){
             assert level != null;
             if (!(level.getBlockState(switchPos).getBlock() instanceof Switch)){

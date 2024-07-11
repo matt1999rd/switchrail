@@ -10,18 +10,20 @@ import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.other.Vector2i;
 import fr.mattmouss.switchrail.switchblock.Switch;
 import fr.mattmouss.switchrail.switchblock.SwitchDoubleSlip;
-import net.minecraft.block.*;
-import net.minecraft.client.gui.IGuiEventListener;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 
 
-public class ControllerScreen extends RailScreen implements IGuiEventListener {
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+
+public class ControllerScreen extends RailScreen implements GuiEventListener {
 
     public ControllerScreen(BlockPos pos) {
         super(pos);
@@ -30,7 +32,7 @@ public class ControllerScreen extends RailScreen implements IGuiEventListener {
     protected IPosZoomStorageHandler getHandler(){
         assert this.minecraft != null;
         assert this.minecraft.level != null;
-        TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
+        BlockEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
         if (tileEntity instanceof ControllerTile){
             return (ControllerTile) tileEntity;
         }
@@ -50,7 +52,7 @@ public class ControllerScreen extends RailScreen implements IGuiEventListener {
         if (isDisabled(switchBlockPos) || button != GLFW_MOUSE_BUTTON_LEFT)return false;
         ChangeSwitchPacket packet;
         assert this.minecraft != null;
-        World world = this.minecraft.level;
+        Level world = this.minecraft.level;
         if (data.getFirst() == RailType.DOUBLE_SLIP) {
             //if it is tjd rail
             assert world != null;
@@ -84,7 +86,7 @@ public class ControllerScreen extends RailScreen implements IGuiEventListener {
     @Override
     public boolean isDisabled(BlockPos pos) {
         assert this.minecraft != null;
-        World world = this.minecraft.level;
+        Level world = this.minecraft.level;
         assert world != null;
         BlockState state = world.getBlockState(pos);
         if (state.hasProperty(BlockStateProperties.ENABLED)){

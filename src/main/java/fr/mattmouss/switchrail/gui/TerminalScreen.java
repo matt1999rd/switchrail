@@ -4,7 +4,8 @@ import com.dannyandson.tinyredstone.api.IPanelCell;
 import com.dannyandson.tinyredstone.blocks.PanelCellPos;
 import com.dannyandson.tinyredstone.blocks.PanelTile;
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import fr.mattmouss.switchrail.blocks.ITerminalHandler;
 import fr.mattmouss.switchrail.blocks.TerminalCell;
 import fr.mattmouss.switchrail.blocks.TerminalTile;
@@ -14,17 +15,18 @@ import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.network.TerminalScreenPacket;
 import fr.mattmouss.switchrail.other.Vector2i;
 import fr.mattmouss.switchrail.switchblock.Switch;
-import net.minecraft.block.BlockState;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextProperties;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.fml.client.gui.GuiUtils;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
+import net.minecraft.ChatFormatting;
+//import net.minecraftforge.fml.client.gui.GuiUtils;
 import com.mojang.datafixers.util.Pair;
+import net.minecraftforge.fmlclient.gui.GuiUtils;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -51,7 +53,7 @@ public class TerminalScreen extends RailScreen {
     protected ITerminalHandler getHandler() {
         assert this.minecraft != null;
         assert this.minecraft.level != null;
-        TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
+        BlockEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
         if (tileEntity instanceof TerminalTile){
             return (ITerminalHandler) tileEntity;
         }else if (tileEntity instanceof PanelTile){
@@ -76,20 +78,20 @@ public class TerminalScreen extends RailScreen {
 
     @Override
     @ParametersAreNonnullByDefault
-    public void renderBackground(MatrixStack stack) {
+    public void renderBackground(PoseStack stack) {
         super.renderBackground(stack);
         assert this.minecraft != null;
-        this.minecraft.getTextureManager().bind(POS_BUTTON);
+        RenderSystem.setShaderTexture(0,POS_BUTTON);
         Vector2i relative = getRelative();
         this.blit(stack,relative.x+ERROR_SCREEN_BEGINNING_X,relative.y+ERROR_SCREEN_BEGINNING_Y,0,26,124,26);
     }
 
     @Override
     @ParametersAreNonnullByDefault
-    public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+    public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
         super.render(stack, mouseX, mouseY, partialTicks);
         assert this.minecraft != null;
-        this.minecraft.getTextureManager().bind(POS_BUTTON);
+        RenderSystem.setShaderTexture(0,POS_BUTTON);
         Vector2i relative = getRelative();
         this.blit(stack,relative.x+ERROR_SCREEN_BEGINNING_X,relative.y+ERROR_SCREEN_BEGINNING_Y,0,26,124,26);
         ITerminalHandler tile = getHandler();
@@ -113,7 +115,7 @@ public class TerminalScreen extends RailScreen {
         }
     }
 
-    private void renderErrorWithMovement(MatrixStack stack) {
+    private void renderErrorWithMovement(PoseStack stack) {
         String initialDisplay = reduceStringToScreen(conflictError);
         ErrorState++;
         String stringToDisplay;
@@ -140,12 +142,13 @@ public class TerminalScreen extends RailScreen {
         return originalString.substring(0,maxString);
     }
 
-    private void drawHoveringText(MatrixStack stack,int mouseX,int mouseY){
-        ArrayList<ITextProperties> textLines = Lists.newArrayList();
-        textLines.add(ITextProperties.of("Conflict Switch", Style.EMPTY.applyFormats(TextFormatting.BOLD, TextFormatting.RED)));
-        Vector2i relative = getRelative();
+    private void drawHoveringText(PoseStack stack,int mouseX,int mouseY){
+        ArrayList<FormattedText> textLines = Lists.newArrayList();
+        textLines.add(FormattedText.of("Conflict Switch", Style.EMPTY.applyFormats(ChatFormatting.BOLD, ChatFormatting.RED)));
+        //Vector2i relative = getRelative();
         assert minecraft != null;
-        GuiUtils.drawHoveringText(stack,textLines,mouseX,mouseY,WIDTH,HEIGHT,WIDTH+relative.x-mouseX,minecraft.font);
+        renderComponentTooltip(stack,textLines,mouseX,mouseY,minecraft.font);
+        //GuiUtils.drawHoveringText(stack,textLines,mouseX,mouseY,WIDTH,HEIGHT,WIDTH+relative.x-mouseX,minecraft.font);
     }
 
     private boolean isSwitchHoveredDisabled(int mouseX,int mouseY){

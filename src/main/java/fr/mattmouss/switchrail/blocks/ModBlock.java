@@ -1,7 +1,7 @@
 package fr.mattmouss.switchrail.blocks;
 
 import fr.mattmouss.switchrail.switchblock.*;
-import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.registries.ObjectHolder;
 
 public class ModBlock {
@@ -35,7 +35,7 @@ public class ModBlock {
 
     @ObjectHolder("switchrail:controller_block")
 
-    public static TileEntityType<ControllerTile> CONTROLLER_TILE;
+    public static BlockEntityType<ControllerTile> CONTROLLER_TILE;
 
     @ObjectHolder("switchrail:bumper")
 
@@ -43,7 +43,7 @@ public class ModBlock {
 
     @ObjectHolder("switchrail:bumper")
 
-    public static TileEntityType<BumperTile> BUMPER_TILE;
+    public static BlockEntityType<BumperTile> BUMPER_TILE;
 
     @ObjectHolder("switchrail:one_way_powered_rail")
 
@@ -59,7 +59,7 @@ public class ModBlock {
 
     @ObjectHolder("switchrail:switch_terminal")
 
-    public static TileEntityType<TerminalTile> TERMINAL_TILE;
+    public static BlockEntityType<TerminalTile> TERMINAL_TILE;
 
     @ObjectHolder("switchrail:axle_counter_point")
 
@@ -71,7 +71,7 @@ public class ModBlock {
 
     @ObjectHolder("switchrail:axle_counter_point")
 
-    public static TileEntityType<AxleCounterTile> AXLE_COUNTER_TILE;
+    public static BlockEntityType<AxleCounterTile> AXLE_COUNTER_TILE;
 
 
 

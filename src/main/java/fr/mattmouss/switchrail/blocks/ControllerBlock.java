@@ -3,35 +3,39 @@ package fr.mattmouss.switchrail.blocks;
 
 import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.network.OpenControllerScreenPacket;
-import mcp.MethodsReturnNonnullByDefault;
-import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
+//import mcp.MethodsReturnNonnullByDefault;
+//import net.minecraft.block.*;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.material.Material;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-//import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
 import fr.mattmouss.switchrail.other.Util;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fmllegacy.network.NetworkDirection;
+//import net.minecraftforge.fml.network.NetworkDirection;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 
-public class ControllerBlock extends Block {
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+
+public class ControllerBlock extends Block implements EntityBlock {
 
     public ControllerBlock() {
         super(Properties.of(Material.STONE)
@@ -43,20 +47,15 @@ public class ControllerBlock extends Block {
         this.setRegistryName("controller_block");
     }
 
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
     @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new ControllerTile();
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+        return new ControllerTile(blockPos,blockState);
     }
 
     @Override
     @ParametersAreNonnullByDefault
-    public void setPlacedBy( World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+    public void setPlacedBy( Level worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (placer != null){
             worldIn.setBlockAndUpdate(pos,state.setValue(BlockStateProperties.HORIZONTAL_FACING,Util.getDirectionFromEntity(placer,pos,false)));
         }
@@ -65,17 +64,18 @@ public class ControllerBlock extends Block {
     @Nonnull
     @Override
     @ParametersAreNonnullByDefault
-    public ActionResultType use(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+    public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
         System.out.println("opening gui !!");
         if (!worldIn.isClientSide){
-            Networking.INSTANCE.sendTo(new OpenControllerScreenPacket(pos),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            Networking.INSTANCE.sendTo(new OpenControllerScreenPacket(pos),((ServerPlayer) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
-        return ActionResultType.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(BlockStateProperties.HORIZONTAL_FACING);
     }
+
 
 }

@@ -8,12 +8,12 @@ import fr.mattmouss.switchrail.blocks.TerminalTile;
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.gui.TerminalScreen;
 import fr.mattmouss.switchrail.switchblock.Switch;
-import net.minecraft.block.BlockState;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -27,7 +27,7 @@ public class TerminalScreenPacket {
     private final int index; // -1 if no index is given. Bad usage to my mind but optional is forbidden.
 
 
-    public TerminalScreenPacket(PacketBuffer buf) {
+    public TerminalScreenPacket(FriendlyByteBuf buf) {
         flag = buf.readByte();
         te_pos = buf.readBlockPos();
         action_id = buf.readByte();
@@ -43,7 +43,7 @@ public class TerminalScreenPacket {
         this.index = index;
     }
 
-    public void toBytes(PacketBuffer buf){
+    public void toBytes(FriendlyByteBuf buf){
         buf.writeByte(flag);
         buf.writeBlockPos(te_pos);
         buf.writeByte(action_id);
@@ -60,7 +60,7 @@ public class TerminalScreenPacket {
                 assert tile != null;
                 terminalHandler = (ITerminalHandler) tile.getIPanelCell(PanelCellPos.fromIndex(tile,index));
             } else {
-                TileEntity tile = Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(te_pos);
+                BlockEntity tile = Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(te_pos);
                 if (tile instanceof ITerminalHandler) {
                     terminalHandler = (ITerminalHandler) tile;
                 } else {

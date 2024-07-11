@@ -4,25 +4,25 @@ import com.dannyandson.tinyredstone.api.IOverlayBlockInfo;
 import com.dannyandson.tinyredstone.api.IPanelCell;
 import com.dannyandson.tinyredstone.api.IPanelCellInfoProvider;
 import com.dannyandson.tinyredstone.blocks.*;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.network.OpenTerminalScreenPacket;
 import fr.mattmouss.switchrail.other.SRRenderHelper;
 import fr.mattmouss.switchrail.other.TerminalStorage;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.fmllegacy.network.NetworkDirection;
 
 import java.util.function.Supplier;
 
@@ -40,8 +40,8 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
 
 
     @Override
-    public void render(MatrixStack matrixStack, IRenderTypeBuffer buffer, int combinedLight, int color, float alpha) {
-        IVertexBuilder builder = buffer.getBuffer((alpha == 1.0) ? RenderType.solid() : RenderType.translucent());
+    public void render(PoseStack matrixStack, MultiBufferSource buffer, int combinedLight, int color, float alpha) {
+        VertexConsumer builder = buffer.getBuffer((alpha == 1.0) ? RenderType.solid() : RenderType.translucent());
         // vecteur xTR,yTR,zTR ne correspond pas au vecteur classique x,y,z de minecraft
         // xTR = z
         // yTR = x
@@ -61,7 +61,7 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
         return onTick();
     }
 
-    public void renderBase(IVertexBuilder builder, MatrixStack stack, int combinedLight, float alpha){
+    public void renderBase(VertexConsumer builder, PoseStack stack, int combinedLight, float alpha){
         // top / up
         stack.pushPose();
         stack.translate(0,0,2/16F);
@@ -97,7 +97,7 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
         stack.popPose();
     }
 
-    public void renderVerticalBar(IVertexBuilder builder,MatrixStack stack,int combinedLight,float alpha){
+    public void renderVerticalBar(VertexConsumer builder,PoseStack stack,int combinedLight,float alpha){
         // back / north
         stack.pushPose();
         SRRenderHelper.rotate(stack,Direction.Axis.X,-90);
@@ -126,7 +126,7 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
         stack.popPose();
     }
 
-    public void renderRedstonePoint(IVertexBuilder builder,MatrixStack stack,int combinedLight,float alpha){
+    public void renderRedstonePoint(VertexConsumer builder,PoseStack stack,int combinedLight,float alpha){
         TextureAtlasSprite spriteRedstone = isPowered ? SRRenderHelper.SPRITE_REDSTONE_ON : SRRenderHelper.SPRITE_REDSTONE_OFF;
         // top / up
         stack.pushPose();
@@ -175,7 +175,7 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
     }
 
     @Override
-    public boolean onPlace(PanelCellPos cellPos, PlayerEntity player) {
+    public boolean onPlace(PanelCellPos cellPos, Player player) {
         isPowered = false;
         this.cellPos = cellPos;
         storage.ifPresent(terminalStorage -> terminalStorage.setBasePos(cellPos.getPanelTile().getBlockPos()));
@@ -200,12 +200,12 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
     }
 
     @Override
-    public boolean onBlockActivated(PanelCellPos cellPos, PanelCellSegment segmentClicked, PlayerEntity player) {
-        World world = cellPos.getPanelTile().getLevel();
+    public boolean onBlockActivated(PanelCellPos cellPos, PanelCellSegment segmentClicked, Player player) {
+        Level world = cellPos.getPanelTile().getLevel();
         assert world != null;
         if (!world.isClientSide){
             //send a packet to client to open screen
-            Networking.INSTANCE.sendTo(new OpenTerminalScreenPacket(cellPos),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            Networking.INSTANCE.sendTo(new OpenTerminalScreenPacket(cellPos),((ServerPlayer) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
         return true;
     }
@@ -237,11 +237,11 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
     }
 
     @Override
-    public CompoundNBT writeNBT() {
-        CompoundNBT compoundNBT = new CompoundNBT();
+    public CompoundTag writeNBT() {
+        CompoundTag compoundNBT = new CompoundTag();
         compoundNBT.putBoolean("powered",isPowered);
         compoundNBT.putBoolean("blocked",isBlocked);
-        CompoundNBT storageNBT = storage.map(TerminalStorage::serializeNBT).orElseThrow(getErrorSupplier());
+        CompoundTag storageNBT = storage.map(TerminalStorage::serializeNBT).orElseThrow(getErrorSupplier());
         compoundNBT.put("storage",storageNBT);
         if (cellPos != null){ // we are server-side
             compoundNBT.putLong("panelpos",cellPos.getPanelTile().getBlockPos().asLong());
@@ -251,10 +251,10 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
     }
 
     @Override
-    public void readNBT(CompoundNBT compoundNBT) {
+    public void readNBT(CompoundTag compoundNBT) {
         isPowered = compoundNBT.getBoolean("powered");
         isBlocked = compoundNBT.getBoolean("blocked");
-        CompoundNBT storageNBT = compoundNBT.getCompound("storage");
+        CompoundTag storageNBT = compoundNBT.getCompound("storage");
         storage.ifPresent(terminalStorage -> terminalStorage.deserializeNBT(storageNBT));
         if (compoundNBT.contains("panelpos")){ // we are client-side
             pos = BlockPos.of(compoundNBT.getLong("panelpos"));
@@ -288,7 +288,7 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
     }
 
     @Override
-    public TileEntity getTile() {
+    public BlockEntity getTile() {
         if (cellPos != null){
             return cellPos.getPanelTile();
         }else if (pos != null){

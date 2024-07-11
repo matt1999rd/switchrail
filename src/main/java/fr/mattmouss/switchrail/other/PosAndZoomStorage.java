@@ -1,8 +1,8 @@
 package fr.mattmouss.switchrail.other;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import javax.annotation.Nonnull;
@@ -10,7 +10,7 @@ import javax.annotation.Nonnull;
 import static fr.mattmouss.switchrail.other.Util.DEFAULT_ZOOM;
 
 
-public class PosAndZoomStorage implements INBTSerializable<CompoundNBT> {
+public class PosAndZoomStorage implements INBTSerializable<CompoundTag> {
     private BlockPos pos;
     private Vector2i zoom;
 
@@ -25,8 +25,8 @@ public class PosAndZoomStorage implements INBTSerializable<CompoundNBT> {
     }
 
     @Override
-    public CompoundNBT serializeNBT() {
-        CompoundNBT tag = new CompoundNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag tag = new CompoundTag();
         System.out.println("position written :"+pos);
         tag.putInt("x",pos.getX());
         tag.putInt("y",pos.getY());
@@ -62,7 +62,7 @@ public class PosAndZoomStorage implements INBTSerializable<CompoundNBT> {
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt) {
+    public void deserializeNBT(CompoundTag nbt) {
         if (nbt.contains("x") &&nbt.contains("y")  && nbt.contains("z") ) {
             int x = nbt.getInt("x");
             int y = nbt.getInt("y");

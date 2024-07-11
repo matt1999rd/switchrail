@@ -1,27 +1,29 @@
 package fr.mattmouss.switchrail.blocks;
 
+import com.dannyandson.tinyredstone.PanelOverflowException;
 import com.dannyandson.tinyredstone.api.IOverlayBlockInfo;
 import com.dannyandson.tinyredstone.api.IPanelCell;
 import com.dannyandson.tinyredstone.api.IPanelCellInfoProvider;
 import com.dannyandson.tinyredstone.blocks.*;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import fr.mattmouss.switchrail.other.CounterStorage;
 import fr.mattmouss.switchrail.other.SRRenderHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.LazyOptional;
 
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounterPoint, ISRCell, IPanelCellInfoProvider {
 
@@ -32,11 +34,12 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     private int cellPosIndex;
     private final Supplier<IllegalArgumentException> storageErrorSupplier = () -> new IllegalArgumentException("no storage found in Axle Counter Cell !");
     private final LazyOptional<CounterStorage> storage = LazyOptional.of(CounterStorage::new);
+    private boolean isDirty = false;
 
 
     @Override
-    public void render(MatrixStack matrixStack, IRenderTypeBuffer buffer, int combinedLight, int color, float alpha) {
-        IVertexBuilder builder = buffer.getBuffer((alpha == 1.0) ? RenderType.solid() : RenderType.translucent());
+    public void render(PoseStack matrixStack, MultiBufferSource buffer, int combinedLight, int color, float alpha) {
+        VertexConsumer builder = buffer.getBuffer((alpha == 1.0) ? RenderType.solid() : RenderType.translucent());
         // vecteur xTR,yTR,zTR ne correspond pas au vecteur classique x,y,z de minecraft
         // xTR = z
         // yTR = x
@@ -48,12 +51,21 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
         renderRedstonePoint(builder,matrixStack,combinedLight,alpha);
     }
 
+    public void markDirty(){
+        isDirty = true;
+    }
+
     @Override
     public boolean neighborChanged(PanelCellPos panelCellPos) {
         return false;
     }
 
-    private void renderRedstonePoint(IVertexBuilder builder, MatrixStack stack, int combinedLight, float alpha) {
+    @Override
+    public boolean isIndependentState() {
+        return true;
+    }
+
+    private void renderRedstonePoint(VertexConsumer builder, PoseStack stack, int combinedLight, float alpha) {
         TextureAtlasSprite spriteRedstone = isPowered ? SRRenderHelper.SPRITE_REDSTONE_ON : SRRenderHelper.SPRITE_REDSTONE_OFF;
         // top / up
         stack.pushPose();
@@ -89,7 +101,7 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
         stack.popPose();
     }
 
-    private void renderBase(IVertexBuilder builder, MatrixStack stack, int combinedLight, float alpha) {
+    private void renderBase(VertexConsumer builder, PoseStack stack, int combinedLight, float alpha) {
         // top / up
         stack.pushPose();
         stack.translate(0,0,2/16F);
@@ -126,7 +138,7 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     }
 
     @Override
-    public boolean onPlace(PanelCellPos cellPos, PlayerEntity player) {
+    public boolean onPlace(PanelCellPos cellPos, Player player) {
         this.cellPos = cellPos;
         storage.ifPresent(counterStorage -> counterStorage.setBasePos(cellPos.getPanelTile().getBlockPos()));
         return IPanelCell.super.onPlace(cellPos, player);
@@ -136,18 +148,18 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     public void onRemove(PanelCellPos cellPos) {
         if (this.cellPos != null){
             // this function is done only server side
-            World world = this.cellPos.getPanelTile().getLevel();
+            Level world = this.cellPos.getPanelTile().getLevel();
             assert world != null;
             this.onACRemove(world,cellPos.getPanelTile().getBlockPos());
         }
     }
 
     @Override
-    public boolean onBlockActivated(PanelCellPos cellPos, PanelCellSegment segmentClicked, PlayerEntity player) {
-        World world = cellPos.getPanelTile().getLevel();
+    public boolean onBlockActivated(PanelCellPos cellPos, PanelCellSegment segmentClicked, Player player) {
+        Level world = cellPos.getPanelTile().getLevel();
         assert world != null;
         if (!world.isClientSide){
-            ICounterPoint.super.onBlockClicked(world,this.cellPos.getPanelTile().getBlockPos(), (ServerPlayerEntity) player, this.cellPos.getIndex());
+            ICounterPoint.super.onBlockClicked(world,this.cellPos.getPanelTile().getBlockPos(), (ServerPlayer) player, this.cellPos.getIndex());
         }
         return true;
     }
@@ -160,6 +172,10 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     @Override
     public boolean tick(PanelCellPos cellPos) {
         this.cellPos = cellPos;
+        if (isDirty){
+            isDirty = false;
+            return true;
+        }
         return false;
     }
 
@@ -177,10 +193,15 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     }
 
     @Override
-    public CompoundNBT writeNBT() {
-        CompoundNBT compoundNBT = new CompoundNBT();
+    public Side getBaseSide() {
+        return Side.BOTTOM;
+    }
+
+    @Override
+    public CompoundTag writeNBT() {
+        CompoundTag compoundNBT = new CompoundTag();
         compoundNBT.putBoolean("powered",isPowered);
-        CompoundNBT storageNBT = storage.map(CounterStorage::serializeNBT).orElseThrow(getErrorSupplier());
+        CompoundTag storageNBT = storage.map(CounterStorage::serializeNBT).orElseThrow(getErrorSupplier());
         compoundNBT.put("storage",storageNBT);
         if (cellPos != null){ // we are server-side
             compoundNBT.putLong("panelpos",cellPos.getPanelTile().getBlockPos().asLong());
@@ -190,9 +211,9 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     }
 
     @Override
-    public void readNBT(CompoundNBT compoundNBT) {
+    public void readNBT(CompoundTag compoundNBT) {
         isPowered = compoundNBT.getBoolean("powered");
-        CompoundNBT storageNBT = compoundNBT.getCompound("storage");
+        CompoundTag storageNBT = compoundNBT.getCompound("storage");
         storage.ifPresent(counterStorage -> counterStorage.deserializeNBT(storageNBT));
         if (compoundNBT.contains("panelpos")){ // we are client-side
             pos = BlockPos.of(compoundNBT.getLong("panelpos"));
@@ -206,7 +227,7 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     }
 
     @Override
-    public TileEntity getTile() {
+    public BlockEntity getTile() {
         if (cellPos != null){
             return cellPos.getPanelTile();
         }else if (pos != null){
@@ -219,10 +240,18 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     @Override
     public void setPowered(boolean powered) {
         isPowered = powered;
+        markDirty();
+        /*
         if (this.cellPos != null){
             //server side
-            this.cellPos.getPanelTile().updateNeighborCells(this.cellPos);
+            try{
+                this.cellPos.getPanelTile().updateNeighborCells(this.cellPos);
+            }catch (PanelOverflowException p){
+                Logger.getGlobal().warning("Try update neighbor cell exits with panel overflow exception. See tiny redstone mod for further information. Details are as follow : \n"+p.getMessage());
+            }
         }
+
+         */
     }
 
     @Override
@@ -246,7 +275,8 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     }
 
     @Override
-    public void addInfo(IOverlayBlockInfo iOverlayBlockInfo, PanelTile panelTile, PosInPanelCell posInPanelCell) {
-
+    public void addInfo(IOverlayBlockInfo overlayBlockInfo, PanelTile panelTile, PosInPanelCell posInPanelCell) {
+        overlayBlockInfo.setPowerOutput(this.isPowered ? 15 : 0);
+        overlayBlockInfo.addInfo("Axle number : "+getAxle());
     }
 }

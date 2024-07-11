@@ -3,16 +3,16 @@ package fr.mattmouss.switchrail.network;
 
 import fr.mattmouss.switchrail.gui.ControllerScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
 public class OpenControllerScreenPacket {
     private final BlockPos pos;
 
-    public OpenControllerScreenPacket(PacketBuffer buf) {
+    public OpenControllerScreenPacket(FriendlyByteBuf buf) {
         pos = buf.readBlockPos();
     }
 
@@ -20,7 +20,7 @@ public class OpenControllerScreenPacket {
         this.pos = pos;
     }
 
-    public void toBytes(PacketBuffer buf){
+    public void toBytes(FriendlyByteBuf buf){
         buf.writeBlockPos(pos);
     }
 

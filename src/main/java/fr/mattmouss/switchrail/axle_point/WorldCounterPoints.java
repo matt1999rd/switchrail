@@ -2,12 +2,12 @@ package fr.mattmouss.switchrail.axle_point;
 
 import com.google.common.collect.Sets;
 import fr.mattmouss.switchrail.other.Util;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.storage.WorldSavedData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.saveddata.SavedData;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class WorldCounterPoints extends WorldSavedData {
+public class WorldCounterPoints extends SavedData {
     private HashMap<BlockPos, Set<CounterPoint>> counterPoints = new HashMap<>();
     private HashMap<BlockPos, UUID> cartsOnRail = new HashMap<>();
 
@@ -26,7 +26,21 @@ public class WorldCounterPoints extends WorldSavedData {
     public static final int TOGGLE_BIDIRECTIONAL = 4;
 
     public WorldCounterPoints() {
-        super("world_cp");
+        super();
+    }
+
+    public WorldCounterPoints(CompoundTag tag){
+        counterPoints = Util.readMap(tag,"counter_pts",compoundNBT -> {
+            Tag inbt = compoundNBT.get("counter_pt");
+            if (!(inbt instanceof ListTag)){
+                throw new IllegalStateException("Error in loading of intern set nbt : the NBT stored is not a list !");
+            }
+            ListTag listNBT = (ListTag) inbt;
+            Set<CounterPoint> cps = new HashSet<>();
+            listNBT.forEach(inbt1 -> cps.add(CounterPoint.read(inbt1)));
+            return cps;
+        });
+        cartsOnRail = Util.readMap(tag,"cart_on_rail",compoundNBT -> compoundNBT.getUUID("cart"));
     }
 
 
@@ -167,26 +181,11 @@ public class WorldCounterPoints extends WorldSavedData {
         this.setDirty();
     }
 
-    @Override
-    public void load(@Nonnull CompoundNBT nbt) {
-        counterPoints = Util.readMap(nbt,"counter_pts",compoundNBT -> {
-            INBT inbt = compoundNBT.get("counter_pt");
-            if (!(inbt instanceof ListNBT)){
-                throw new IllegalStateException("Error in loading of intern set nbt : the NBT stored is not a list !");
-            }
-            ListNBT listNBT = (ListNBT) inbt;
-            Set<CounterPoint> cps = new HashSet<>();
-            listNBT.forEach(inbt1 -> cps.add(CounterPoint.read(inbt1)));
-            return cps;
-        });
-        cartsOnRail = Util.readMap(nbt,"cart_on_rail",compoundNBT -> compoundNBT.getUUID("cart"));
-    }
-
     @Nonnull
     @Override
-    public CompoundNBT save(@Nonnull CompoundNBT nbt) {
+    public CompoundTag save(@Nonnull CompoundTag nbt) {
         Util.writeMap(nbt,"counter_pts",counterPoints,(compoundNBT, cpSet) -> {
-            ListNBT listNBT = new ListNBT();
+            ListTag listNBT = new ListTag();
             cpSet.forEach(cp -> listNBT.add(cp.write()));
             compoundNBT.put("counter_pt",listNBT);
         });

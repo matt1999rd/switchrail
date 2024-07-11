@@ -9,15 +9,16 @@ import fr.mattmouss.switchrail.other.PosAndZoomStorageCapability;
 import fr.mattmouss.switchrail.setup.*;
 import fr.mattmouss.switchrail.switchblock.*;
 
-import net.minecraft.block.Block;
+import net.minecraft.world.level.block.Block;
 
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.Rarity;
-import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -36,20 +37,19 @@ public class SwitchRailMod {
 
     public static ModSetup setup = new ModSetup();
 
+
     public SwitchRailMod (){
 
         final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        modEventBus.addListener(this::preInit);
+        modEventBus.addListener(this::initCap);
         modEventBus.addListener(this::setup);
-
 
         MinecraftForge.EVENT_BUS.register(this);
 
     }
 
-    public void preInit(FMLCommonSetupEvent evt) {
-        PosAndZoomStorageCapability.register();
-
+    public void initCap(RegisterCapabilitiesEvent evt) {
+        PosAndZoomStorageCapability.register(evt);
     }
 
     private void setup(final FMLCommonSetupEvent event) {
@@ -65,6 +65,7 @@ public class SwitchRailMod {
     public static class RegistryEvents {
         @SubscribeEvent
         public static void onBlockRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
+            //BlockTags.RAILS
             blockRegistryEvent.getRegistry().register(new SwitchStraight());
             blockRegistryEvent.getRegistry().register(new SwitchDoubleTurn());
             blockRegistryEvent.getRegistry().register(new CrossedRail());
@@ -83,7 +84,7 @@ public class SwitchRailMod {
 
         @SubscribeEvent
         public static void onItemRegistry(final RegistryEvent.Register<Item> blockRegistryEvent) {
-            Item.Properties properties = new Item.Properties().tab(ItemGroup.TAB_TRANSPORTATION);
+            Item.Properties properties = new Item.Properties().tab(CreativeModeTab.TAB_TRANSPORTATION);
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.SWITCH_STRAIGHT,properties).setRegistryName("switch_straight"));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.SWITCH_DOUBLE_TURN,properties).setRegistryName("double_turn_switch"));
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.CROSSED_RAIL,properties).setRegistryName("crossed_rail"));
@@ -110,15 +111,15 @@ public class SwitchRailMod {
         }
 
         @SubscribeEvent
-        public static void onTileEntityRegistry(final RegistryEvent.Register<TileEntityType<?>> event)
+        public static void onTileEntityRegistry(final RegistryEvent.Register<BlockEntityType<?>> event)
         {
-            event.getRegistry().register(TileEntityType.Builder.of(ControllerTile::new,ModBlock.CONTROLLER_BLOCK)
+            event.getRegistry().register(BlockEntityType.Builder.of(ControllerTile::new, ModBlock.CONTROLLER_BLOCK)
                     .build(null).setRegistryName("controller_block"));
-            event.getRegistry().register(TileEntityType.Builder.of(BumperTile::new,ModBlock.BUMPER)
+            event.getRegistry().register(BlockEntityType.Builder.of(BumperTile::new,ModBlock.BUMPER)
                     .build(null).setRegistryName("bumper"));
-            event.getRegistry().register(TileEntityType.Builder.of(TerminalTile::new,ModBlock.SWITCH_TERMINAL)
+            event.getRegistry().register(BlockEntityType.Builder.of(TerminalTile::new,ModBlock.SWITCH_TERMINAL)
                     .build(null).setRegistryName("switch_terminal"));
-            event.getRegistry().register(TileEntityType.Builder.of(AxleCounterTile::new,ModBlock.AXLE_COUNTER)
+            event.getRegistry().register(BlockEntityType.Builder.of(AxleCounterTile::new,ModBlock.AXLE_COUNTER)
                     .build(null).setRegistryName("axle_counter_point")
             );
         }

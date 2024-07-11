@@ -1,9 +1,9 @@
 package fr.mattmouss.switchrail.axle_point;
 
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -14,7 +14,7 @@ public class CounterPointInfo {
     public CounterPointInfo(){
     }
 
-    public CounterPointInfo(PacketBuffer buf) {
+    public CounterPointInfo(FriendlyByteBuf buf) {
         int size = buf.readInt();
         for (int i=0;i<size;i++){
             BlockPos pos = buf.readBlockPos();
@@ -24,7 +24,7 @@ public class CounterPointInfo {
         }
     }
 
-    public void toBytes(PacketBuffer buf){
+    public void toBytes(FriendlyByteBuf buf){
         buf.writeInt(info.size());
         info.forEach((p,byt)->{
             buf.writeBlockPos(p.getFirst());

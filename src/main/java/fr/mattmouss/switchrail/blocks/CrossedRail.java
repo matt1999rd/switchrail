@@ -1,24 +1,28 @@
 package fr.mattmouss.switchrail.blocks;
 
-import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.Property;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.RailShape;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
+import net.minecraft.tags.Tag;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 
 
-public class CrossedRail extends AbstractRailBlock implements ICrossedRail {
+import net.minecraft.world.level.block.BaseRailBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+
+public class CrossedRail extends BaseRailBlock implements ICrossedRail {
 
     private static final EnumProperty<RailShape> RAIL_STRAIGHT_FLAT;
 
@@ -39,19 +43,14 @@ public class CrossedRail extends AbstractRailBlock implements ICrossedRail {
     }
 
     @Override
-    public boolean is(ITag<Block> tag) {
-        return (tag == BlockTags.RAILS);
-    }
-
-    @Override
-    public boolean canMakeSlopes(BlockState p_canMakeSlopes_1_, IBlockReader p_canMakeSlopes_2_, BlockPos p_canMakeSlopes_3_) {
+    public boolean canMakeSlopes(BlockState p_canMakeSlopes_1_, BlockGetter p_canMakeSlopes_2_, BlockPos p_canMakeSlopes_3_) {
         return false;
     }
 
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(RAIL_STRAIGHT_FLAT);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(RAIL_STRAIGHT_FLAT,WATERLOGGED);
     }
 
     @Override
@@ -60,14 +59,14 @@ public class CrossedRail extends AbstractRailBlock implements ICrossedRail {
     }
 
     @Override
-    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+    public void setPlacedBy(Level worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (placer != null) {
             worldIn.setBlockAndUpdate(pos, state.setValue(RAIL_STRAIGHT_FLAT, RailShape.NORTH_SOUTH));
         }
     }
 
     @Override
-    public RailShape getRailDirection(BlockState state, IBlockReader reader, BlockPos pos, @Nullable AbstractMinecartEntity entity) {
+    public RailShape getRailDirection(BlockState state, BlockGetter reader, BlockPos pos, @Nullable AbstractMinecart entity) {
         if (entity != null){
             RailShape railShape = getRailShapeFromEntityAndState(pos,entity);
             if (!minecartArrivedOnBlock(entity,pos)){
@@ -77,7 +76,7 @@ public class CrossedRail extends AbstractRailBlock implements ICrossedRail {
         return fixedRailShape;
     }
 
-    public boolean minecartArrivedOnBlock(AbstractMinecartEntity entity, BlockPos pos) {
+    public boolean minecartArrivedOnBlock(AbstractMinecart entity, BlockPos pos) {
         return (entity.getCommandSenderWorld().isClientSide ||
                 entity.xo > pos.getX() &&
                         entity.xo < pos.getX() + 1 &&
@@ -88,7 +87,7 @@ public class CrossedRail extends AbstractRailBlock implements ICrossedRail {
 
     @Override
 
-    protected BlockState updateDir(World world, BlockPos pos, BlockState state, boolean placing) {
+    protected BlockState updateDir(Level world, BlockPos pos, BlockState state, boolean placing) {
         return state;
     }
 

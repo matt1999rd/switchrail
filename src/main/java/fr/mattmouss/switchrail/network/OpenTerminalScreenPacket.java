@@ -4,9 +4,9 @@ package fr.mattmouss.switchrail.network;
 import com.dannyandson.tinyredstone.blocks.PanelCellPos;
 import fr.mattmouss.switchrail.gui.TerminalScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
@@ -14,7 +14,7 @@ public class OpenTerminalScreenPacket {
     private final BlockPos pos;
     private final int index; // -1 if no index is given. Bad usage to my mind but optional is forbidden
 
-    public OpenTerminalScreenPacket(PacketBuffer buf) {
+    public OpenTerminalScreenPacket(FriendlyByteBuf buf) {
         pos = buf.readBlockPos();
         index = buf.readInt();
     }
@@ -29,7 +29,7 @@ public class OpenTerminalScreenPacket {
         this.index = cellPos.getIndex();
     }
 
-    public void toBytes(PacketBuffer buf){
+    public void toBytes(FriendlyByteBuf buf){
         buf.writeBlockPos(pos);
         buf.writeInt(index);
     }

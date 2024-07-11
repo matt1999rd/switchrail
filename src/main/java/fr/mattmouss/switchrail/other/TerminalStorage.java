@@ -1,9 +1,9 @@
 package fr.mattmouss.switchrail.other;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.core.BlockPos;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -31,11 +31,11 @@ public class TerminalStorage extends PosAndZoomStorage {
 
     @Nonnull
     @Override
-    public CompoundNBT serializeNBT() {
-        CompoundNBT tag = super.serializeNBT();
-        ListNBT listNBT = new ListNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag tag = super.serializeNBT();
+        ListTag listNBT = new ListTag();
         for (BlockPos pos : switchMap.keySet()){
-            CompoundNBT switchNBT = new CompoundNBT();
+            CompoundTag switchNBT = new CompoundTag();
             Util.putPos(switchNBT,pos);
             switchNBT.putByte("sw_position",switchMap.get(pos));
             listNBT.add(switchNBT);
@@ -45,13 +45,13 @@ public class TerminalStorage extends PosAndZoomStorage {
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt) {
+    public void deserializeNBT(CompoundTag nbt) {
         super.deserializeNBT(nbt);
         if (nbt.contains("list")){
-            ListNBT listNBT = (ListNBT) nbt.get("list");
+            ListTag listNBT = (ListTag) nbt.get("list");
             assert listNBT != null;
-            for (INBT inbt : listNBT){
-                CompoundNBT sw_nbt = (CompoundNBT) inbt;
+            for (Tag inbt : listNBT){
+                CompoundTag sw_nbt = (CompoundTag) inbt;
                 BlockPos pos = Util.getPosFromNbt(sw_nbt);
                 byte switchPosition = sw_nbt.getByte("sw_position");
                 switchMap.put(pos,switchPosition);

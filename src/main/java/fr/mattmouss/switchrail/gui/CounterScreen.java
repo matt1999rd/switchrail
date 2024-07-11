@@ -4,7 +4,8 @@ import com.dannyandson.tinyredstone.api.IPanelCell;
 import com.dannyandson.tinyredstone.blocks.PanelCellPos;
 import com.dannyandson.tinyredstone.blocks.PanelTile;
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 import fr.mattmouss.switchrail.SwitchRailMod;
 import fr.mattmouss.switchrail.axle_point.CPFlag;
@@ -18,22 +19,25 @@ import fr.mattmouss.switchrail.network.SetAxleNumberPacket;
 import fr.mattmouss.switchrail.network.UpdateCounterPointPacket;
 import fr.mattmouss.switchrail.other.Util;
 import fr.mattmouss.switchrail.other.Vector2i;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector2f;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.awt.*;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 
@@ -46,7 +50,7 @@ public class CounterScreen extends RailScreen{
     private static final int textureDimension = 256;
     private static final int iconPxLength = 32;
     private static final Vector2i additionalScreenDimension = new Vector2i(76,26);
-    private static final Vector2f arrowUVOrigin = new Vector2f(0, (offsetV + additionalScreenDimension.y) /256F);
+    private static final Vec2 arrowUVOrigin = new Vec2(0, (offsetV + additionalScreenDimension.y) /256F);
     private static final int AXLE_SCREEN_X_BEGINNING = WIDTH - 2;
     private static final int AXLE_SCREEN_Y_BEGINNING = HEIGHT - additionalScreenDimension.y;
     private ImageButton removeAxleButton;
@@ -68,7 +72,7 @@ public class CounterScreen extends RailScreen{
     protected ICounterHandler getHandler() {
         assert this.minecraft != null;
         assert this.minecraft.level != null;
-        TileEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
+        BlockEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
         if (tileEntity instanceof AxleCounterTile){
             return (ICounterHandler) tileEntity;
         }else if (tileEntity instanceof PanelTile) {
@@ -129,9 +133,9 @@ public class CounterScreen extends RailScreen{
         if (handler.isFree()){
             removeAxleButton.visible = false;
         }
-        addButton(addAxleButton);
-        addButton(removeAxleButton);
-        addButton(freeButton);
+        addRenderableWidget(addAxleButton);
+        addRenderableWidget(removeAxleButton);
+        addRenderableWidget(freeButton);
     }
 
     private void addAxle(){
@@ -157,11 +161,11 @@ public class CounterScreen extends RailScreen{
 
     @Override
     @ParametersAreNonnullByDefault
-    public void renderBackground(MatrixStack stack) {
+    public void renderBackground(PoseStack stack) {
         super.renderBackground(stack);
         Vector2i relative = getRelative();
         assert this.minecraft != null;
-        this.minecraft.getTextureManager().bind(POS_BUTTON);
+        RenderSystem.setShaderTexture(0,POS_BUTTON);
         this.blit(stack,relative.x+AXLE_SCREEN_X_BEGINNING,relative.y+AXLE_SCREEN_Y_BEGINNING,
                 0,offsetV,additionalScreenDimension.x,additionalScreenDimension.y);
         ICounterHandler handler = getHandler();
@@ -174,7 +178,7 @@ public class CounterScreen extends RailScreen{
 
     @Override
     @ParametersAreNonnullByDefault
-    public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+    public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
         Vector2i relative = getRelative();
         super.render(stack, mouseX, mouseY, partialTicks);
         Map<BlockPos,RailType> blockWithCPOnBoard = getBlockOnBoard(false);
@@ -203,23 +207,23 @@ public class CounterScreen extends RailScreen{
     }
 
     //isActivated indicates if we must count this limit in the axle counter
-    private void renderArrow(MatrixStack stack, BlockPos pos, Direction side, boolean fromOutside,boolean addAxle,boolean bidirectional, boolean isActivated,Vector2i relative){
+    private void renderArrow(PoseStack stack, BlockPos pos, Direction side, boolean fromOutside,boolean addAxle,boolean bidirectional, boolean isActivated,Vector2i relative){
         assert this.minecraft != null;
-        this.minecraft.getTextureManager().bind(POS_BUTTON);
+        RenderSystem.setShaderTexture(0,POS_BUTTON);
 
         if (isOnBoard(pos)){
             // the origin for the rendering
-            Vector2f posOnBoard = getPosOnBoard(pos,relative);
+            Vec2 posOnBoard = getPosOnBoard(pos,relative);
             // dimension of the block
-            Vector2f iconDimension = getDimensionOnBoard();
+            Vec2 iconDimension = getDimensionOnBoard();
             //dimension of the arrow on Board
-            Vector2f arrowDimensionOnBoard = getArrowDimension(side,Util.scale(iconDimension,1F/iconPxLength));
+            Vec2 arrowDimensionOnBoard = getArrowDimension(side,Util.scale(iconDimension,1F/iconPxLength));
             // this offset is used to place the arrow on the square of the block
-            Vector2f arrowOrigin = getArrowOrigin(side,posOnBoard,iconDimension,arrowDimensionOnBoard);
+            Vec2 arrowOrigin = getArrowOrigin(side,posOnBoard,iconDimension,arrowDimensionOnBoard);
             // this arrowDimension is indicating what place the arrow will take on UV (for final GUI, it needs a scaling operation)
-            Vector2f arrowDimension = getArrowDimension(side,Util.makeVector(1F/textureDimension));
+            Vec2 arrowDimension = getArrowDimension(side,Util.makeVector(1F/textureDimension));
             // the origin for the UV placement. If fromOutside is true, we reverse the side to consider
-            Vector2f uvOrigin = getUVOrigin(fromOutside?side.getOpposite():side,isActivated,addAxle,bidirectional);
+            Vec2 uvOrigin = getUVOrigin(fromOutside?side.getOpposite():side,isActivated,addAxle,bidirectional);
             // final rendering
             Util.renderQuad(stack,arrowOrigin,Util.add(arrowOrigin,arrowDimensionOnBoard)
                     ,uvOrigin,Util.add(uvOrigin,arrowDimension),true);
@@ -227,7 +231,7 @@ public class CounterScreen extends RailScreen{
     }
 
     // render information when using large zoom (difficulty to see the arrow)
-    private void renderExplanation(MatrixStack stack,int mouseX,int mouseY,Vector2i relative){
+    private void renderExplanation(PoseStack stack,int mouseX,int mouseY,Vector2i relative){
         Pair<RailType,BlockPos> data = getSwitchClicked(mouseX,mouseY,relative);
         if (data != null){
             Direction side = getSideClicked(data.getSecond(),relative,mouseX,mouseY);
@@ -238,10 +242,10 @@ public class CounterScreen extends RailScreen{
                 boolean bidirectional = CounterPointInfo.readFlag(b,CPFlag.BIDIRECTIONAL);
                 String explanation = getExplanation(addAxle,fromOutside,side);
                 if (!bidirectional){
-                    renderTooltip(stack, ITextComponent.nullToEmpty(explanation),mouseX,mouseY);
+                    renderTooltip(stack, Component.nullToEmpty(explanation),mouseX,mouseY);
                 }else {
                     String reverseExplanation = getExplanation(!addAxle,!fromOutside,side);
-                    renderWrappedToolTip(stack, Lists.newArrayList(ITextComponent.nullToEmpty(explanation), ITextComponent.nullToEmpty(reverseExplanation)),mouseX,mouseY,font);
+                    renderTooltip(stack, Lists.newArrayList(Component.nullToEmpty(explanation), Component.nullToEmpty(reverseExplanation)), Optional.empty(),mouseX,mouseY,font);
                 }
             }
         }
@@ -262,24 +266,24 @@ public class CounterScreen extends RailScreen{
     // starting from the center of the block (rO + rD/2), we go in the side direction half the total block length minus half the length of the arrow on GUI (normal2D)
     // Then we are at the center of the arrow, and we move half the dimension of the arrow on GUI to get to the arrow origin (-aDOB/2)
 
-    private Vector2f getArrowOrigin(Direction side,Vector2f renderingOrigin,Vector2f renderingDimension,Vector2f arrowDimensionOnBoard){
+    private Vec2 getArrowOrigin(Direction side,Vec2 renderingOrigin,Vec2 renderingDimension,Vec2 arrowDimensionOnBoard){
         // scale = (iPL / 2 - aSL / 2) * pxLengthOnGUI pxLengthOnGUI = rD / iPL
         float scale = (1/2F - arrowShortLength/(2F *iconPxLength)) * (float) side.getAxis().choose(renderingDimension.x,0,renderingDimension.y);
         // scale * dirOffset = vector2D
-        Vector2f normal2D = Util.scale(Vector2i.project2D(side.getNormal(), Direction.Axis.Y).toFloatVector(),scale);
+        Vec2 normal2D = Util.scale(Vector2i.project2D(side.getNormal(), Direction.Axis.Y).toFloatVector(),scale);
         return Util.add(renderingOrigin,Util.scale(renderingDimension,1/2F),normal2D,Util.scale(arrowDimensionOnBoard,-1/2F));
     }
 
-    private Vector2f getUVOrigin(Direction side,boolean isEnabled,boolean addAxle,boolean biDirectional){
+    private Vec2 getUVOrigin(Direction side,boolean isEnabled,boolean addAxle,boolean biDirectional){
         float dim = arrowShortLength*1.0F/textureDimension;
         int offsetV = getOffsetV(side,isEnabled,addAxle,biDirectional);
-        Vector2f allArrowOrigin = Util.add(arrowUVOrigin,new Vector2f(0,arrowLongLength*offsetV*1F/textureDimension));
+        Vec2 allArrowOrigin = Util.add(arrowUVOrigin,new Vec2(0,arrowLongLength*offsetV*1F/textureDimension));
         boolean needUOffset = needUOffset(side, addAxle, biDirectional);
         boolean needVOffset = needVOffset(side, addAxle, biDirectional);
         if (needUOffset){
-            return Util.add(new Vector2f(dim,0),allArrowOrigin);
+            return Util.add(new Vec2(dim,0),allArrowOrigin);
         }else if (needVOffset){
-            return Util.add(new Vector2f(0,dim),allArrowOrigin);
+            return Util.add(new Vec2(0,dim),allArrowOrigin);
         }else if (!Direction.Axis.Y.test(side)){
             return allArrowOrigin;
         }else {
@@ -334,10 +338,10 @@ public class CounterScreen extends RailScreen{
         return 0;
     }
 
-    private Vector2f getArrowDimension(Direction side,Vector2f scale){
-        Vector2f unscaledDim = (side.getAxis() == Direction.Axis.X)?
-                new Vector2f(arrowShortLength,arrowLongLength) :
-                new Vector2f(arrowLongLength,arrowShortLength) ;
+    private Vec2 getArrowDimension(Direction side,Vec2 scale){
+        Vec2 unscaledDim = (side.getAxis() == Direction.Axis.X)?
+                new Vec2(arrowShortLength,arrowLongLength) :
+                new Vec2(arrowLongLength,arrowShortLength) ;
         return Util.directMult(unscaledDim,scale);
     }
 

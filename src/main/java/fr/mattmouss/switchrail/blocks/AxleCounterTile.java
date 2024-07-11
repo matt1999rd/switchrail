@@ -1,25 +1,24 @@
 package fr.mattmouss.switchrail.blocks;
 
 import fr.mattmouss.switchrail.other.CounterStorage;
-import fr.mattmouss.switchrail.other.PosAndZoomStorage;
-import net.minecraft.block.BlockState;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
-public class AxleCounterTile extends TileEntity implements ICounterHandler {
+public class AxleCounterTile extends BlockEntity implements ICounterHandler {
 
     private final LazyOptional<CounterStorage> storage = LazyOptional.of(this::createStorage);
     private final Supplier<IllegalArgumentException> storageErrorSupplier = () -> new IllegalArgumentException("no storage found in Axle Counter Tile Entity !");
 
-    public AxleCounterTile() {
-        super(ModBlock.AXLE_COUNTER_TILE);
+    public AxleCounterTile(BlockPos pos, BlockState state) {
+        super(ModBlock.AXLE_COUNTER_TILE,pos,state);
     }
 
     @Nonnull
@@ -33,17 +32,17 @@ public class AxleCounterTile extends TileEntity implements ICounterHandler {
     }
 
     @Override
-    public void load(@Nonnull BlockState state, CompoundNBT nbt) {
-        CompoundNBT storage_tag = nbt.getCompound("axle_counter");
-        storage.ifPresent(ACStorage -> ((INBTSerializable<CompoundNBT>)ACStorage).deserializeNBT(storage_tag));
-        super.load(state, nbt);
+    public void load(CompoundTag nbt) {
+        CompoundTag storage_tag = nbt.getCompound("axle_counter");
+        storage.ifPresent(ACStorage -> ((INBTSerializable<CompoundTag>)ACStorage).deserializeNBT(storage_tag));
+        super.load(nbt);
     }
 
     @Nonnull
     @Override
-    public CompoundNBT save(@Nonnull CompoundNBT nbt) {
+    public CompoundTag save(@Nonnull CompoundTag nbt) {
         storage.ifPresent(ACStorage -> {
-            CompoundNBT compoundNBT = ((INBTSerializable<CompoundNBT>)ACStorage).serializeNBT();
+            CompoundTag compoundNBT = ((INBTSerializable<CompoundTag>)ACStorage).serializeNBT();
             nbt.put("axle_counter",compoundNBT);
         });
         return super.save(nbt);
@@ -51,14 +50,14 @@ public class AxleCounterTile extends TileEntity implements ICounterHandler {
 
     @Nonnull
     @Override
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        return this.save(new CompoundTag());
     }
 
     public void setPowered(boolean powered){
         BlockState state= this.getBlockState();
         assert level != null;
-        level.setBlock(worldPosition,state.setValue(BlockStateProperties.POWERED,powered), Constants.BlockFlags.DEFAULT);
+        level.setBlock(worldPosition,state.setValue(BlockStateProperties.POWERED,powered), 3);
     }
 
     @Override
@@ -67,7 +66,7 @@ public class AxleCounterTile extends TileEntity implements ICounterHandler {
     }
 
     @Override
-    public TileEntity getTile() {
+    public BlockEntity getTile() {
         return this;
     }
 }

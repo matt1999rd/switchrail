@@ -3,28 +3,31 @@ package fr.mattmouss.switchrail.switchblock;
 
 import fr.mattmouss.switchrail.enum_rail.Corners;
 import fr.mattmouss.switchrail.other.Util;
-import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.entity.LivingEntity;
 
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.Property;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.state.properties.DoorHingeSide;
-import net.minecraft.state.properties.RailShape;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoorHingeSide;
+import net.minecraft.world.level.block.state.properties.RailShape;
 
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class SwitchStraight extends Switch {
 
@@ -39,7 +42,7 @@ public class SwitchStraight extends Switch {
     }
 
     @Override
-    public void setPlacedBy(World world , BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
+    public void setPlacedBy(Level world , BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
         if (entity !=null) {
             Direction facing = Util.getDirectionFromEntity(entity,pos);
             world.setBlockAndUpdate(pos,state
@@ -50,7 +53,7 @@ public class SwitchStraight extends Switch {
     }
 
     @Override
-    public void createBlockStateDefinition(StateContainer.Builder<Block,BlockState> builder){
+    public void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder){
         builder.add(RAIL_STRAIGHT_FLAT,
                 SWITCH_POSITION_STANDARD,
                 BlockStateProperties.HORIZONTAL_FACING,
@@ -59,7 +62,7 @@ public class SwitchStraight extends Switch {
     }
 
     @Override
-    public RailShape getRailDirection(BlockState state, IBlockReader world, BlockPos pos, @Nullable AbstractMinecartEntity cart) {
+    public RailShape getRailDirection(BlockState state, BlockGetter world, BlockPos pos, @Nullable AbstractMinecart cart) {
         Corners corners = state.getValue(SWITCH_POSITION_STANDARD);
         if (corners == Corners.STRAIGHT){
             Direction.Axis axis = state.getValue(BlockStateProperties.HORIZONTAL_FACING).getAxis();
@@ -74,7 +77,7 @@ public class SwitchStraight extends Switch {
     }
 
     @Override
-    public boolean isFlexibleRail(BlockState p_isFlexibleRail_1_, IBlockReader p_isFlexibleRail_2_, BlockPos p_isFlexibleRail_3_) {
+    public boolean isFlexibleRail(BlockState p_isFlexibleRail_1_, BlockGetter p_isFlexibleRail_2_, BlockPos p_isFlexibleRail_3_) {
         return false;
     }
 
@@ -90,14 +93,14 @@ public class SwitchStraight extends Switch {
     }
 
     @Override
-    public boolean canMakeSlopes(BlockState p_canMakeSlopes_1_, IBlockReader p_canMakeSlopes_2_, BlockPos p_canMakeSlopes_3_) {
+    public boolean canMakeSlopes(BlockState p_canMakeSlopes_1_, BlockGetter p_canMakeSlopes_2_, BlockPos p_canMakeSlopes_3_) {
         return false;
     }
 
 
     @Nonnull
     @Override
-    protected BlockState updateDir(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull BlockState state, boolean b) {
+    protected BlockState updateDir(@Nonnull Level world, @Nonnull BlockPos pos, @Nonnull BlockState state, boolean b) {
         return state;
     }
 }

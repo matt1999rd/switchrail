@@ -3,10 +3,10 @@ package fr.mattmouss.switchrail.network;
 import fr.mattmouss.switchrail.blocks.IPosZoomStorageHandler;
 import fr.mattmouss.switchrail.blocks.ISRCell;
 import fr.mattmouss.switchrail.other.Util;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 import java.util.function.Supplier;
 
 public class ChangeZoomPacket {
@@ -19,8 +19,8 @@ public class ChangeZoomPacket {
     public ChangeZoomPacket(int zoom, IPosZoomStorageHandler handler, boolean isX) {
         this.zoom = zoom;
         this.isX = isX;
-        if (handler instanceof TileEntity){
-            tePos = ((TileEntity) handler).getBlockPos();
+        if (handler instanceof BlockEntity){
+            tePos = ((BlockEntity) handler).getBlockPos();
             index = -1;
         }else if (handler instanceof ISRCell){
             ISRCell isrCell = (ISRCell)handler;
@@ -31,14 +31,14 @@ public class ChangeZoomPacket {
         }
     }
 
-    public ChangeZoomPacket(PacketBuffer buf) {
+    public ChangeZoomPacket(FriendlyByteBuf buf) {
         this.zoom = buf.readInt();
         this.tePos = buf.readBlockPos();
         this.isX = buf.readBoolean();
         this.index = buf.readInt();
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(zoom);
         buf.writeBlockPos(tePos);
         buf.writeBoolean(isX);

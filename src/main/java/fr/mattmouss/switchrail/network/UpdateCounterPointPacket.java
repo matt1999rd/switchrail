@@ -3,11 +3,11 @@ package fr.mattmouss.switchrail.network;
 import fr.mattmouss.switchrail.axle_point.CounterPoint;
 import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
 import fr.mattmouss.switchrail.other.Util;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -32,7 +32,7 @@ public class UpdateCounterPointPacket {
         this.index = index;
     }
 
-    public UpdateCounterPointPacket(PacketBuffer buf) {
+    public UpdateCounterPointPacket(FriendlyByteBuf buf) {
         this.cpPos = buf.readBlockPos();
         this.type = buf.readInt();
         this.index = buf.readInt();
@@ -47,7 +47,7 @@ public class UpdateCounterPointPacket {
         }
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeBlockPos(cpPos);
         buf.writeInt(type);
         buf.writeInt(index);
@@ -62,7 +62,7 @@ public class UpdateCounterPointPacket {
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            World world = Objects.requireNonNull(ctx.get().getSender()).getLevel();
+            Level world = Objects.requireNonNull(ctx.get().getSender()).getLevel();
             WorldCounterPoints worldCP = Util.getWorldCounterPoint(world);
             worldCP.doActionServerSide(cpPos,type,counterPoint,acPos,side,index);
         });

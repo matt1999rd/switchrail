@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"textures": {
 		"2": "switchrail:block/redstone_off",
-		"wood": "switchrail:block/wood",
 		"particle": "switchrail:block/wood",
+		"wood": "switchrail:block/wood",
 		"metal": "switchrail:block/metal"
 	},
 	"elements": [
@@ -649,8 +649,8 @@
 			}
 		},
 		{
-			"from": [3, -1, 2],
-			"to": [4, 2, 3],
+			"from": [3, 0, 2],
+			"to": [4, 3, 3],
 			"faces": {
 				"north": {"uv": [2, 0, 4, 2], "texture": "#wood"},
 				"east": {"uv": [0, 12, 2, 14], "texture": "#wood"},
@@ -696,5 +696,6 @@
 				"down": {"uv": [0, 0, 2, 2], "texture": "#2"}
 			}
 		}
-	]
+	],
+	"display": {}
 }

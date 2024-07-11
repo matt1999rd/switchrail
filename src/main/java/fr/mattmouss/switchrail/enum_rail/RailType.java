@@ -1,20 +1,20 @@
 package fr.mattmouss.switchrail.enum_rail;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import fr.mattmouss.switchrail.blocks.AxleCounterRail;
 import fr.mattmouss.switchrail.blocks.ControllerBlock;
 import fr.mattmouss.switchrail.blocks.CrossedRail;
 import fr.mattmouss.switchrail.other.Util;
 import fr.mattmouss.switchrail.switchblock.*;
-import net.minecraft.block.AbstractRailBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.state.properties.DoorHingeSide;
-import net.minecraft.state.properties.RailShape;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.vector.Vector2f;
+import net.minecraft.world.level.block.BaseRailBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoorHingeSide;
+import net.minecraft.world.level.block.state.properties.RailShape;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec2;
 
 public enum RailType {
     CROSSED_RAIL(10,CrossedRail.class),
@@ -25,11 +25,11 @@ public enum RailType {
     THREE_WAY(36,SwitchTriple.class),
     SINGLE_SLIP(48, SwitchSimpleSlip.class),
     DOUBLE_SLIP(56, SwitchDoubleSlip.class),
-    RAIL(0,AbstractRailBlock.class);
+    RAIL(0,BaseRailBlock.class);
 
     final int shift;
     final Class<? extends Block> instanceClass;
-    final Vector2f uvDimension = Util.makeVector(32F/256F);
+    final Vec2 uvDimension = Util.makeVector(32F/256F);
 
 
     RailType(int shift, Class<? extends Block> instanceClass){
@@ -41,7 +41,7 @@ public enum RailType {
         for (RailType switchType : RailType.values()){
             Class<?> class_in = block.getClass();
             if (switchType == RAIL){
-                if (AbstractRailBlock.class.isAssignableFrom(class_in)){
+                if (BaseRailBlock.class.isAssignableFrom(class_in)){
                     return switchType;
                 }
             }else if (class_in == switchType.instanceClass) {
@@ -143,9 +143,9 @@ public enum RailType {
         return null;
     }
 
-    public void render(MatrixStack stack, Vector2f posOnBoard, Vector2f iconDimension, BlockState blockState,boolean isEnable){
+    public void render(PoseStack stack, Vec2 posOnBoard, Vec2 iconDimension, BlockState blockState,boolean isEnable){
         int uvShift = this.getUVShift(blockState);
-        Vector2f uvOrigin = Util.directMult(new Vector2f(uvShift%8,(float)(uvShift/8)),uvDimension);
+        Vec2 uvOrigin = Util.directMult(new Vec2(uvShift%8,(float)(uvShift/8)),uvDimension);
         Util.renderQuad(stack,posOnBoard, Util.add(posOnBoard,iconDimension),uvOrigin,Util.add(uvOrigin,uvDimension),isEnable);
     }
 

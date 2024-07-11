@@ -8,29 +8,28 @@ import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
 import fr.mattmouss.switchrail.network.Networking;
 import fr.mattmouss.switchrail.network.SetAxleNumberPacket;
 import fr.mattmouss.switchrail.other.Util;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.state.properties.RailShape;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.PacketDistributor;
-import org.lwjgl.system.CallbackI;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.level.block.state.properties.RailShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fmllegacy.network.PacketDistributor;
 
 import java.util.List;
 
 public interface IAxleCounterDetector {
 
     // test of the registering of cart in the world data
-    default boolean isMinecartComing(WorldCounterPoints worldCP, BlockPos pos, AbstractMinecartEntity cart){
+    default boolean isMinecartComing(WorldCounterPoints worldCP, BlockPos pos, AbstractMinecart cart){
         boolean res = !worldCP.getCart(pos).isPresent();
         if (res)worldCP.onCartPassing(pos,cart.getUUID());  // add cart uuid
         return res;
     }
 
-    default boolean isMinecartLeaving(WorldCounterPoints worldCP,BlockPos railPos, AbstractMinecartEntity cart){
+    default boolean isMinecartLeaving(WorldCounterPoints worldCP,BlockPos railPos, AbstractMinecart cart){
         boolean res = cart.getX() < railPos.getX() || cart.getX() > railPos.getX() + 1 ||
                 cart.getZ() < railPos.getZ() || cart.getZ() > railPos.getZ() + 1 ;
         if (res)worldCP.onCartLeaving(railPos);
@@ -38,8 +37,8 @@ public interface IAxleCounterDetector {
     }
 
     // correction need to be made on direction of the minecart because on turn, cart may be in the wrong direction
-    default Direction getMotionDirection(AbstractMinecartEntity cart, boolean isLeaving, RailShape shape){
-        Vector3d motion = cart.getDeltaMovement();
+    default Direction getMotionDirection(AbstractMinecart cart, boolean isLeaving, RailShape shape){
+        Vec3 motion = cart.getDeltaMovement();
         Direction motionRawDirection = Direction.getNearest(motion.x,0,motion.z);
         Pair<Direction,Direction> pair = Util.getDirections(shape);
         if (pair.getFirst() == pair.getSecond().getOpposite()){
@@ -68,7 +67,7 @@ public interface IAxleCounterDetector {
         }
     }
 
-    default void onMinecartLimitPass(World world, WorldCounterPoints worldCP, BlockPos pos,Direction side,boolean isLeaving){
+    default void onMinecartLimitPass(Level world, WorldCounterPoints worldCP, BlockPos pos,Direction side,boolean isLeaving){
         List<CounterPoint> sideCPoints = worldCP.getCounterPoints(pos,side,isLeaving);
         if (sideCPoints == null)return;
         if (!sideCPoints.isEmpty()){
@@ -82,7 +81,7 @@ public interface IAxleCounterDetector {
                 if (index == -1){
                     handler = Util.getAxleTileEntity(world,acPos);
                 }else{
-                    TileEntity te = world.getBlockEntity(acPos);
+                    BlockEntity te = world.getBlockEntity(acPos);
                     if (te instanceof PanelTile){
                         PanelTile panelTile = (PanelTile) te;
                         handler = (ICounterHandler) panelTile.getIPanelCell(PanelCellPos.fromIndex(panelTile,index));
@@ -93,17 +92,18 @@ public interface IAxleCounterDetector {
                 assert handler != null;
                 if (addAxle){
                     handler.addAxle();
-                    // we add or remove axle server side => need to add or remove axle client side as well
-                    Networking.INSTANCE.send(PacketDistributor.ALL.noArg(), new SetAxleNumberPacket(acPos, 1,index));
+                    // we add or remove axle server side => need to add or remove axle on all client side as well for axle counter tile
+                    // with axle counter cell, update server side are brought down by the function IPanelCell#writeNBT
+                    if (handler instanceof AxleCounterTile) Networking.INSTANCE.send(PacketDistributor.ALL.noArg(), new SetAxleNumberPacket(acPos, 1,index));
                 }else {
                     handler.removeAxle();
-                    Networking.INSTANCE.send(PacketDistributor.ALL.noArg(), new SetAxleNumberPacket(acPos, -1,index));
+                    if (handler instanceof AxleCounterTile) Networking.INSTANCE.send(PacketDistributor.ALL.noArg(), new SetAxleNumberPacket(acPos, -1,index));
                 }
             });
         }
     }
 
-    default void onMinecartPass(World world, BlockPos pos, AbstractMinecartEntity cart, RailShape shape){
+    default void onMinecartPass(Level world, BlockPos pos, AbstractMinecart cart, RailShape shape){
         WorldCounterPoints worldCP = Util.getWorldCounterPoint(world);
         boolean isMinecartComing = isMinecartComing(worldCP,pos,cart);
         if (!isMinecartComing){
@@ -120,7 +120,7 @@ public interface IAxleCounterDetector {
         }
     }
 
-    default void removeCP(World world,BlockState oldState,BlockState actualState,BlockPos cpPos){
+    default void removeCP(Level world,BlockState oldState,BlockState actualState,BlockPos cpPos){
         // this function is done only server side
         if (actualState.getBlock() != oldState.getBlock()) {
             WorldCounterPoints worldCP = Util.getWorldCounterPoint(world);

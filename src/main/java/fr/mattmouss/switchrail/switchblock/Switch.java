@@ -2,24 +2,25 @@ package fr.mattmouss.switchrail.switchblock;
 
 import fr.mattmouss.switchrail.blocks.IAxleCounterDetector;
 import fr.mattmouss.switchrail.enum_rail.Corners;
-import net.minecraft.block.AbstractRailBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.Property;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.state.properties.RailShape;
+import net.minecraft.world.level.block.BaseRailBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.tags.Tag;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nonnull;
 
-public abstract class Switch extends AbstractRailBlock implements IAxleCounterDetector {
+
+public abstract class Switch extends BaseRailBlock implements IAxleCounterDetector {
 
     public static EnumProperty<RailShape> RAIL_STRAIGHT_FLAT;
     public static EnumProperty<Corners>
@@ -46,11 +47,11 @@ public abstract class Switch extends AbstractRailBlock implements IAxleCounterDe
         this.registerDefaultState(this.defaultBlockState().setValue(BlockStateProperties.ENABLED,true));
     }
     
-    public BlockState getBlockState(World world, BlockPos pos){
+    public BlockState getBlockState(Level world, BlockPos pos){
         return world.getBlockState(pos);
     }
 
-    public void updatePoweredState(World world, BlockState state, BlockPos pos, PlayerEntity player, int flags, boolean fromScreen){
+    public void updatePoweredState(Level world, BlockState state, BlockPos pos, Player player, int flags, boolean fromScreen){
         if (!world.isClientSide || fromScreen){
             RailShape currentRailShape = world.getBlockState(pos).getValue(RAIL_STRAIGHT_FLAT);
             world.setBlock(pos,state.cycle(getSwitchPositionProperty()).setValue(RAIL_STRAIGHT_FLAT,currentRailShape),flags);
@@ -59,33 +60,27 @@ public abstract class Switch extends AbstractRailBlock implements IAxleCounterDe
 
     public abstract EnumProperty<Corners> getSwitchPositionProperty();
 
-    @Override
-    public boolean is(@Nonnull ITag<Block> tag) {
-        return (tag == BlockTags.RAILS);
-    }
-
-
     @Nonnull
     @Override
-    protected BlockState updateDir(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, boolean placing) {
+    protected BlockState updateDir(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, boolean placing) {
         System.out.println("getUpdatedState called");
         return state;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(BlockStateProperties.ENABLED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(BlockStateProperties.ENABLED,WATERLOGGED);
     }
 
     @Override
-    public void onMinecartPass(BlockState state, World world, BlockPos pos, AbstractMinecartEntity cart) {
+    public void onMinecartPass(BlockState state, Level world, BlockPos pos, AbstractMinecart cart) {
         RailShape shape = this.getRailDirection(state,world,pos,cart);
         onMinecartPass(world,pos,cart,shape);
         super.onMinecartPass(state, world, pos, cart);
     }
 
     @Override
-    public void onRemove(BlockState oldState, World world, BlockPos pos, BlockState actualState, boolean p_196243_5_) {
+    public void onRemove(BlockState oldState, Level world, BlockPos pos, BlockState actualState, boolean p_196243_5_) {
         removeCP(world,oldState,actualState,pos);
         super.onRemove(oldState, world, pos, actualState, p_196243_5_);
     }

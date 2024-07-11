@@ -3,9 +3,9 @@ package fr.mattmouss.switchrail.network;
 import fr.mattmouss.switchrail.axle_point.CounterPointInfo;
 import fr.mattmouss.switchrail.gui.CounterScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
@@ -19,13 +19,13 @@ public class OpenCounterScreenPacket {
         this.index = index;
     }
 
-    public OpenCounterScreenPacket(PacketBuffer buf) {
+    public OpenCounterScreenPacket(FriendlyByteBuf buf) {
         acPos = buf.readBlockPos();
         index = buf.readInt();
         cpInfo = new CounterPointInfo(buf);
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeBlockPos(acPos);
         buf.writeInt(index);
         cpInfo.toBytes(buf);

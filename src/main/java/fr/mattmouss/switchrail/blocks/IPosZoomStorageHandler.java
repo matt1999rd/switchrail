@@ -2,8 +2,8 @@ package fr.mattmouss.switchrail.blocks;
 
 import fr.mattmouss.switchrail.other.PosAndZoomStorage;
 import fr.mattmouss.switchrail.other.Vector2i;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.common.util.LazyOptional;
 
 import java.util.function.Supplier;

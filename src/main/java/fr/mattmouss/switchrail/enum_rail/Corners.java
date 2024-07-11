@@ -1,13 +1,13 @@
 package fr.mattmouss.switchrail.enum_rail;
 
-import net.minecraft.state.properties.DoorHingeSide;
-import net.minecraft.util.Direction;
-import net.minecraft.util.IStringSerializable;
+import net.minecraft.world.level.block.state.properties.DoorHingeSide;
+import net.minecraft.core.Direction;
+import net.minecraft.util.StringRepresentable;
 import org.lwjgl.system.CallbackI;
 
 import javax.annotation.Nullable;
 
-public enum Corners implements IStringSerializable {
+public enum Corners implements StringRepresentable {
     TURN_LEFT("turn_left",0b10),
     STRAIGHT("straight",0b00),
     TURN_RIGHT("turn_right",0b01),

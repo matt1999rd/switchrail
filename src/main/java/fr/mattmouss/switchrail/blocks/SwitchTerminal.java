@@ -2,43 +2,45 @@ package fr.mattmouss.switchrail.blocks;
 
 import fr.mattmouss.switchrail.network.ActionOnTilePacket;
 import fr.mattmouss.switchrail.network.Networking;
-import fr.mattmouss.switchrail.network.OpenControllerScreenPacket;
+//import fr.mattmouss.switchrail.network.OpenControllerScreenPacket;
 import fr.mattmouss.switchrail.network.OpenTerminalScreenPacket;
 import fr.mattmouss.switchrail.other.Util;
-import mcp.MethodsReturnNonnullByDefault;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
-import net.minecraftforge.common.util.Constants.BlockFlags;
-import net.minecraftforge.fml.network.NetworkDirection;
+//import mcp.MethodsReturnNonnullByDefault;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fmllegacy.network.NetworkDirection;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
-import java.util.Optional;
 
-public class SwitchTerminal extends Block {
+
+public class SwitchTerminal extends Block implements EntityBlock {
     
     public static final BooleanProperty IS_BLOCKED = BooleanProperty.create("is_blocked");
     public SwitchTerminal() {
@@ -50,8 +52,8 @@ public class SwitchTerminal extends Block {
     @Nonnull
     @Override
     @ParametersAreNonnullByDefault
-    public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-        return VoxelShapes.or(
+    public VoxelShape getShape(BlockState p_220053_1_, BlockGetter p_220053_2_, BlockPos p_220053_3_, CollisionContext p_220053_4_) {
+        return Shapes.or(
                 Block.box(0,0,0,16,1,16), //bottom part
                 Block.box(7,0,7,9,16,9), //vertical part
                 Block.box(6,12,6,10,17,10)); //top redstone part
@@ -60,7 +62,7 @@ public class SwitchTerminal extends Block {
     //return the blockstate to configure when player is using the corresponding blockitem
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext blockItemUseContext) {
+    public BlockState getStateForPlacement(BlockPlaceContext blockItemUseContext) {
         BlockPos pos = blockItemUseContext.getClickedPos();
         LivingEntity placer = blockItemUseContext.getPlayer();
         assert placer != null;
@@ -71,34 +73,39 @@ public class SwitchTerminal extends Block {
 
     // used for modification of redstone wire already placed nearby
     @Override
-    public void onPlace(BlockState state, World world, BlockPos pos, @Nonnull BlockState p_220082_4_, boolean b) {
+    public void onPlace(BlockState state, Level world, BlockPos pos, @Nonnull BlockState p_220082_4_, boolean b) {
         Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         world.updateNeighborsAt(pos.relative(getCommandDirection(facing)),this);
         world.updateNeighborsAt(pos.relative(getControlDirection(facing)),this);
     }
 
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return type == ModBlock.TERMINAL_TILE ? ((level1, blockPos, blockState, t) -> {
+            if (t instanceof ITerminalHandler){
+                ((ITerminalHandler) t).onTick();
+            }
+        }) : null;
+    }
+
     // it is a list of all blockstate properties
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(BlockStateProperties.POWERED,IS_BLOCKED,BlockStateProperties.HORIZONTAL_FACING);
     }
 
     @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TerminalTile();
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+        return new TerminalTile(blockPos,blockState);
     }
 
     // this function remove the block if the block below it is not a solid block
     @Nonnull
     @Override
     @ParametersAreNonnullByDefault
-    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
+    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, LevelAccessor worldIn, BlockPos currentPos, BlockPos facingPos) {
         if (facing == Direction.DOWN && !facingState.getMaterial().blocksMotion()){
             return Blocks.AIR.defaultBlockState();
         }
@@ -107,13 +114,13 @@ public class SwitchTerminal extends Block {
 
     // used to power the terminal block if nearby block can power it
     @ParametersAreNonnullByDefault
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos pos1, boolean bd) {
+    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos pos1, boolean bd) {
         Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         boolean wasPowered = state.getValue(BlockStateProperties.POWERED);
         BlockPos controlDirPos = pos.relative(getCommandDirection(facing));
         if (controlDirPos.equals(pos1)) {
             boolean isPowered = world.hasSignal(pos.relative(getCommandDirection(facing)), getCommandDirection(facing));
-            world.setBlock(pos, state.setValue(BlockStateProperties.POWERED, isPowered), BlockFlags.DEFAULT);
+            world.setBlock(pos, state.setValue(BlockStateProperties.POWERED, isPowered), 3);
             if (isPowered != wasPowered)actionOnPoweredBSPModification(world, pos, isPowered);
         }
     }
@@ -121,14 +128,14 @@ public class SwitchTerminal extends Block {
     // done when block is powered or unpowered
     // we need to block or free switch only if changes occurs in terminal : powering unpowered block or unpowering powered block
 
-    public void actionOnPoweredBSPModification(World world,BlockPos pos,boolean isPowered){
+    public void actionOnPoweredBSPModification(Level world,BlockPos pos,boolean isPowered){
         TerminalTile tile = (TerminalTile) world.getBlockEntity(pos);
         assert tile != null;
         //action done on tile entity : need packet matter to send to other client (search all player)
-        List<? extends PlayerEntity> players = world.players();
-        for (PlayerEntity player : players){
-            if (player instanceof ServerPlayerEntity){
-                Networking.INSTANCE.sendTo(new ActionOnTilePacket(pos,isPowered),((ServerPlayerEntity)player).connection.connection,NetworkDirection.PLAY_TO_CLIENT);
+        List<? extends Player> players = world.players();
+        for (Player player : players){
+            if (player instanceof ServerPlayer){
+                Networking.INSTANCE.sendTo(new ActionOnTilePacket(pos,isPowered),((ServerPlayer)player).connection.connection,NetworkDirection.PLAY_TO_CLIENT);
             }else {
                 throw new IllegalStateException("Server player are mandatory here to push modification of switch enabled state to client ");
             }
@@ -145,17 +152,17 @@ public class SwitchTerminal extends Block {
     @Nonnull
     @Override
     @ParametersAreNonnullByDefault
-    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult rayTraceResult) {
+    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult rayTraceResult) {
         if (!world.isClientSide){
             //send a packet to client to open screen
-            Networking.INSTANCE.sendTo(new OpenTerminalScreenPacket(pos, -1),((ServerPlayerEntity) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            Networking.INSTANCE.sendTo(new OpenTerminalScreenPacket(pos, -1),((ServerPlayer) player).connection.connection, NetworkDirection.PLAY_TO_CLIENT);
         }
-        return ActionResultType.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
     @ParametersAreNonnullByDefault
-    public int getSignal(BlockState state, IBlockReader reader, BlockPos pos, Direction dir) {
+    public int getSignal(BlockState state, BlockGetter reader, BlockPos pos, Direction dir) {
         Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         boolean isBlocked = state.getValue(IS_BLOCKED);
         boolean isPowered = state.getValue(BlockStateProperties.POWERED);
@@ -166,19 +173,19 @@ public class SwitchTerminal extends Block {
     }
 
     @Override
-    public boolean canConnectRedstone(BlockState state, IBlockReader world, BlockPos pos, @Nullable Direction side) {
+    public boolean canConnectRedstone(BlockState state, BlockGetter world, BlockPos pos, @Nullable Direction side) {
         Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
         return side == getCommandDirection(facing) || side == getControlDirection(facing);
     }
 
     @Override
     @ParametersAreNonnullByDefault
-    public void onRemove(BlockState state, World world, BlockPos pos, BlockState futureState, boolean bool) {
+    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState futureState, boolean bool) {
         if (state.is(futureState.getBlock())) {
             super.onRemove(state, world, pos, futureState, bool);
             return;
         }
-        TileEntity te = world.getBlockEntity(pos);
+        BlockEntity te = world.getBlockEntity(pos);
         if (te == null)throw new IllegalStateException("No tile entity found in position !");
         if (!state.getValue(IS_BLOCKED) && state.getValue(BlockStateProperties.POWERED)) {
             ((TerminalTile)te).freeAllSwitch();

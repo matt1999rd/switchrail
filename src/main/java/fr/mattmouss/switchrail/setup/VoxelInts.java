@@ -1,8 +1,8 @@
 package fr.mattmouss.switchrail.setup;
 
-import net.minecraft.block.Block;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 //tools for voxel-shapes
 public class VoxelInts {
@@ -106,6 +106,21 @@ public class VoxelInts {
 
 
     public VoxelShape getAssociatedShape(){
+        if (plane_val[0]>plane_val[3]){
+            int pv0 = plane_val[0];
+            plane_val[0] = plane_val[3];
+            plane_val[3] = pv0;
+        }
+        if (plane_val[1]>plane_val[4]){
+            int pv1 = plane_val[1];
+            plane_val[1] = plane_val[4];
+            plane_val[4] = pv1;
+        }
+        if (plane_val[2]>plane_val[5]){
+            int pv2 = plane_val[2];
+            plane_val[2] = plane_val[5];
+            plane_val[5] = pv2;
+        }
         return Block.box(
                 plane_val[0], plane_val[1], plane_val[2],
                 plane_val[3], plane_val[4], plane_val[5]);

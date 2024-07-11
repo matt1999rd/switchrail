@@ -1,11 +1,13 @@
 package fr.mattmouss.switchrail.blocks;
 
 import fr.mattmouss.switchrail.other.TerminalStorage;
-import net.minecraft.block.BlockState;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
@@ -13,26 +15,19 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.Supplier;
 
-public class TerminalTile extends TileEntity implements ITickableTileEntity, ITerminalHandler {
+public class TerminalTile extends BlockEntity implements ITerminalHandler {
 
     private final LazyOptional<TerminalStorage> storage = LazyOptional.of(this::createStorage).cast();
     private final Supplier<IllegalArgumentException> storageErrorSupplier = () -> new IllegalArgumentException("no storage found in Terminal Tile Entity !");
 
-    public TerminalTile() {
-        super(ModBlock.TERMINAL_TILE);
+    public TerminalTile(BlockPos pos,BlockState state) {
+        super(ModBlock.TERMINAL_TILE,pos,state);
     }
 
     @Nonnull
     public TerminalStorage createStorage(){
         return new TerminalStorage(this.worldPosition);
     }
-
-    // Interface ITickableTE function
-    @Override
-    public void tick() {
-        onTick();
-    }
-    //--------------
 
     // Interface ITerminalHandler functions
     @Override
@@ -51,7 +46,7 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity, ITe
     }
 
     @Override
-    public TileEntity getTile() {
+    public BlockEntity getTile() {
         return this;
     }
 
@@ -65,18 +60,18 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity, ITe
 
     @Override
     @ParametersAreNonnullByDefault
-    public void load(BlockState state, CompoundNBT nbt) {
-        CompoundNBT storage_tag = nbt.getCompound("terminal");
-        storage.ifPresent(terminalStorage -> ((INBTSerializable<CompoundNBT>)terminalStorage).deserializeNBT(storage_tag));
-        super.load(state, nbt);
+    public void load(CompoundTag nbt) {
+        CompoundTag storage_tag = nbt.getCompound("terminal");
+        storage.ifPresent(terminalStorage -> ((INBTSerializable<CompoundTag>)terminalStorage).deserializeNBT(storage_tag));
+        super.load(nbt);
     }
 
     @Nonnull
     @Override
     @ParametersAreNonnullByDefault
-    public CompoundNBT save(CompoundNBT nbt) {
+    public CompoundTag save(CompoundTag nbt) {
         storage.ifPresent(terminalStorage -> {
-            CompoundNBT compoundNBT = ((INBTSerializable<CompoundNBT>)terminalStorage).serializeNBT();
+            CompoundTag compoundNBT = ((INBTSerializable<CompoundTag>)terminalStorage).serializeNBT();
             nbt.put("terminal",compoundNBT);
         });
         return super.save(nbt);
@@ -84,12 +79,14 @@ public class TerminalTile extends TileEntity implements ITickableTileEntity, ITe
 
     @Override
     @Nonnull
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        return this.save(new CompoundTag());
     }
 
     @Override
     public Supplier<IllegalArgumentException> getErrorSupplier() {
         return storageErrorSupplier;
     }
+
+
 }

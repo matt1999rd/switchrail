@@ -1,11 +1,11 @@
 package fr.mattmouss.switchrail.axle_point;
 
 import fr.mattmouss.switchrail.other.Util;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 
 // a unique counting point (WARNING : work in both direction if bidirectional is true)
 public class CounterPoint {
@@ -59,28 +59,28 @@ public class CounterPoint {
         return this.testPos(pos,index) && this.getCountingDirection().equals(side);
     }
 
-    public CounterPoint(PacketBuffer buf){
+    public CounterPoint(FriendlyByteBuf buf){
         this.acPos = buf.readBlockPos();
         this.config = new Config(buf);
         this.index = buf.readInt();
     }
 
-    public void toBytes(PacketBuffer buf){
+    public void toBytes(FriendlyByteBuf buf){
         buf.writeBlockPos(acPos);
         config.toBytes(buf);
         buf.writeInt(index);
     }
 
-    public INBT write(){
-        CompoundNBT nbt = new CompoundNBT();
+    public Tag write(){
+        CompoundTag nbt = new CompoundTag();
         Util.putPos(nbt,acPos);
         config.write(nbt);
         nbt.putInt("index",index);
         return nbt;
     }
 
-    public static CounterPoint read(INBT nbt){
-        CompoundNBT nbt1 = (CompoundNBT) nbt;
+    public static CounterPoint read(Tag nbt){
+        CompoundTag nbt1 = (CompoundTag) nbt;
         BlockPos pos = Util.getPosFromNbt(nbt1);
         Config config = Config.read(nbt1);
         int index;
@@ -105,7 +105,7 @@ public class CounterPoint {
             this.bidirectional = bidirectional;
         }
 
-        public Config(PacketBuffer buf){
+        public Config(FriendlyByteBuf buf){
             this.direction = buf.readEnum(Direction.class);
             this.addAxle = buf.readBoolean();
             this.fromOutside = buf.readBoolean();
@@ -132,21 +132,21 @@ public class CounterPoint {
 
         public void toggleBidirectional() { this.bidirectional = !bidirectional; }
 
-        public void toBytes(PacketBuffer buf) {
+        public void toBytes(FriendlyByteBuf buf) {
             buf.writeEnum(direction);
             buf.writeBoolean(addAxle);
             buf.writeBoolean(fromOutside);
             buf.writeBoolean(bidirectional);
         }
 
-        public void write(CompoundNBT nbt) {
+        public void write(CompoundTag nbt) {
             nbt.putByte("direction", (byte) direction.get2DDataValue());
             nbt.putBoolean("add_axle",addAxle);
             nbt.putBoolean("from_outside",fromOutside);
             nbt.putBoolean("bidirectional",bidirectional);
         }
 
-        public static Config read(CompoundNBT nbt){
+        public static Config read(CompoundTag nbt){
             Direction direction = Direction.from2DDataValue(nbt.getByte("direction"));
             boolean addAxle = nbt.getBoolean("add_axle");
             boolean fromOutside = nbt.getBoolean("from_outside");

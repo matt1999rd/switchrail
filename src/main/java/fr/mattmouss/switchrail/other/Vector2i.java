@@ -1,8 +1,8 @@
 package fr.mattmouss.switchrail.other;
 
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.vector.Vector2f;
-import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.core.Vec3i;
 
 public class Vector2i {
     public int x,y;
@@ -16,11 +16,11 @@ public class Vector2i {
         this.y = vec2i.y;
     }
 
-    public Vector2f toFloatVector(){
-        return new Vector2f((float) x,(float) y);
+    public Vec2 toFloatVector(){
+        return new Vec2((float) x,(float) y);
     }
 
-    public static Vector2i project2D(Vector3i vec, Direction.Axis removedAxis){
+    public static Vector2i project2D(Vec3i vec, Direction.Axis removedAxis){
         switch (removedAxis) {
             case X:
                 return new Vector2i(vec.getY(), vec.getZ());

@@ -3,29 +3,26 @@ package fr.mattmouss.switchrail.other;
 import com.dannyandson.tinyredstone.api.IPanelCell;
 import com.dannyandson.tinyredstone.blocks.PanelCellPos;
 import com.dannyandson.tinyredstone.blocks.PanelTile;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
 import fr.mattmouss.switchrail.blocks.AxleCounterTile;
 import fr.mattmouss.switchrail.blocks.IPosZoomStorageHandler;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.state.properties.DoorHingeSide;
-import net.minecraft.state.properties.RailShape;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector2f;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.world.level.block.state.properties.DoorHingeSide;
+import net.minecraft.world.level.block.state.properties.RailShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import com.mojang.math.Matrix4f;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -39,42 +36,42 @@ public class Util {
 
     public static final Vector2i DEFAULT_ZOOM = new Vector2i(16,11);
 
-    public static Vector2f add(Vector2f... vectors){
+    public static Vec2 add(Vec2... vectors){
         float x = 0.0F;
         float y = 0.0F;
-        for (Vector2f vec : vectors){
+        for (Vec2 vec : vectors){
             x += vec.x;
             y += vec.y;
         }
-        return new Vector2f(x,y);
+        return new Vec2(x,y);
     }
 
-    public static Vector2f subtract(Vector2f vec1, Vector2f vec2){
-        return new Vector2f(vec1.x-vec2.x,vec1.y-vec2.y);
+    public static Vec2 subtract(Vec2 vec1, Vec2 vec2){
+        return new Vec2(vec1.x-vec2.x,vec1.y-vec2.y);
     }
 
-    public static Vector2f scale(Vector2f vec,float scale){
-        return new Vector2f(scale*vec.x,scale* vec.y);
+    public static Vec2 scale(Vec2 vec,float scale){
+        return new Vec2(scale*vec.x,scale* vec.y);
     }
 
-    public static Vector2f makeVector(BlockPos pos){
-        return new Vector2f(pos.getX(),pos.getZ());
+    public static Vec2 makeVector(BlockPos pos){
+        return new Vec2(pos.getX(),pos.getZ());
     }
 
-    public static Vector2f directMult(Vector2f vec1,Vector2f vec2){
-        return new Vector2f(vec1.x*vec2.x,vec1.y* vec2.y);
+    public static Vec2 directMult(Vec2 vec1,Vec2 vec2){
+        return new Vec2(vec1.x*vec2.x,vec1.y* vec2.y);
     }
 
-    public static Vector2f makeVector(float scale){
-        return scale(Vector2f.ONE,scale);
+    public static Vec2 makeVector(float scale){
+        return scale(Vec2.ONE,scale);
     }
 
-    public static boolean isBiggerThan(Vector2f vec1,Vector2f vec2){
+    public static boolean isBiggerThan(Vec2 vec1,Vec2 vec2){
         return vec1.x>= vec2.x && vec1.y>=vec2.y;
     }
 
-    public static boolean isIn(Vector2f start,Vector2f dimension,double mouseX, double mouseY){
-        Vector2f mousePosition = new Vector2f((float) mouseX,(float) mouseY);
+    public static boolean isIn(Vec2 start,Vec2 dimension,double mouseX, double mouseY){
+        Vec2 mousePosition = new Vec2((float) mouseX,(float) mouseY);
         return isBiggerThan(mousePosition,start) && isBiggerThan(add(start,dimension),mousePosition);
     }
 
@@ -83,7 +80,7 @@ public class Util {
     }
 
     public static Direction getDirectionFromEntity(LivingEntity placer, BlockPos pos,boolean takeOpposite){
-        Vector3d vec3d = placer.position();
+        Vec3 vec3d = placer.position();
         Direction d= Direction.getNearest(vec3d.x-pos.getX(),vec3d.y-pos.getY(),vec3d.z-pos.getZ());
         if (d== Direction.DOWN || d== Direction.UP){
             return Direction.NORTH;
@@ -118,7 +115,7 @@ public class Util {
     }
 
     public static Direction getFacingFromEntity(LivingEntity placer, BlockPos pos,boolean needOpposite) {
-        Vector3d vec =placer.position();
+        Vec3 vec =placer.position();
         Direction dir = Direction.getNearest(vec.x-pos.getX(),vec.y-pos.getY(),vec.z-pos.getZ());
         if (dir == Direction.UP || dir == Direction.DOWN){
             dir = Direction.NORTH;
@@ -127,11 +124,11 @@ public class Util {
         return dir;
     }
 
-    public static void putPos(CompoundNBT nbt, BlockPos pos){
+    public static void putPos(CompoundTag nbt, BlockPos pos){
         nbt.putLong("position",pos.asLong());
     }
 
-    public static BlockPos getPosFromNbt(CompoundNBT nbt){
+    public static BlockPos getPosFromNbt(CompoundTag nbt){
         long value = nbt.getLong("position");
         return BlockPos.of(value);
     }
@@ -152,23 +149,23 @@ public class Util {
         }
     }
 
-    public static void renderQuad(MatrixStack stack, Vector2f origin, Vector2f end, Vector2f uvOrigin, Vector2f uvEnd, boolean isEnable){
-        Tessellator tessellator = Tessellator.getInstance();
+    public static void renderQuad(PoseStack stack, Vec2 origin, Vec2 end, Vec2 uvOrigin, Vec2 uvEnd, boolean isEnable){
+        Tesselator tessellator = Tesselator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuilder();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         Matrix4f matrix4f = stack.last().pose();
         float colorMask = (isEnable) ? 1.0F : 0.5F;
-        RenderSystem.color3f(colorMask,colorMask,colorMask);
+        RenderSystem.setShaderFogColor(colorMask,colorMask,colorMask);
         bufferbuilder.vertex(matrix4f, origin.x, origin.y, (float)0).uv(uvOrigin.x, uvOrigin.y).endVertex();
         bufferbuilder.vertex(matrix4f, origin.x, end.y, (float)0).uv(uvOrigin.x, uvEnd.y).endVertex();
         bufferbuilder.vertex(matrix4f, end.x, end.y, (float)0).uv(uvEnd.x, uvEnd.y).endVertex();
         bufferbuilder.vertex(matrix4f, end.x, origin.y, (float)0).uv(uvEnd.x, uvOrigin.y).endVertex();
         tessellator.end();
-        RenderSystem.color3f(1.0F,1.0F,1.0F);
+        RenderSystem.setShaderFogColor(1.0F,1.0F,1.0F);
     }
 
-    public static AxleCounterTile getAxleTileEntity(World world, BlockPos pos){
-        TileEntity tile = world.getBlockEntity(pos);
+    public static AxleCounterTile getAxleTileEntity(Level world, BlockPos pos){
+        BlockEntity tile = world.getBlockEntity(pos);
         if (tile instanceof AxleCounterTile) {
             return (AxleCounterTile) tile;
         }else {
@@ -181,11 +178,11 @@ public class Util {
     // writeTinNBTConsumer is a function that indicates how to save variable of type T in the given CompoundNBT
     // this function takes in account if the map is empty
     // Use it with the readMap function
-    public static <T> void writeMap(CompoundNBT nbt, String tag, HashMap<BlockPos,T> map, BiConsumer<CompoundNBT,T> writeTinNBTConsumer){
+    public static <T> void writeMap(CompoundTag nbt, String tag, HashMap<BlockPos,T> map, BiConsumer<CompoundTag,T> writeTinNBTConsumer){
         if (!map.isEmpty()){
-            ListNBT listNBT = new ListNBT();
+            ListTag listNBT = new ListTag();
             map.forEach(((pos, t) -> {
-                CompoundNBT internNBT = new CompoundNBT();
+                CompoundTag internNBT = new CompoundTag();
                 writeTinNBTConsumer.accept(internNBT,t);
                 Util.putPos(internNBT,pos);
                 listNBT.add(internNBT);
@@ -199,20 +196,20 @@ public class Util {
     // readTinNBTFunction is a function that indicates how to extract variable of type T in the given CompoundNBT
     // this function takes in account if the map is empty and return an empty map if it is the case
     // Use it with the writeMap function
-    public static <T> HashMap<BlockPos,T> readMap(CompoundNBT nbt, String tag, Function<CompoundNBT,T> readTinNBTFunction){
+    public static <T> HashMap<BlockPos,T> readMap(CompoundTag nbt, String tag, Function<CompoundTag,T> readTinNBTFunction){
         HashMap<BlockPos,T> map = new HashMap<>();
         if (nbt.contains(tag)){
-            INBT inbt = nbt.get(tag);
-            if (!(inbt instanceof ListNBT)){
+            Tag inbt = nbt.get(tag);
+            if (!(inbt instanceof ListTag)){
                 throw new IllegalStateException("Error in loading of nbt : the NBT stored is not a list ! Use this function with writeMap !");
             }
-            ListNBT listNBT = (ListNBT) (nbt.get(tag));
+            ListTag listNBT = (ListTag) (nbt.get(tag));
             assert listNBT != null;
             listNBT.forEach(inbt1 -> {
-                if (!(inbt1 instanceof CompoundNBT)){
+                if (!(inbt1 instanceof CompoundTag)){
                     throw new IllegalStateException("Error in loading of nbt : the NBT stored is not a compound NBT ! Use this function with writeMap !");
                 }
-                CompoundNBT internNBT = (CompoundNBT) inbt1;
+                CompoundTag internNBT = (CompoundTag) inbt1;
                 T t = readTinNBTFunction.apply(internNBT);
                 BlockPos pos = Util.getPosFromNbt(internNBT);
                 map.put(pos,t);
@@ -221,9 +218,10 @@ public class Util {
         return map;
     }
 
-    public static WorldCounterPoints getWorldCounterPoint(World world){
-        return Objects.requireNonNull(world.getServer()).overworld()
-                .getDataStorage().computeIfAbsent(WorldCounterPoints::new,"world_cp");
+    public static WorldCounterPoints getWorldCounterPoint(Level world){
+        return Objects.requireNonNull(world.getServer()).overworld().getDataStorage().computeIfAbsent(WorldCounterPoints::new,WorldCounterPoints::new,"world_cp");
+        //return Objects.requireNonNull(world.getServer()).overworld()
+        //     .getDataStorage().computeIfAbsent(WorldCounterPoints::new,"world_cp");
     }
 
     //this function is a string test to know if the shape "shape" has a part in the direction "direction"
@@ -248,7 +246,7 @@ public class Util {
 
     //this function extract the IPosZoomStorageHandler from the context object of a packet send through network
     public static IPosZoomStorageHandler extractHandler(Supplier<NetworkEvent.Context> context, BlockPos tePos, int index){
-        TileEntity te = Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(tePos);
+        BlockEntity te = Objects.requireNonNull(context.get().getSender()).getLevel().getBlockEntity(tePos);
         if (index != -1){
             if (te instanceof PanelTile){
                 PanelTile panelTile = (PanelTile)te;
