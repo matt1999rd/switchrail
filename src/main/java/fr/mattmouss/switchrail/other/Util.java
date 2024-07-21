@@ -4,7 +4,6 @@ import com.dannyandson.tinyredstone.api.IPanelCell;
 import com.dannyandson.tinyredstone.blocks.PanelCellPos;
 import com.dannyandson.tinyredstone.blocks.PanelTile;
 import com.mojang.blaze3d.vertex.*;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import fr.mattmouss.switchrail.axle_point.WorldCounterPoints;
 import fr.mattmouss.switchrail.blocks.AxleCounterTile;
@@ -24,10 +23,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -149,19 +146,16 @@ public class Util {
         }
     }
 
-    public static void renderQuad(PoseStack stack, Vec2 origin, Vec2 end, Vec2 uvOrigin, Vec2 uvEnd, boolean isEnable){
+    public static void renderQuad(PoseStack stack, Vec2 origin, Vec2 end, Vec2 uvOrigin, Vec2 uvEnd) {
         Tesselator tessellator = Tesselator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         Matrix4f matrix4f = stack.last().pose();
-        float colorMask = (isEnable) ? 1.0F : 0.5F;
-        RenderSystem.setShaderFogColor(colorMask,colorMask,colorMask);
-        bufferbuilder.vertex(matrix4f, origin.x, origin.y, (float)0).uv(uvOrigin.x, uvOrigin.y).endVertex();
-        bufferbuilder.vertex(matrix4f, origin.x, end.y, (float)0).uv(uvOrigin.x, uvEnd.y).endVertex();
-        bufferbuilder.vertex(matrix4f, end.x, end.y, (float)0).uv(uvEnd.x, uvEnd.y).endVertex();
-        bufferbuilder.vertex(matrix4f, end.x, origin.y, (float)0).uv(uvEnd.x, uvOrigin.y).endVertex();
+        bufferbuilder.vertex(matrix4f, origin.x, origin.y, (float) 0).uv(uvOrigin.x, uvOrigin.y).endVertex();
+        bufferbuilder.vertex(matrix4f, origin.x, end.y, (float) 0).uv(uvOrigin.x, uvEnd.y).endVertex();
+        bufferbuilder.vertex(matrix4f, end.x, end.y, (float) 0).uv(uvEnd.x, uvEnd.y).endVertex();
+        bufferbuilder.vertex(matrix4f, end.x, origin.y, (float) 0).uv(uvEnd.x, uvOrigin.y).endVertex();
         tessellator.end();
-        RenderSystem.setShaderFogColor(1.0F,1.0F,1.0F);
     }
 
     public static AxleCounterTile getAxleTileEntity(Level world, BlockPos pos){

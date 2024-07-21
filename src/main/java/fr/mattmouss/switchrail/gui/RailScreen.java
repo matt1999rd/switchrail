@@ -37,9 +37,10 @@ import java.util.function.Consumer;
 
 public abstract class RailScreen extends Screen implements GuiEventListener {
 
-    private final ResourceLocation GUI = new ResourceLocation(SwitchRailMod.MOD_ID, "textures/gui/controller_gui.png");
+    private final ResourceLocation GUI = new ResourceLocation(SwitchRailMod.MOD_ID, "textures/gui/rail_gui.png");
     protected final ResourceLocation POS_BUTTON = new ResourceLocation(SwitchRailMod.MOD_ID,"textures/gui/posbutton.png");
-    private static final ResourceLocation ICONS = new ResourceLocation(SwitchRailMod.MOD_ID,"textures/gui/controller_icons.png");
+    private static final ResourceLocation ICONS = new ResourceLocation(SwitchRailMod.MOD_ID,"textures/gui/rails_icons.png");
+    private static final ResourceLocation ICONS_DISABLE = new ResourceLocation(SwitchRailMod.MOD_ID,"textures/gui/rails_icons_disabled.png");
 
     protected static final int WIDTH = 227;
     protected static final int HEIGHT = 175;
@@ -329,12 +330,12 @@ public abstract class RailScreen extends Screen implements GuiEventListener {
     private void displayIcons(PoseStack stack,Vector2i relative){
         Map<BlockPos, RailType> blockToDisplay = getBlockOnBoard(true);
         assert this.minecraft != null;
-        RenderSystem.setShaderTexture(0,getIcon());
         blockToDisplay.forEach((pos,type)->{
             Vec2 posOnBoard = getPosOnBoard(pos,relative);
             boolean isDisabled = type.isSwitch() && isDisabled(pos);
             BlockState state = getBlockState(pos);
-            type.render(stack,posOnBoard,getDimensionOnBoard(), state,!isDisabled);
+            RenderSystem.setShaderTexture(0,getIcon(!isDisabled));
+            type.render(stack,posOnBoard,getDimensionOnBoard(), state);
         });
     }
 
@@ -453,8 +454,8 @@ public abstract class RailScreen extends Screen implements GuiEventListener {
     public abstract boolean isDisabled(BlockPos pos);
 
     //function specific to other icons to display in the same grid type
-    protected ResourceLocation getIcon(){
-        return ICONS;
+    protected ResourceLocation getIcon(boolean isEnable){
+        return isEnable? ICONS : ICONS_DISABLE;
     }
 
     public BlockState getBlockState(BlockPos pos){

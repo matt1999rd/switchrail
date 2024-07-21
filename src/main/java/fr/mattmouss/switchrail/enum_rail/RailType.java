@@ -143,10 +143,10 @@ public enum RailType {
         return null;
     }
 
-    public void render(PoseStack stack, Vec2 posOnBoard, Vec2 iconDimension, BlockState blockState,boolean isEnable){
+    public void render(PoseStack stack, Vec2 posOnBoard, Vec2 iconDimension, BlockState blockState){
         int uvShift = this.getUVShift(blockState);
         Vec2 uvOrigin = Util.directMult(new Vec2(uvShift%8,(float)(uvShift/8)),uvDimension);
-        Util.renderQuad(stack,posOnBoard, Util.add(posOnBoard,iconDimension),uvOrigin,Util.add(uvOrigin,uvDimension),isEnable);
+        Util.renderQuad(stack,posOnBoard, Util.add(posOnBoard,iconDimension),uvOrigin,Util.add(uvOrigin,uvDimension));
     }
 
 }

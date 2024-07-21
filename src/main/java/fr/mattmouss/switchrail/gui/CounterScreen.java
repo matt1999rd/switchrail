@@ -19,7 +19,6 @@ import fr.mattmouss.switchrail.network.SetAxleNumberPacket;
 import fr.mattmouss.switchrail.network.UpdateCounterPointPacket;
 import fr.mattmouss.switchrail.other.Util;
 import fr.mattmouss.switchrail.other.Vector2i;
-import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
@@ -35,7 +34,6 @@ import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.awt.*;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -96,7 +94,7 @@ public class CounterScreen extends RailScreen{
     }
 
     @Override
-    protected ResourceLocation getIcon() {
+    protected ResourceLocation getIcon(boolean isEnable) {
         return COUNTER_ICONS;
     }
 
@@ -226,7 +224,7 @@ public class CounterScreen extends RailScreen{
             Vec2 uvOrigin = getUVOrigin(fromOutside?side.getOpposite():side,isActivated,addAxle,bidirectional);
             // final rendering
             Util.renderQuad(stack,arrowOrigin,Util.add(arrowOrigin,arrowDimensionOnBoard)
-                    ,uvOrigin,Util.add(uvOrigin,arrowDimension),true);
+                    ,uvOrigin,Util.add(uvOrigin,arrowDimension));
         }
     }
 
