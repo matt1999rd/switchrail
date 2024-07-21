@@ -15,5 +15,6 @@
 	"block.switchrail.axle_counter_rail": "Axle Counter Rail",
 
 	"item.switchrail.switch_lever": "Switch Lever",
-	"item.switchrail.switch_register": "Switch Register"
+	"item.switchrail.axle_counter_cell_item": "Tiny Axle Counter Point",
+	"item.switchrail.terminal_cell_item": "Tiny Terminal Cell"
 }

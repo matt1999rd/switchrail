@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "switchrail:terminal_cell_item",
+    "switchrail:axle_counter_cell_item"
+  ]
+}

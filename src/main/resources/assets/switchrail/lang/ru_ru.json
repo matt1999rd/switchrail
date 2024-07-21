@@ -14,5 +14,7 @@
 	"block.switchrail.axle_counter_point": "счетчик осей (зона)",
 	"block.switchrail.axle_counter_rail": "счетчик осей (рельса)",
 
-	"item.switchrail.switch_lever": "рычаг направления"
+	"item.switchrail.switch_lever": "рычаг направления",
+	"item.switchrail.axle_counter_cell_item": "мелкий счетчик осей (зона)",
+	"item.switchrail.terminal_cell_item": "мелкий терминал управления иглой"
 }

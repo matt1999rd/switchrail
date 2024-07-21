@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [{
+    "item": "switchrail:switch_terminal"   },
+    {
+      "tag": "forge:silicon"
+
+    }
+  ],
+  "result": {
+    "item": "switchrail:terminal_cell_item",
+    "count": 1
+  }
+}

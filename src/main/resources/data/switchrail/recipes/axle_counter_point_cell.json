@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [{
+    "item": "switchrail:axle_counter_point"   },
+    {
+      "tag": "forge:silicon"
+
+    }
+  ],
+  "result": {
+    "item": "switchrail:axle_counter_cell_item",
+    "count": 1
+  }
+}

@@ -13,5 +13,8 @@
 	"block.switchrail.switch_terminal": "Terminal de Commande d'Aiguille par Redstone",
 	"block.switchrail.axle_counter_point": "Point de comptage d'essieux",
 	"block.switchrail.axle_counter_rail": "Rail avec pédale de comptage d'essieux",
-	"block.switchrail.bumper": "Heurtoir"
+	"block.switchrail.bumper": "Heurtoir",
+
+	"item.switchrail.axle_counter_cell_item": "Petit Compteur d'essieux",
+	"item.switchrail.terminal_cell_item": "Petit Terminal de commande d'aiguille"
 }
