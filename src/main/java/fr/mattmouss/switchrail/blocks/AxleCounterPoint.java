@@ -42,7 +42,7 @@ public class AxleCounterPoint extends Block implements ICounterPoint, EntityBloc
     public void onRemove(BlockState oldState, @Nonnull Level world, @Nonnull BlockPos pos, BlockState actualState, boolean p_196243_5_) {
         // this function is done only server side
         if (actualState.getBlock() != oldState.getBlock()) {
-            this.onACRemove(world,pos);
+            this.onACRemove(world,pos,-1);
             super.onRemove(oldState, world, pos, actualState, p_196243_5_);
         }
     }

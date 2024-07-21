@@ -95,10 +95,10 @@ public class SwitchRailMod {
             blockRegistryEvent.getRegistry().register(new BlockItem(ModBlock.BUMPER,properties).setRegistryName("bumper"));
             blockRegistryEvent.getRegistry().register(new SwitchLever(properties.stacksTo(1)));
             if (ModList.get().isLoaded("tinyredstone")){
-                TerminalCellItem terminalCellItem = new TerminalCellItem(properties);
+                TerminalCellItem terminalCellItem = new TerminalCellItem(properties.rarity(Rarity.COMMON));
                 blockRegistryEvent.getRegistry().register(terminalCellItem);
                 TinyRedstone.registerPanelCell(TerminalCell.class, terminalCellItem);
-                AxleCounterPointCellItem axleCounterPointCellItem = new AxleCounterPointCellItem(properties);
+                AxleCounterPointCellItem axleCounterPointCellItem = new AxleCounterPointCellItem(properties.rarity(Rarity.COMMON));
                 blockRegistryEvent.getRegistry().register(axleCounterPointCellItem);
                 TinyRedstone.registerPanelCell(AxleCounterPointCell.class, axleCounterPointCellItem);
             }

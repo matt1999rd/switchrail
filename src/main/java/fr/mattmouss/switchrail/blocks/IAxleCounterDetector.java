@@ -24,15 +24,15 @@ public interface IAxleCounterDetector {
 
     // test of the registering of cart in the world data
     default boolean isMinecartComing(WorldCounterPoints worldCP, BlockPos pos, AbstractMinecart cart){
-        boolean res = !worldCP.getCart(pos).isPresent();
-        if (res)worldCP.onCartPassing(pos,cart.getUUID());  // add cart uuid
-        return res;
+        boolean minecartNotRegistered = !worldCP.getCart(pos).isPresent();
+        if (minecartNotRegistered)worldCP.registerCart(pos,cart.getUUID());  // add cart uuid
+        return minecartNotRegistered;
     }
 
     default boolean isMinecartLeaving(WorldCounterPoints worldCP,BlockPos railPos, AbstractMinecart cart){
         boolean res = cart.getX() < railPos.getX() || cart.getX() > railPos.getX() + 1 ||
                 cart.getZ() < railPos.getZ() || cart.getZ() > railPos.getZ() + 1 ;
-        if (res)worldCP.onCartLeaving(railPos);
+        if (res)worldCP.removeCart(railPos);
         return res;
     }
 
@@ -106,21 +106,20 @@ public interface IAxleCounterDetector {
     default void onMinecartPass(Level world, BlockPos pos, AbstractMinecart cart, RailShape shape){
         WorldCounterPoints worldCP = Util.getWorldCounterPoint(world);
         boolean isMinecartComing = isMinecartComing(worldCP,pos,cart);
-        if (!isMinecartComing){
-            boolean isMinecartLeaving = isMinecartLeaving(worldCP,pos,cart);
-            if (isMinecartLeaving) {
-                System.out.println("Minecart "+cart.getUUID()+ " is leaving block !");
-                Direction motionDirection = getMotionDirection(cart,true,shape);
-                onMinecartLimitPass(world,worldCP,pos,motionDirection,true);
-            }
-        }else {
+        boolean isMinecartLeaving = isMinecartLeaving(worldCP,pos,cart);
+        if (isMinecartComing){
             System.out.println("Minecart "+cart.getUUID()+" is coming on block !");
             Direction motionDirection = getMotionDirection(cart,false,shape);
             onMinecartLimitPass(world,worldCP,pos,motionDirection.getOpposite(),false);
         }
+        if (isMinecartLeaving) {
+            System.out.println("Minecart "+cart.getUUID()+ " is leaving block !");
+            Direction motionDirection = getMotionDirection(cart,true,shape);
+            onMinecartLimitPass(world,worldCP,pos,motionDirection,true);
+        }
     }
 
-    default void removeCP(Level world,BlockState oldState,BlockState actualState,BlockPos cpPos){
+    default void onRemoveAxleCounter(Level world, BlockState oldState, BlockState actualState, BlockPos cpPos){
         // this function is done only server side
         if (actualState.getBlock() != oldState.getBlock()) {
             WorldCounterPoints worldCP = Util.getWorldCounterPoint(world);

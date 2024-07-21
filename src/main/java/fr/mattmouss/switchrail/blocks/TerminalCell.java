@@ -61,6 +61,11 @@ public class TerminalCell implements IPanelCell, IPanelCellInfoProvider, ITermin
         return onTick();
     }
 
+    @Override
+    public Side getBaseSide() {
+        return Side.BOTTOM;
+    }
+
     public void renderBase(VertexConsumer builder, PoseStack stack, int combinedLight, float alpha){
         // top / up
         stack.pushPose();

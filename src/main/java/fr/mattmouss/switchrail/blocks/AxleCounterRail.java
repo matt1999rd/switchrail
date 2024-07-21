@@ -27,7 +27,7 @@ public class AxleCounterRail extends RailBlock implements IAxleCounterDetector {
 
     @Override
     public void onRemove(BlockState oldState, Level world, BlockPos pos, BlockState actualState, boolean p_196243_5_) {
-        removeCP(world,oldState,actualState,pos);
+        onRemoveAxleCounter(world,oldState,actualState,pos);
         super.onRemove(oldState, world, pos, actualState, p_196243_5_);
     }
 }

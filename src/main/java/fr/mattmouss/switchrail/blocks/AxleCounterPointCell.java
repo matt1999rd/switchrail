@@ -23,7 +23,6 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.LazyOptional;
 
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 
 public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounterPoint, ISRCell, IPanelCellInfoProvider {
 
@@ -150,7 +149,7 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
             // this function is done only server side
             Level world = this.cellPos.getPanelTile().getLevel();
             assert world != null;
-            this.onACRemove(world,cellPos.getPanelTile().getBlockPos());
+            this.onACRemove(world,cellPos.getPanelTile().getBlockPos(),cellPos.getIndex());
         }
     }
 
@@ -241,17 +240,6 @@ public class AxleCounterPointCell implements IPanelCell,ICounterHandler,ICounter
     public void setPowered(boolean powered) {
         isPowered = powered;
         markDirty();
-        /*
-        if (this.cellPos != null){
-            //server side
-            try{
-                this.cellPos.getPanelTile().updateNeighborCells(this.cellPos);
-            }catch (PanelOverflowException p){
-                Logger.getGlobal().warning("Try update neighbor cell exits with panel overflow exception. See tiny redstone mod for further information. Details are as follow : \n"+p.getMessage());
-            }
-        }
-
-         */
     }
 
     @Override

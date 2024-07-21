@@ -137,14 +137,15 @@ public class WorldCounterPoints extends SavedData {
     //function done when block with counterpoint are remove
     public void onCPBlockRemove(BlockPos cpPos){
         counterPoints.remove(cpPos);
+        removeCart(cpPos);
     }
 
     //function done when an Axle counterpoint is remove
-    public void onACRemove(BlockPos acPos) {
+    public void onACRemove(BlockPos acPos,int index) {
         //to avoid concurrent modification while in loop, we store all empty blockpos set in a new set
         Set<BlockPos> cpPosToRemove = new HashSet<>();
         for (BlockPos cpPos : counterPoints.keySet()){
-            counterPoints.get(cpPos).removeIf(cp->cp.getACPos().equals(acPos));
+            counterPoints.get(cpPos).removeIf(cp->cp.testPos(acPos,index));
             if (counterPoints.get(cpPos).isEmpty()){
                 cpPosToRemove.add(cpPos);
             }
@@ -171,12 +172,12 @@ public class WorldCounterPoints extends SavedData {
         else return Optional.empty();
     }
 
-    public void onCartPassing(BlockPos cpPos,UUID uuid){
+    public void registerCart(BlockPos cpPos, UUID uuid){
         cartsOnRail.put(cpPos,uuid);
         this.setDirty();
     }
 
-    public void onCartLeaving(BlockPos cpPos){
+    public void removeCart(BlockPos cpPos){
         cartsOnRail.remove(cpPos);
         this.setDirty();
     }

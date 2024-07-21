@@ -12,8 +12,6 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.RailShape;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.Tag;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
@@ -81,7 +79,7 @@ public abstract class Switch extends BaseRailBlock implements IAxleCounterDetect
 
     @Override
     public void onRemove(BlockState oldState, Level world, BlockPos pos, BlockState actualState, boolean p_196243_5_) {
-        removeCP(world,oldState,actualState,pos);
+        onRemoveAxleCounter(world,oldState,actualState,pos);
         super.onRemove(oldState, world, pos, actualState, p_196243_5_);
     }
 }

@@ -11,10 +11,10 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.fmllegacy.network.NetworkDirection;
 
 public interface ICounterPoint {
-    default void onACRemove(Level world, BlockPos pos){
+    default void onACRemove(Level world, BlockPos pos,int index){
         // this function is done only server side
         WorldCounterPoints worldCP = Util.getWorldCounterPoint(world);
-        worldCP.onACRemove(pos);
+        worldCP.onACRemove(pos,index);
     }
 
     default void onBlockClicked(Level world, BlockPos pos, ServerPlayer player, int index){
