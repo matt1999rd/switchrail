@@ -1,6 +1,5 @@
 package fr.mattmouss.switchrail.blocks;
 
-import com.dannyandson.tinyredstone.PanelOverflowException;
 import com.dannyandson.tinyredstone.api.IOverlayBlockInfo;
 import com.dannyandson.tinyredstone.api.IPanelCell;
 import com.dannyandson.tinyredstone.api.IPanelCellInfoProvider;

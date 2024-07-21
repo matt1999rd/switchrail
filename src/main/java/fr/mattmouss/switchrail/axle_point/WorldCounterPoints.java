@@ -32,10 +32,9 @@ public class WorldCounterPoints extends SavedData {
     public WorldCounterPoints(CompoundTag tag){
         counterPoints = Util.readMap(tag,"counter_pts",compoundNBT -> {
             Tag inbt = compoundNBT.get("counter_pt");
-            if (!(inbt instanceof ListTag)){
+            if (!(inbt instanceof ListTag listNBT)){
                 throw new IllegalStateException("Error in loading of intern set nbt : the NBT stored is not a list !");
             }
-            ListTag listNBT = (ListTag) inbt;
             Set<CounterPoint> cps = new HashSet<>();
             listNBT.forEach(inbt1 -> cps.add(CounterPoint.read(inbt1)));
             return cps;

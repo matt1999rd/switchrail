@@ -24,7 +24,7 @@ public interface IAxleCounterDetector {
 
     // test of the registering of cart in the world data
     default boolean isMinecartComing(WorldCounterPoints worldCP, BlockPos pos, AbstractMinecart cart){
-        boolean minecartNotRegistered = !worldCP.getCart(pos).isPresent();
+        boolean minecartNotRegistered = worldCP.getCart(pos).isEmpty();
         if (minecartNotRegistered)worldCP.registerCart(pos,cart.getUUID());  // add cart uuid
         return minecartNotRegistered;
     }
@@ -82,8 +82,7 @@ public interface IAxleCounterDetector {
                     handler = Util.getAxleTileEntity(world,acPos);
                 }else{
                     BlockEntity te = world.getBlockEntity(acPos);
-                    if (te instanceof PanelTile){
-                        PanelTile panelTile = (PanelTile) te;
+                    if (te instanceof PanelTile panelTile){
                         handler = (ICounterHandler) panelTile.getIPanelCell(PanelCellPos.fromIndex(panelTile,index));
                     }else {
                         throw new IllegalStateException("Index is not -1 and we get a tile entity which is not a panel tile !");

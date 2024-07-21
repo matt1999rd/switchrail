@@ -11,6 +11,8 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
+import javax.annotation.Nonnull;
+
 public class AxleCounterRail extends RailBlock implements IAxleCounterDetector {
 
     public AxleCounterRail() {
@@ -26,7 +28,7 @@ public class AxleCounterRail extends RailBlock implements IAxleCounterDetector {
     }
 
     @Override
-    public void onRemove(BlockState oldState, Level world, BlockPos pos, BlockState actualState, boolean p_196243_5_) {
+    public void onRemove(@Nonnull BlockState oldState, @Nonnull Level world, @Nonnull BlockPos pos, @Nonnull BlockState actualState, boolean p_196243_5_) {
         onRemoveAxleCounter(world,oldState,actualState,pos);
         super.onRemove(oldState, world, pos, actualState, p_196243_5_);
     }

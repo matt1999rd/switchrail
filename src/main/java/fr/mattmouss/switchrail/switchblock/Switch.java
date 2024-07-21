@@ -16,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 
 public abstract class Switch extends BaseRailBlock implements IAxleCounterDetector {
@@ -78,6 +79,7 @@ public abstract class Switch extends BaseRailBlock implements IAxleCounterDetect
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public void onRemove(BlockState oldState, Level world, BlockPos pos, BlockState actualState, boolean p_196243_5_) {
         onRemoveAxleCounter(world,oldState,actualState,pos);
         super.onRemove(oldState, world, pos, actualState, p_196243_5_);

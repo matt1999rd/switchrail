@@ -73,8 +73,7 @@ public class CounterScreen extends RailScreen{
         BlockEntity tileEntity = this.minecraft.level.getBlockEntity(pos);
         if (tileEntity instanceof AxleCounterTile){
             return (ICounterHandler) tileEntity;
-        }else if (tileEntity instanceof PanelTile) {
-            PanelTile panelTile = (PanelTile) tileEntity;
+        }else if (tileEntity instanceof PanelTile panelTile) {
             if (index == -1) throw new IllegalStateException("Try to open a screen for a tiny switch terminal while no cell position on the panel was given from the server");
             PanelCellPos cellPos = PanelCellPos.fromIndex(panelTile,index);
             IPanelCell panelCell = cellPos.getPanelTile().getIPanelCell(cellPos); // There is a strange bug here : the panel cell changes between init function and this function call

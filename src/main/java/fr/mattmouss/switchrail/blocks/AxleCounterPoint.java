@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.EntityBlock;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 public class AxleCounterPoint extends Block implements ICounterPoint, EntityBlock {
     public AxleCounterPoint() {
@@ -34,6 +35,7 @@ public class AxleCounterPoint extends Block implements ICounterPoint, EntityBloc
 
     @Nullable
     @Override
+    @ParametersAreNonnullByDefault
     public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
         return new AxleCounterTile(blockPos,blockState);
     }
@@ -66,6 +68,8 @@ public class AxleCounterPoint extends Block implements ICounterPoint, EntityBloc
         builder.add(BlockStateProperties.POWERED);
     }
 
+    @Nonnull
+    @ParametersAreNonnullByDefault
     @Override
     public VoxelShape getShape(BlockState p_220053_1_, BlockGetter p_220053_2_, BlockPos p_220053_3_, CollisionContext p_220053_4_) {
         return Shapes.or(
@@ -75,6 +79,8 @@ public class AxleCounterPoint extends Block implements ICounterPoint, EntityBloc
 
     // this function remove the block if the block below it is not a solid block
     @Override
+    @Nonnull
+    @ParametersAreNonnullByDefault
     public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, LevelAccessor worldIn, BlockPos currentPos, BlockPos facingPos) {
         if (facing == Direction.DOWN && !facingState.getMaterial().blocksMotion()){
             return Blocks.AIR.defaultBlockState();

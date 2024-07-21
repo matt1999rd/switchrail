@@ -86,20 +86,13 @@ public class Util {
     }
 
     public static DoorHingeSide getHingeSideFromEntity(LivingEntity entity, BlockPos pos, Direction direction) {
-        switch (direction){
-            case DOWN:
-            case UP:
-            default:
-                throw new IllegalArgumentException("No such direction authorised !!");
-            case NORTH:
-                return (entity.position().x<pos.getX()+0.5)?DoorHingeSide.RIGHT:DoorHingeSide.LEFT;
-            case SOUTH:
-                return (entity.position().x<pos.getX()+0.5)?DoorHingeSide.LEFT:DoorHingeSide.RIGHT;
-            case WEST:
-                return (entity.position().z<pos.getZ()+0.5)?DoorHingeSide.LEFT:DoorHingeSide.RIGHT;
-            case EAST:
-                return (entity.position().z<pos.getZ()+0.5)?DoorHingeSide.RIGHT:DoorHingeSide.LEFT;
-        }
+        return switch (direction) {
+            default -> throw new IllegalArgumentException("No such direction authorised !!");
+            case NORTH -> (entity.position().x < pos.getX() + 0.5) ? DoorHingeSide.RIGHT : DoorHingeSide.LEFT;
+            case SOUTH -> (entity.position().x < pos.getX() + 0.5) ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT;
+            case WEST -> (entity.position().z < pos.getZ() + 0.5) ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT;
+            case EAST -> (entity.position().z < pos.getZ() + 0.5) ? DoorHingeSide.RIGHT : DoorHingeSide.LEFT;
+        };
     }
 
     public static RailShape getShapeFromDirection(Direction direction1,Direction direction2){
@@ -132,18 +125,11 @@ public class Util {
 
     //gives the axis direction that is the motion of the train from the rail-shape
     public static Direction.Axis getRailShapeAxis(RailShape shape){
-        switch (shape){
-            case EAST_WEST:
-            case ASCENDING_EAST:
-            case ASCENDING_WEST:
-                return Direction.Axis.X;
-            case NORTH_SOUTH:
-            case ASCENDING_NORTH:
-            case ASCENDING_SOUTH:
-                return Direction.Axis.Z;
-            default:
-                return null;
-        }
+        return switch (shape) {
+            case EAST_WEST, ASCENDING_EAST, ASCENDING_WEST -> Direction.Axis.X;
+            case NORTH_SOUTH, ASCENDING_NORTH, ASCENDING_SOUTH -> Direction.Axis.Z;
+            default -> null;
+        };
     }
 
     public static void renderQuad(PoseStack stack, Vec2 origin, Vec2 end, Vec2 uvOrigin, Vec2 uvEnd) {
