@@ -42,7 +42,7 @@ public class SwitchDoubleSlip extends Switch implements ICrossedRail {
                 .strength(2f)
                 .sound(SoundType.METAL));
         this.setRegistryName("switch_tjd");
-        this.registerDefaultState(this.stateDefinition.any()
+        this.registerDefaultState(getChangedBlockState()
                 .setValue(DSS_POSITION, Corners.STRAIGHT)
                 .setValue(RAIL_STRAIGHT_FLAT, RailShape.NORTH_SOUTH)
         );

@@ -37,7 +37,7 @@ public class SwitchStraight extends Switch {
                 .strength(2f)
                 .noCollission()
                 .sound(SoundType.METAL));
-        this.registerDefaultState(this.stateDefinition.any().setValue(RAIL_STRAIGHT_FLAT,RailShape.NORTH_SOUTH).setValue(SWITCH_POSITION_STANDARD,Corners.STRAIGHT));
+        this.registerDefaultState(getChangedBlockState().setValue(RAIL_STRAIGHT_FLAT,RailShape.NORTH_SOUTH).setValue(SWITCH_POSITION_STANDARD,Corners.STRAIGHT));
         this.setRegistryName("switch_straight");
     }
 

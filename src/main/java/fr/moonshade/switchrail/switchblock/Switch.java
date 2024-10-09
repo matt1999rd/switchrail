@@ -2,7 +2,6 @@ package fr.moonshade.switchrail.switchblock;
 
 import fr.moonshade.switchrail.blocks.IAxleCounterDetector;
 import fr.moonshade.switchrail.enum_rail.Corners;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -43,8 +42,11 @@ public abstract class Switch extends BaseRailBlock implements IAxleCounterDetect
     }
 
     protected Switch(Properties p_i48444_2_) {
-        super(true, p_i48444_2_);
-        this.registerDefaultState(this.defaultBlockState().setValue(BlockStateProperties.ENABLED, Boolean.TRUE).setValue(WATERLOGGED, Boolean.FALSE));
+        super(false,p_i48444_2_);
+    }
+
+    protected BlockState getChangedBlockState(){
+        return this.stateDefinition.any().setValue(BlockStateProperties.ENABLED,true).setValue(WATERLOGGED,false);
     }
     
     public BlockState getBlockState(Level world, BlockPos pos){

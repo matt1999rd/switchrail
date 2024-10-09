@@ -57,7 +57,7 @@ public class SwitchSimpleSlip extends Switch implements ICrossedRail {
                 .strength(2f)
                 .sound(SoundType.METAL));
         setRegistryName("switch_tjs");
-        this.registerDefaultState(this.stateDefinition.any()
+        this.registerDefaultState(getChangedBlockState()
                 .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH)
                 .setValue(SWITCH_POSITION_STANDARD, Corners.STRAIGHT)
                 .setValue(RAIL_STRAIGHT_FLAT,RailShape.NORTH_SOUTH)

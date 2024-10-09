@@ -46,7 +46,7 @@ public class SwitchRailMod {
         modEventBus.addListener(this::setup);
         //modEventBus.addListener(this::onWorldLoad);
         MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(new UpdateSwitchRailHandler.WorldLoadingHandler());
+        //MinecraftForge.EVENT_BUS.register(new UpdateSwitchRailHandler.WorldLoadingHandler());
 
     }
 

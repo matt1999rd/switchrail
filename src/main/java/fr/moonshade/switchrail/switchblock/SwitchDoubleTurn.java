@@ -33,7 +33,7 @@ public class SwitchDoubleTurn extends Switch {
         .strength(2f)
         .sound(SoundType.METAL));
         setRegistryName("double_turn_switch");
-        this.registerDefaultState(this.stateDefinition.any()
+        this.registerDefaultState(getChangedBlockState()
                 .setValue(BlockStateProperties.HORIZONTAL_FACING,Direction.NORTH)
                 .setValue(Y_SWITCH_POSITION,Corners.TURN_LEFT)
         );

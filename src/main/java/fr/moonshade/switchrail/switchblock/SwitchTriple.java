@@ -31,7 +31,7 @@ public class SwitchTriple extends Switch {
                 .strength(2f)
                 .sound(SoundType.METAL));
         this.setRegistryName("triple_switch");
-        this.registerDefaultState(this.stateDefinition.any()
+        this.registerDefaultState(getChangedBlockState()
                 .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH)
                 .setValue(THREE_WAY_SWITCH_POSITION,Corners.TURN_LEFT)
                 .setValue(RAIL_STRAIGHT_FLAT,RailShape.NORTH_SOUTH)
